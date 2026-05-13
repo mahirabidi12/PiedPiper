@@ -6,6 +6,7 @@ import { logStep } from '../utils/logger';
 import { createId } from './identity';
 
 const db = SQLite.openDatabaseSync('disaster_mesh.db');
+const activeAccountKey = 'active_account_id';
 
 function parseJSON<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
@@ -55,6 +56,10 @@ export function initDatabase() {
       hop_count INTEGER NOT NULL,
       target_admin_ids TEXT NOT NULL,
       route_reason TEXT NOT NULL,
+      assigned_volunteer_node_id TEXT,
+      assigned_volunteer_name TEXT,
+      assigned_by_authority_node_id TEXT,
+      assigned_at INTEGER,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -74,6 +79,31 @@ export function initDatabase() {
   if (!nodeId) {
     db.runSync('INSERT INTO app_state (key, value) VALUES (?, ?)', ['node_id', createId('node')]);
   }
+
+  migrateRoleNames();
+  addColumnIfMissing('signals', 'assigned_volunteer_node_id', 'TEXT');
+  addColumnIfMissing('signals', 'assigned_volunteer_name', 'TEXT');
+  addColumnIfMissing('signals', 'assigned_by_authority_node_id', 'TEXT');
+  addColumnIfMissing('signals', 'assigned_at', 'INTEGER');
+}
+
+function addColumnIfMissing(table: string, column: string, type: string) {
+  const columns = db.getAllSync<{ name: string }>(`PRAGMA table_info(${table})`);
+  if (!columns.some((row) => row.name === column)) {
+    db.execSync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
+}
+
+function normalizeRole(role: string): Account['role'] {
+  if (role === 'admin') return 'authority';
+  if (role === 'user') return 'civilian';
+  if (role === 'volunteer' || role === 'authority' || role === 'civilian') return role;
+  return 'civilian';
+}
+
+function migrateRoleNames() {
+  db.runSync('UPDATE accounts SET role = ? WHERE role = ?', ['civilian', 'user']);
+  db.runSync('UPDATE accounts SET role = ? WHERE role = ?', ['authority', 'admin']);
 }
 
 export function getNodeId() {
@@ -82,7 +112,8 @@ export function getNodeId() {
 }
 
 export function findAccountByEmail(email: string) {
-  return db.getFirstSync<any>('SELECT * FROM accounts WHERE email = ?', [email]);
+  const row = db.getFirstSync<any>('SELECT * FROM accounts WHERE email = ?', [email]);
+  return row ? { ...row, role: normalizeRole(row.role) } : null;
 }
 
 export function createAccount(account: Account, passwordHash: string, salt: string) {
@@ -115,8 +146,12 @@ function rowToSignal(row: any): Signal {
     status: row.status,
     ttl: row.ttl,
     hopCount: row.hop_count,
-    targetAdminIds: parseJSON<string[]>(row.target_admin_ids, []),
+    targetResponderIds: parseJSON<string[]>(row.target_admin_ids, []),
     routeReason: row.route_reason,
+    assignedVolunteerNodeId: row.assigned_volunteer_node_id ?? undefined,
+    assignedVolunteerName: row.assigned_volunteer_name ?? undefined,
+    assignedByAuthorityNodeId: row.assigned_by_authority_node_id ?? undefined,
+    assignedAt: row.assigned_at ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -129,8 +164,9 @@ export function saveSignal(signal: Signal) {
       id, sender_node_id, sender_user_id, sender_name, sender_contact, message,
       category, priority, summary, needs, people_count, manual_location,
       latitude, longitude, accuracy, language, status, ttl, hop_count,
-      target_admin_ids, route_reason, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      target_admin_ids, route_reason, assigned_volunteer_node_id, assigned_volunteer_name,
+      assigned_by_authority_node_id, assigned_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       signal.id,
       signal.senderNodeId,
@@ -151,8 +187,12 @@ export function saveSignal(signal: Signal) {
       signal.status,
       signal.ttl,
       signal.hopCount,
-      JSON.stringify(signal.targetAdminIds),
+      JSON.stringify(signal.targetResponderIds),
       signal.routeReason,
+      signal.assignedVolunteerNodeId ?? null,
+      signal.assignedVolunteerName ?? null,
+      signal.assignedByAuthorityNodeId ?? null,
+      signal.assignedAt ?? null,
       signal.createdAt,
       signal.updatedAt,
     ],
@@ -182,9 +222,42 @@ export function loadSignals() {
 }
 
 export function updateSignalStatus(id: string, status: SignalStatus) {
-  logStep('admin', 'updating signal status', { id, status });
+  logStep('responder', 'updating signal status', { id, status });
   db.runSync('UPDATE signals SET status = ?, updated_at = ? WHERE id = ?', [status, Date.now(), id]);
   addSyncLog(`Signal ${id.slice(0, 8)} marked ${statusLabel(status)}`);
+}
+
+export function assignSignalToVolunteer(
+  signalId: string,
+  volunteer: { nodeId: string; name: string },
+  authorityNodeId: string,
+) {
+  const assignedAt = Date.now();
+  logStep('authority', 'assigning signal to volunteer', { signalId, volunteerNodeId: volunteer.nodeId });
+  db.runSync(
+    `UPDATE signals
+     SET assigned_volunteer_node_id = ?, assigned_volunteer_name = ?,
+         assigned_by_authority_node_id = ?, assigned_at = ?, updated_at = ?
+     WHERE id = ?`,
+    [volunteer.nodeId, volunteer.name, authorityNodeId, assignedAt, assignedAt, signalId],
+  );
+  addSyncLog(`Assigned ${signalId.slice(0, 8)} to ${volunteer.name}`);
+}
+
+export function loadActiveAccount() {
+  const row = db.getFirstSync<{ value: string }>('SELECT value FROM app_state WHERE key = ?', [activeAccountKey]);
+  if (!row?.value) return null;
+
+  const account = db.getFirstSync<any>('SELECT id, email, name, role FROM accounts WHERE id = ?', [row.value]);
+  return account ? ({ ...account, role: normalizeRole(account.role) } as Account) : null;
+}
+
+export function saveActiveAccount(account: Account) {
+  db.runSync('INSERT OR REPLACE INTO app_state (key, value) VALUES (?, ?)', [activeAccountKey, account.id]);
+}
+
+export function clearActiveAccount() {
+  db.runSync('DELETE FROM app_state WHERE key = ?', [activeAccountKey]);
 }
 
 export function addSyncLog(message: string) {

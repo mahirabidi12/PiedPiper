@@ -52,7 +52,7 @@ export function MeshStatus({
               <View>
                 <Text style={styles.peerName}>{peer.name}</Text>
                 <Text style={styles.signalMeta}>
-                  {peer.role.toUpperCase()} • {peer.host ?? 'Nearby'} • {formatTime(peer.lastSeenAt)}
+                  {peer.role.toUpperCase()} • {peer.connected ? 'online' : 'discovered'} • {formatTime(peer.lastSeenAt)}
                 </Text>
               </View>
               <Text style={styles.statusPill}>{peer.role.toUpperCase()}</Text>

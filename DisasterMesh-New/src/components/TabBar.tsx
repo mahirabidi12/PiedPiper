@@ -13,7 +13,7 @@ export function TabBar({
   role: Role;
 }) {
   const tabs = [
-    { id: 'home' as const, label: role === 'admin' ? 'Command' : 'Signal' },
+    { id: 'home' as const, label: role === 'civilian' ? 'Signal' : role === 'volunteer' ? 'Respond' : 'Command' },
     { id: 'map' as const, label: 'Map' },
     { id: 'mesh' as const, label: 'Mesh' },
     { id: 'settings' as const, label: 'Node' },

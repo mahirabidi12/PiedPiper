@@ -18,17 +18,18 @@ export function OfflineMap({
   userId: string;
   onChangeStatus: (signal: Signal, status: SignalStatus) => void;
 }) {
-  const visibleSignals = role === 'admin' ? signals : signals.filter((signal) => signal.senderUserId === userId);
+  const visibleSignals = role === 'civilian' ? signals.filter((signal) => signal.senderUserId === userId) : signals;
   const mapSignals = visibleSignals.filter((signal) => signal.location || signal.manualLocation);
+  const isResponder = role === 'volunteer' || role === 'authority';
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>{role === 'admin' ? 'Offline Admin Map' : 'My Offline Map'}</Text>
+        <Text style={styles.sectionTitle}>{isResponder ? 'Offline Response Map' : 'My Offline Map'}</Text>
         <Text style={styles.cardCopy}>
-          {role === 'admin'
-            ? 'All received user signals appear as local pins. Tiles are adapter-ready for bundled offline packs.'
-            : 'Users see their own signals and safety notices, not every civilian report.'}
+          {isResponder
+            ? 'Received civilian signals appear as local pins. Tiles are adapter-ready for bundled offline packs.'
+            : 'Civilians see their own signals and safety notices, not every civilian report.'}
         </Text>
         <View style={styles.mapFrame}>
           <Svg width="100%" height="280" viewBox="0 0 340 280">
@@ -64,7 +65,7 @@ export function OfflineMap({
           <Text style={styles.emptyText}>No mapped signals yet.</Text>
         ) : (
           mapSignals.map((signal) => (
-            <SignalCard key={signal.id} signal={signal} compact={role !== 'admin'} onChangeStatus={onChangeStatus} />
+            <SignalCard key={signal.id} signal={signal} compact={!isResponder} onChangeStatus={onChangeStatus} />
           ))
         )}
       </View>

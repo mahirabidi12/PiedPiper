@@ -42,7 +42,7 @@ export async function configureLocalNotifications() {
 }
 
 export function notifyIncomingSignal(account: Account | null, signal: Signal, sourceName: string) {
-  if (account?.role !== 'admin') return;
+  if (account?.role !== 'volunteer' && account?.role !== 'authority') return;
 
   void scheduleLocalNotification(
     'New emergency packet',
@@ -51,11 +51,20 @@ export function notifyIncomingSignal(account: Account | null, signal: Signal, so
 }
 
 export function notifyStatusUpdate(account: Account | null, signal: Signal) {
-  if (account?.role !== 'user') return;
+  if (account?.role !== 'civilian') return;
 
   void scheduleLocalNotification(
     'Responder updated your signal',
     `${signal.summary} is now ${signal.status.replace('_', ' ')}.`,
+  );
+}
+
+export function notifyVolunteerAssignment(account: Account | null, signal: Signal) {
+  if (account?.role !== 'volunteer' || signal.assignedVolunteerName !== account.name) return;
+
+  void scheduleLocalNotification(
+    'Incident assigned to you',
+    `${signal.summary} needs your response.`,
   );
 }
 

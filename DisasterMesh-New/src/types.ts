@@ -1,4 +1,4 @@
-export type Role = 'user' | 'admin';
+export type Role = 'civilian' | 'volunteer' | 'authority';
 
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
 
@@ -39,8 +39,12 @@ export type Signal = {
   status: SignalStatus;
   ttl: number;
   hopCount: number;
-  targetAdminIds: string[];
+  targetResponderIds: string[];
   routeReason: string;
+  assignedVolunteerNodeId?: string;
+  assignedVolunteerName?: string;
+  assignedByAuthorityNodeId?: string;
+  assignedAt?: number;
   createdAt: number;
   updatedAt: number;
 };

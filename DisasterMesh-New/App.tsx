@@ -15,12 +15,16 @@ import { Settings } from './src/screens/Settings';
 import { UserHome } from './src/screens/UserHome';
 import {
   addSyncLog,
+  assignSignalToVolunteer,
+  clearActiveAccount,
   createAccount,
   findAccountByEmail,
   getNodeId,
   initDatabase,
+  loadActiveAccount,
   loadSignals,
   loadSyncLogs,
+  saveActiveAccount,
   saveSignal,
   updateSignalStatus,
 } from './src/services/database';
@@ -28,17 +32,17 @@ import { createId, hashPassword } from './src/services/identity';
 import { gossipPacket } from './src/services/mesh';
 import { nearbyTransport } from './src/services/nearbyTransport';
 import { configureLocalNotifications } from './src/services/notifications';
-import { routeToNearestAdmins } from './src/services/routing';
+import { routeToResponders } from './src/services/routing';
 import { triageSignal } from './src/services/triage';
 import { colors } from './src/theme/colors';
 import { styles } from './src/theme/styles';
-import type { Account, LocationPoint, MeshRuntimeState, Role, Signal, SignalStatus, SyncLog, TabId } from './src/types';
+import type { Account, LocationPoint, MeshPeer, MeshRuntimeState, Role, Signal, SignalStatus, SyncLog, TabId } from './src/types';
 import { logError, logStep } from './src/utils/logger';
 
 export default function App() {
   const [ready, setReady] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
-  const [mode, setMode] = useState<Role>('user');
+  const [mode, setMode] = useState<Role>('civilian');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -59,6 +63,11 @@ export default function App() {
 
   useEffect(() => {
     initDatabase();
+    const savedAccount = loadActiveAccount();
+    if (!account && savedAccount) {
+      logStep('auth', 'restored saved offline session', { role: savedAccount.role });
+      setAccount(savedAccount);
+    }
     setSignals(loadSignals());
     setSyncLogs(loadSyncLogs());
     nearbyTransport.configure(getNodeId(), account, () => {
@@ -166,7 +175,9 @@ export default function App() {
         Alert.alert('Offline login failed', 'Check the password or selected role for this device.');
         return;
       }
-      setAccount({ id: existing.id, email: existing.email, name: existing.name, role: existing.role });
+      const nextAccount = { id: existing.id, email: existing.email, name: existing.name, role: existing.role };
+      saveActiveAccount(nextAccount);
+      setAccount(nextAccount);
       logStep('auth', 'offline login successful', { role: existing.role });
       addSyncLog(`${existing.role.toUpperCase()} ${existing.email} signed in offline`);
       setSyncLogs(loadSyncLogs());
@@ -175,10 +186,11 @@ export default function App() {
 
     const salt = createId('salt');
     const id = createId(mode);
-    const displayName = name.trim() || (mode === 'admin' ? 'Responder Admin' : 'Local User');
+    const displayName = name.trim() || (mode === 'authority' ? 'Authority Node' : mode === 'volunteer' ? 'Volunteer Node' : 'Civilian Node');
     const passwordHash = await hashPassword(password, salt);
     const nextAccount = { id, email: normalizedEmail, name: displayName, role: mode };
     createAccount(nextAccount, passwordHash, salt);
+    saveActiveAccount(nextAccount);
     setAccount(nextAccount);
     logStep('auth', 'offline account created', { role: mode, id });
     addSyncLog(`${mode.toUpperCase()} ${normalizedEmail} created offline account`);
@@ -190,7 +202,7 @@ export default function App() {
     const point = location ?? (await refreshLocation());
     const phrase = isImmediate ? 'SOS. Immediate rescue needed.' : `${selectedChip.phrase}. ${story}`.trim();
     const triage = triageSignal(phrase, isImmediate ? 'sos' : selectedChip.category);
-    const route = routeToNearestAdmins(nearbyTransport.getAdminPeers());
+    const route = routeToResponders(nearbyTransport.getResponderPeers());
     logStep('signal', 'creating signal packet', { isImmediate, route: route.routeReason });
     const signal: Signal = {
       id: createId('signal'),
@@ -206,10 +218,10 @@ export default function App() {
       manualLocation: manualLocation.trim() || undefined,
       location: point,
       language: triage.language,
-      status: route.targetAdminIds.length ? 'sent' : 'queued',
+      status: route.targetResponderIds.length ? 'sent' : 'queued',
       ttl: 8,
       hopCount: 0,
-      targetAdminIds: route.targetAdminIds,
+      targetResponderIds: route.targetResponderIds,
       routeReason: route.routeReason,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -228,7 +240,7 @@ export default function App() {
 
   function changeStatus(signal: Signal, status: SignalStatus) {
     updateSignalStatus(signal.id, status);
-    logStep('admin', 'status changed by admin', { signalId: signal.id, status });
+    logStep('responder', 'status changed by responder', { signalId: signal.id, status, role: account?.role });
     setSignals(loadSignals());
     setSyncLogs(loadSyncLogs());
     void nearbyTransport.broadcast();
@@ -238,6 +250,22 @@ export default function App() {
     logStep('mesh', 'manual retry sync requested');
     void nearbyTransport.broadcast();
     setSyncLogs(loadSyncLogs());
+  }
+
+  function assignVolunteer(signal: Signal, volunteer: MeshPeer) {
+    if (!account || account.role !== 'authority') return;
+    assignSignalToVolunteer(signal.id, volunteer, getNodeId());
+    logStep('authority', 'signal assignment saved', { signalId: signal.id, volunteerNodeId: volunteer.nodeId });
+    setSignals(loadSignals());
+    setSyncLogs(loadSyncLogs());
+    void nearbyTransport.broadcast();
+  }
+
+  function signOut() {
+    clearActiveAccount();
+    setAccount(null);
+    setActiveTab('home');
+    nearbyTransport.stop();
   }
 
   if (!ready) {
@@ -283,7 +311,7 @@ export default function App() {
         <Header account={account} stats={stats} />
         <View style={styles.content}>
           {activeTab === 'home' &&
-            (account.role === 'user' ? (
+            (account.role === 'civilian' ? (
               <UserHome
                 selectedChip={selectedChip}
                 setSelectedChip={setSelectedChip}
@@ -292,12 +320,17 @@ export default function App() {
                 manualLocation={manualLocation}
                 setManualLocation={setManualLocation}
                 location={location}
-                onRefreshLocation={refreshLocation}
                 onSend={sendSignal}
                 signals={signals.filter((signal) => signal.senderUserId === account.id)}
               />
             ) : (
-              <AdminHome signals={signals} onChangeStatus={changeStatus} />
+              <AdminHome
+                account={account}
+                signals={signals}
+                volunteers={nearbyTransport.getVolunteerPeers()}
+                onChangeStatus={changeStatus}
+                onAssignVolunteer={assignVolunteer}
+              />
             ))}
           {activeTab === 'map' && (
             <OfflineMap role={account.role} signals={signals} userId={account.id} onChangeStatus={changeStatus} />
@@ -311,7 +344,7 @@ export default function App() {
             />
           )}
           {activeTab === 'settings' && (
-            <Settings account={account} nodeId={getNodeId()} onSignOut={() => setAccount(null)} />
+            <Settings account={account} nodeId={getNodeId()} onSignOut={signOut} />
           )}
         </View>
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} role={account.role} />

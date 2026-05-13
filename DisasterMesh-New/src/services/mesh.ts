@@ -5,7 +5,7 @@ export function gossipPacket(signal: Signal): MeshPacket | null {
   if (hasSeenPacket(signal.id) || signal.hopCount >= signal.ttl) return null;
 
   markPacketSeen(signal.id, 'signal');
-  addSyncLog(`Gossip queued ${signal.id.slice(0, 8)} to ${signal.targetAdminIds.length || 'nearest'} admin route`);
+  addSyncLog(`Gossip queued ${signal.id.slice(0, 8)} to ${signal.targetResponderIds.length || 'nearest'} responder route`);
   return {
     id: signal.id,
     type: 'signal',

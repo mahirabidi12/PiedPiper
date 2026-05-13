@@ -3,7 +3,7 @@ import { NativeEventEmitter, NativeModules, PermissionsAndroid, Platform } from 
 import type { Account, MeshPeer, Signal } from '../types';
 import { logError, logStep } from '../utils/logger';
 import { addSyncLog, loadSignals, mergeIncomingSignal } from './database';
-import { notifyIncomingSignal, notifyStatusUpdate } from './notifications';
+import { notifyIncomingSignal, notifyStatusUpdate, notifyVolunteerAssignment } from './notifications';
 
 type NearbyNativeModule = {
   start: (nodeName: string) => Promise<boolean>;
@@ -66,7 +66,19 @@ class NearbyTransport {
   }
 
   getAdminPeers() {
-    return this.state.peers.filter((peer) => peer.role === 'admin' && peer.connected);
+    return this.getAuthorityPeers();
+  }
+
+  getVolunteerPeers() {
+    return this.state.peers.filter((peer) => peer.role === 'volunteer' && peer.connected);
+  }
+
+  getAuthorityPeers() {
+    return this.state.peers.filter((peer) => peer.role === 'authority' && peer.connected);
+  }
+
+  getResponderPeers() {
+    return this.state.peers.filter((peer) => (peer.role === 'volunteer' || peer.role === 'authority') && peer.connected);
   }
 
   async start() {
@@ -85,7 +97,7 @@ class NearbyTransport {
     }
 
     this.ensureSubscriptions();
-    const nodeName = `${this.account?.role ?? 'user'}:${this.account?.name ?? 'Unknown'}:${this.nodeId}`;
+    const nodeName = `${this.account?.role ?? 'civilian'}:${this.account?.name ?? 'Unknown'}:${this.nodeId}`;
     try {
       await nativeNearby.start(nodeName);
       this.patchState({ running: true, lastError: undefined });
@@ -110,14 +122,14 @@ class NearbyTransport {
     await this.sendPacket({
       kind: 'hello',
       nodeId: this.nodeId,
-      role: this.account?.role ?? 'user',
+      role: this.account?.role ?? 'civilian',
       name: this.account?.name ?? 'Unknown node',
       sentAt: Date.now(),
     });
     return this.sendPacket({
       kind: 'signals',
       nodeId: this.nodeId,
-      role: this.account?.role ?? 'user',
+      role: this.account?.role ?? 'civilian',
       name: this.account?.name ?? 'Unknown node',
       signals: loadSignals().filter((signal) => signal.hopCount < signal.ttl),
       sentAt: Date.now(),
@@ -184,11 +196,14 @@ class NearbyTransport {
         });
         if (accepted) {
           merged += 1;
-          if (this.account?.role === 'admin' && signal.senderNodeId !== this.nodeId) {
+          if ((this.account?.role === 'volunteer' || this.account?.role === 'authority') && signal.senderNodeId !== this.nodeId) {
             notifyIncomingSignal(this.account, signal, packet.name);
           }
-          if (this.account?.role === 'user' && signal.senderNodeId === this.nodeId) {
+          if (this.account?.role === 'civilian' && signal.senderNodeId === this.nodeId) {
             notifyStatusUpdate(this.account, signal);
+          }
+          if (this.account?.role === 'volunteer' && signal.assignedVolunteerNodeId === this.nodeId) {
+            notifyVolunteerAssignment(this.account, signal);
           }
         }
       });
@@ -255,7 +270,12 @@ async function requestNearbyPermissions() {
 
 function parsePeer(endpointId: string, endpointName?: string, connected?: boolean): MeshPeer {
   const parts = (endpointName ?? '').split(':');
-  const role = parts[0] === 'admin' ? 'admin' : 'user';
+  const role =
+    parts[0] === 'authority' || parts[0] === 'admin'
+      ? 'authority'
+      : parts[0] === 'volunteer'
+        ? 'volunteer'
+        : 'civilian';
   const name = parts[1] || endpointName || 'Nearby peer';
   const nodeId = parts[2] || endpointId;
 
