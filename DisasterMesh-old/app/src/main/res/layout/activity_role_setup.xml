@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1117"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="32dp"
+        android:gravity="center_horizontal">
+
+        <!-- Logo -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡"
+            android:textSize="52sp"
+            android:layout_marginTop="52dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DISASTER MESH"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="14dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Emergency Coordination Network"
+            android:textColor="#8B949E"
+            android:textSize="14sp"
+            android:layout_marginTop="6dp" />
+
+        <!-- Offline badge -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="● Works without internet"
+            android:textColor="#3FB950"
+            android:textSize="12sp"
+            android:layout_marginTop="10dp" />
+
+        <!-- Role heading -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Who are you in this emergency?"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="44dp"
+            android:layout_marginBottom="14dp" />
+
+        <!-- CIVILIAN card -->
+        <LinearLayout
+            android:id="@+id/cardUser"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="👤"
+                android:textSize="24sp"
+                android:gravity="center" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Civilian"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="I need help or want to report"
+                    android:textColor="#8B949E"
+                    android:textSize="13sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <View
+                android:tag="dot_USER"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/dot_selected"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+        <!-- VOLUNTEER card -->
+        <LinearLayout
+            android:id="@+id/cardVolunteer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="🤝"
+                android:textSize="24sp"
+                android:gravity="center" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Volunteer"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="I'm here to help people"
+                    android:textColor="#8B949E"
+                    android:textSize="13sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <View
+                android:tag="dot_VOLUNTEER"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/dot_selected"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+        <!-- AUTHORITY card -->
+        <LinearLayout
+            android:id="@+id/cardAuthority"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="🛡️"
+                android:textSize="24sp"
+                android:gravity="center" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Authority"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Official emergency responder"
+                    android:textColor="#8B949E"
+                    android:textSize="13sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <View
+                android:tag="dot_AUTHORITY"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/dot_selected"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+        <!-- Name input -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your name"
+            android:textColor="#8B949E"
+            android:textSize="13sp"
+            android:layout_marginTop="28dp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. Mahira, Officer Singh, Rahul..."
+            android:textColorHint="#484F58"
+            android:textColor="#E6EDF3"
+            android:textSize="16sp"
+            android:background="@drawable/input_background"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp"
+            android:inputType="textPersonName|textCapWords"
+            android:importantForAutofill="no" />
+
+        <!-- Join button -->
+        <Button
+            android:id="@+id/btnJoin"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="JOIN MESH"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:backgroundTint="#58A6FF"
+            android:layout_marginTop="24dp"
+            android:stateListAnimator="@null" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No internet required · Peer-to-peer only"
+            android:textColor="#484F58"
+            android:textSize="11sp"
+            android:layout_marginTop="12dp" />
+
+    </LinearLayout>
+</ScrollView>

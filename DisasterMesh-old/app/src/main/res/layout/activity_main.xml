@@ -5,71 +5,172 @@
     android:orientation="vertical"
     android:background="#0D1117">
 
-    <!-- Header -->
+    <!-- ── Header ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="#161B22"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        android:background="#161B22">
+        android:paddingTop="14dp"
+        android:paddingBottom="12dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- App title row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/app_title"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/tvDeviceName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#484F58"
-            android:textSize="11sp"
-            android:layout_marginTop="2dp" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⚡ DISASTER MESH"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
 
-        <TextView
-            android:id="@+id/tvPeerStatus"
-            android:layout_width="wrap_content"
+            <!-- Role badge -->
+            <TextView
+                android:id="@+id/tvRoleBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CIV"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/badge_bg" />
+        </LinearLayout>
+
+        <!-- User name + peer status row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/searching_peers"
-            android:textColor="#F78166"
-            android:textSize="13sp"
-            android:layout_marginTop="6dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/tvUserName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#8B949E"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvPeerStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="● Searching..."
+                android:textColor="#F78166"
+                android:textSize="12sp" />
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#21262D" />
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#21262D" />
 
-    <!-- Message list -->
+    <!-- ── Quick chips (User only, hidden for other roles) ── -->
+    <LinearLayout
+        android:id="@+id/rowChips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="10dp"
+        android:background="#0D1117"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/chipSos"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="🚨 SOS"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#B91C1C"
+            android:paddingHorizontal="14dp"
+            android:stateListAnimator="@null"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/chipMedical"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="🏥 Medical"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#D97706"
+            android:paddingHorizontal="14dp"
+            android:stateListAnimator="@null"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/chipSupply"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="📦 Supply"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1F6FEB"
+            android:paddingHorizontal="14dp"
+            android:stateListAnimator="@null" />
+
+    </LinearLayout>
+
+    <!-- ── Target selector (User only) ── -->
+    <LinearLayout
+        android:id="@+id/rowTarget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:background="#161B22"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send to:"
+            android:textColor="#8B949E"
+            android:textSize="13sp"
+            android:layout_marginEnd="12dp" />
+
+        <Spinner
+            android:id="@+id/spinnerTarget"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/spinner_bg"
+            android:paddingHorizontal="8dp" />
+
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#21262D" />
+
+    <!-- ── Message list ── -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMessages"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingHorizontal="12dp"
+        android:paddingHorizontal="10dp"
         android:paddingVertical="8dp"
         android:clipToPadding="false" />
 
-    <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#21262D" />
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#21262D" />
 
-    <!-- Input row -->
+    <!-- ── Input bar ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
+        android:padding="10dp"
         android:background="#161B22"
         android:gravity="center_vertical">
 
@@ -78,7 +179,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/message_hint"
+            android:hint="Describe your emergency..."
             android:textColorHint="#484F58"
             android:textColor="#E6EDF3"
             android:textSize="15sp"
@@ -95,7 +196,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="@string/send_button"
+            android:text="Send"
             android:textColor="#FFFFFF"
             android:backgroundTint="#1F6FEB"
             android:paddingHorizontal="18dp"

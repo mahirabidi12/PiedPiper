@@ -1,14 +1,14 @@
 package com.disastermesh
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -18,23 +18,31 @@ import com.disastermesh.adapter.MessageAdapter
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var session: UserSession
     private lateinit var meshManager: MeshManager
     private lateinit var messageAdapter: MessageAdapter
 
-    private lateinit var tvDeviceName: TextView
+    // Header
+    private lateinit var tvUserName: TextView
+    private lateinit var tvRoleBadge: TextView
     private lateinit var tvPeerStatus: TextView
+
+    // User-only controls
+    private lateinit var rowChips: LinearLayout
+    private lateinit var rowTarget: LinearLayout
+    private lateinit var spinnerTarget: Spinner
+
+    // Message list + input
     private lateinit var rvMessages: RecyclerView
     private lateinit var etMessage: EditText
     private lateinit var btnSend: Button
 
-    // Each device gets a random name so you can tell them apart during testing
-    private val deviceName = "Phone-${(1000..9999).random()}"
+    private var currentTarget = "ALL"
 
     companion object {
         private const val REQUEST_PERMISSIONS = 1001
     }
 
-    // All permissions needed by Nearby Connections, split by API level
     private val requiredPermissions: Array<String> by lazy {
         buildList {
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
@@ -57,52 +65,117 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
+        session = UserSession(this)
+
+        // Redirect to setup if not configured
+        if (!session.isSetup) {
+            startActivity(Intent(this, RoleSetupActivity::class.java))
+            finish()
+            return
+        }
+
+        setContentView(R.layout.activity_main)
         bindViews()
+        applyRoleTheme()
+        setupTargetSpinner()
         setupRecyclerView()
         setupMeshManager()
         setupSendButton()
+        setupQuickChips()
         checkAndRequestPermissions()
     }
 
     private fun bindViews() {
-        tvDeviceName = findViewById(R.id.tvDeviceName)
-        tvPeerStatus = findViewById(R.id.tvPeerStatus)
-        rvMessages = findViewById(R.id.rvMessages)
-        etMessage = findViewById(R.id.etMessage)
-        btnSend = findViewById(R.id.btnSend)
+        tvUserName    = findViewById(R.id.tvUserName)
+        tvRoleBadge   = findViewById(R.id.tvRoleBadge)
+        tvPeerStatus  = findViewById(R.id.tvPeerStatus)
+        rowChips      = findViewById(R.id.rowChips)
+        rowTarget     = findViewById(R.id.rowTarget)
+        spinnerTarget = findViewById(R.id.spinnerTarget)
+        rvMessages    = findViewById(R.id.rvMessages)
+        etMessage     = findViewById(R.id.etMessage)
+        btnSend       = findViewById(R.id.btnSend)
 
-        tvDeviceName.text = deviceName
+        tvUserName.text  = session.name
+        tvRoleBadge.text = session.role.badgeLabel
+    }
+
+    private fun applyRoleTheme() {
+        val role = session.role
+
+        // Role badge styling
+        tvRoleBadge.setTextColor(Color.WHITE)
+        tvRoleBadge.setBackgroundColor(role.color())
+
+        // Show/hide user-only rows
+        val isUser = role == Role.USER
+        rowChips.visibility  = if (isUser) View.VISIBLE else View.GONE
+        rowTarget.visibility = if (isUser) View.VISIBLE else View.GONE
+
+        // Send button colour follows role
+        btnSend.backgroundTintList =
+            android.content.res.ColorStateList.valueOf(role.color())
+
+        // Hint text for input based on role
+        etMessage.hint = when (role) {
+            Role.USER      -> "Describe your emergency..."
+            Role.VOLUNTEER -> "Broadcast to all peers..."
+            Role.AUTHORITY -> "Official message to all..."
+        }
+    }
+
+    private fun setupTargetSpinner() {
+        val options = arrayOf("Everyone", "Volunteers only", "Authorities only")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTarget.adapter = adapter
+        spinnerTarget.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, pos: Int, id: Long) {
+                currentTarget = when (pos) {
+                    1 -> "VOLUNTEER"
+                    2 -> "AUTHORITY"
+                    else -> "ALL"
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
     }
 
     private fun setupRecyclerView() {
-        messageAdapter = MessageAdapter(localDeviceId = deviceName)
+        messageAdapter = MessageAdapter(
+            localDeviceId = session.name,
+            myRole        = session.role
+        )
         rvMessages.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity).apply {
-                stackFromEnd = false
-            }
+            layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = messageAdapter
         }
     }
 
     private fun setupMeshManager() {
         meshManager = MeshManager(
-            context = this,
-            deviceName = deviceName,
+            context    = this,
+            deviceName = session.name,
             onMessageReceived = { message ->
                 runOnUiThread {
-                    messageAdapter.addMessage(message)
-                    rvMessages.scrollToPosition(0)
+                    if (message.isVisibleTo(session.role)) {
+                        messageAdapter.addMessage(message)
+                        rvMessages.scrollToPosition(0)
+                    }
                 }
             },
-            onPeersChanged = { count, names ->
+            onPeersChanged = { count, _ ->
                 runOnUiThread {
                     tvPeerStatus.text = when (count) {
-                        0 -> "● Searching for peers..."
-                        1 -> "● 1 peer connected: ${names.firstOrNull() ?: ""}"
+                        0    -> "● Searching for peers..."
+                        1    -> "● 1 peer connected"
                         else -> "● $count peers connected"
                     }
+                    tvPeerStatus.setTextColor(
+                        if (count > 0) Color.parseColor("#3FB950")
+                        else Color.parseColor("#F78166")
+                    )
                 }
             }
         )
@@ -110,20 +183,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSendButton() {
         btnSend.setOnClickListener { sendMessage() }
-
-        // Also send when user taps "Done" / "Send" on the keyboard
         etMessage.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEND) {
-                sendMessage()
-                true
-            } else false
+            if (actionId == EditorInfo.IME_ACTION_SEND) { sendMessage(); true } else false
+        }
+    }
+
+    private fun setupQuickChips() {
+        findViewById<Button>(R.id.chipSos).setOnClickListener {
+            etMessage.setText("🚨 SOS — I need immediate rescue help")
+            currentTarget = "ALL"
+            spinnerTarget.setSelection(0)
+        }
+        findViewById<Button>(R.id.chipMedical).setOnClickListener {
+            etMessage.setText("🏥 Medical emergency — ")
+            etMessage.setSelection(etMessage.text.length)
+            currentTarget = "VOLUNTEER"
+            spinnerTarget.setSelection(1)
+        }
+        findViewById<Button>(R.id.chipSupply).setOnClickListener {
+            etMessage.setText("📦 Need supplies — ")
+            etMessage.setSelection(etMessage.text.length)
+            currentTarget = "ALL"
+            spinnerTarget.setSelection(0)
         }
     }
 
     private fun sendMessage() {
         val text = etMessage.text.toString().trim()
         if (text.isEmpty()) return
-        meshManager.sendMessage(text)
+        val target = if (session.role == Role.USER) currentTarget else "ALL"
+        meshManager.sendMessage(text, session.role.name, target)
         etMessage.text.clear()
     }
 
@@ -133,35 +222,24 @@ class MainActivity : AppCompatActivity() {
         val missing = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
-
-        if (missing.isEmpty()) {
-            meshManager.start()
-        } else {
-            ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQUEST_PERMISSIONS)
-        }
+        if (missing.isEmpty()) meshManager.start()
+        else ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQUEST_PERMISSIONS)
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_PERMISSIONS) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                meshManager.start()
-            } else {
-                Toast.makeText(
-                    this,
-                    "All permissions are required for peer-to-peer mesh networking",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) meshManager.start()
+            else Toast.makeText(this, "All permissions are required for mesh networking", Toast.LENGTH_LONG).show()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        meshManager.stop()
+        if (::meshManager.isInitialized) {
+            meshManager.stop()
+        }
     }
 }

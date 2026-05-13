@@ -36,11 +36,13 @@ class MeshManager(
         Log.d(TAG, "Mesh stopped")
     }
 
-    fun sendMessage(text: String) {
+    fun sendMessage(text: String, senderRole: String = Role.USER.name, targetRole: String = "ALL") {
         val message = Message(
-            senderId = deviceName,
+            senderId   = deviceName,
             senderName = deviceName,
-            text = text
+            senderRole = senderRole,
+            text       = text,
+            targetRole = targetRole
         )
         // Mark as seen so we don't echo it back to ourselves if it bounces
         if (repository.add(message)) {

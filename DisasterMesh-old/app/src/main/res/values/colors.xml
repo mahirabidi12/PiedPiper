@@ -4,5 +4,14 @@
     <color name="white">#FFFFFFFF</color>
     <color name="background">#0D1117</color>
     <color name="surface">#161B22</color>
+    <color name="surface2">#21262D</color>
+    <color name="border">#30363D</color>
+    <color name="text_primary">#E6EDF3</color>
+    <color name="text_secondary">#8B949E</color>
+    <color name="text_muted">#484F58</color>
+    <color name="color_user">#58A6FF</color>
+    <color name="color_volunteer">#3FB950</color>
+    <color name="color_authority">#F78166</color>
+    <color name="color_sos">#B91C1C</color>
     <color name="primary">#1F6FEB</color>
 </resources>
