@@ -13,7 +13,7 @@ class MeshManager(
 ) {
     private val client = Nearby.getConnectionsClient(context)
     private val connectedEndpoints = mutableMapOf<String, String>() // endpointId -> endpointName
-    private val repository = MessageRepository()
+    private val repository = MessageRepository(context)
 
     companion object {
         private const val SERVICE_ID = "com.disastermesh.mesh"
@@ -127,12 +127,10 @@ class MeshManager(
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
             if (result.status.isSuccess) {
-                // We need the name but ConnectionResolution doesn't carry it directly.
-                // We stored it during onConnectionInitiated via the discovery info.
-                // Use endpointId as fallback name if we don't have it yet.
                 connectedEndpoints[endpointId] = connectedEndpoints[endpointId] ?: endpointId
                 Log.d(TAG, "Connected: $endpointId | Total peers: ${connectedEndpoints.size}")
                 notifyPeers()
+                syncHistoryTo(endpointId)
             } else {
                 Log.e(TAG, "Connection to $endpointId failed: ${result.status.statusMessage}")
             }
@@ -171,6 +169,18 @@ class MeshManager(
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Send full message history to a newly connected peer so they get everything
+    // that happened before they joined. Their gossip dedup drops what they already have.
+    private fun syncHistoryTo(endpointId: String) {
+        val history = repository.getAllForSync()
+        if (history.isEmpty()) return
+        Log.d(TAG, "Syncing ${history.size} stored messages to $endpointId")
+        history.forEach { message ->
+            val payload = Payload.fromBytes(message.toJson().toByteArray(Charsets.UTF_8))
+            client.sendPayload(endpointId, payload)
+        }
+    }
 
     private fun notifyPeers() {
         onPeersChanged(connectedEndpoints.size, connectedEndpoints.values.toList())
