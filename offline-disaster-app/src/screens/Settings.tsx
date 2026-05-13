@@ -21,11 +21,10 @@ export function Settings({ account, nodeId, onSignOut }: { account: Account; nod
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Future Native Adapters</Text>
-        <Text style={styles.settingLine}>Gemma GGUF: llama.cpp adapter boundary</Text>
-        <Text style={styles.settingLine}>Discovery: mDNS / Nearby / WiFi Direct boundary</Text>
-        <Text style={styles.settingLine}>Maps: bundled MBTiles / vector tile boundary</Text>
-        <Text style={styles.settingLine}>Radio: ESP32 LoRa relay boundary</Text>
+        <Text style={styles.sectionTitle}>Offline Runtime</Text>
+        <Text style={styles.settingLine}>Discovery: Google Nearby Connections P2P_CLUSTER</Text>
+        <Text style={styles.settingLine}>Transport: Bluetooth, BLE, and WiFi Direct style links</Text>
+        <Text style={styles.settingLine}>Network: no router, shared WiFi, internet, or manual IP required</Text>
       </View>
     </ScrollView>
   );

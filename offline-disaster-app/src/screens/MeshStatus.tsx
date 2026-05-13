@@ -24,12 +24,11 @@ export function MeshStatus({
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Offline Radio Mesh</Text>
         <Text style={styles.cardCopy}>
-          Discovery and sync run automatically in the background. The app tries Nearby Connections first, then keeps
-          LAN store-and-forward available internally as a fallback. No one needs to choose a transport or admin.
+          Discovery and sync run automatically with Google Nearby Connections. The app uses Bluetooth, BLE, and
+          WiFi Direct style offline links through Nearby; no router, shared WiFi, manual IP, or transport choice is needed.
         </Text>
         <View style={styles.commandGrid}>
           <Metric label="Nearby" value={meshState.nearbyPeers.length} color={colors.blue} />
-          <Metric label="LAN" value={meshState.connectedPeers.length} color={colors.purple} />
           <Metric label="Packets" value={packets.length} color={colors.low} />
         </View>
         <View style={styles.actionRowWrap}>
@@ -39,10 +38,8 @@ export function MeshStatus({
         </View>
         {!!meshState.nearbyError && <Text style={styles.locationText}>Nearby error: {meshState.nearbyError}</Text>}
         <Text style={styles.settingLine}>
-          Nearby: {meshState.nearbyRunning ? 'active' : 'starting'} • fallback:{' '}
-          {meshState.serverRunning ? 'ready' : 'starting'}
+          Nearby: {meshState.nearbyRunning ? 'active' : 'starting'}
         </Text>
-        {!!meshState.lastError && <Text style={styles.locationText}>Fallback error: {meshState.lastError}</Text>}
       </View>
 
       <View style={styles.card}>
@@ -56,25 +53,6 @@ export function MeshStatus({
                 <Text style={styles.peerName}>{peer.name}</Text>
                 <Text style={styles.signalMeta}>
                   {peer.role.toUpperCase()} • {peer.host ?? 'Nearby'} • {formatTime(peer.lastSeenAt)}
-                </Text>
-              </View>
-              <Text style={styles.statusPill}>{peer.role.toUpperCase()}</Text>
-            </View>
-          ))
-        )}
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Fallback Peers</Text>
-        {meshState.connectedPeers.length === 0 ? (
-          <Text style={styles.emptyText}>No fallback peer connected. Nearby remains the primary path.</Text>
-        ) : (
-          meshState.connectedPeers.map((peer) => (
-            <View key={peer.key} style={styles.peerRow}>
-              <View>
-                <Text style={styles.peerName}>{peer.name}</Text>
-                <Text style={styles.signalMeta}>
-                  {peer.role.toUpperCase()} • {peer.host ?? peer.key} • {formatTime(peer.lastSeenAt)}
                 </Text>
               </View>
               <Text style={styles.statusPill}>{peer.role.toUpperCase()}</Text>

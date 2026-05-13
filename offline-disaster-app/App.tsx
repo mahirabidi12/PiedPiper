@@ -1,7 +1,8 @@
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, PermissionsAndroid, Platform, SafeAreaView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, PermissionsAndroid, Platform, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Header } from './src/components/Header';
 import { TabBar } from './src/components/TabBar';
@@ -24,7 +25,6 @@ import {
   updateSignalStatus,
 } from './src/services/database';
 import { createId, hashPassword } from './src/services/identity';
-import { lanTransport, meshPort } from './src/services/lanTransport';
 import { gossipPacket } from './src/services/mesh';
 import { nearbyTransport } from './src/services/nearbyTransport';
 import { configureLocalNotifications } from './src/services/notifications';
@@ -52,7 +52,7 @@ export default function App() {
   const [meshState, setMeshState] = useState<MeshRuntimeState>({
     serverRunning: false,
     nearbyRunning: false,
-    port: meshPort,
+    port: 0,
     connectedPeers: [],
     nearbyPeers: [],
   });
@@ -61,10 +61,6 @@ export default function App() {
     initDatabase();
     setSignals(loadSignals());
     setSyncLogs(loadSyncLogs());
-    lanTransport.configure(getNodeId(), account, () => {
-      setSignals(loadSignals());
-      setSyncLogs(loadSyncLogs());
-    });
     nearbyTransport.configure(getNodeId(), account, () => {
       setSignals(loadSignals());
       setSyncLogs(loadSyncLogs());
@@ -75,27 +71,13 @@ export default function App() {
       void requestMeshPermissions().then((permissionsReady) => {
         logStep('mesh', 'runtime permission result', { permissionsReady });
         if (!permissionsReady) {
-          void lanTransport.startServer(meshPort);
           return false;
         }
         return nearbyTransport.start();
       }).then((started) => {
         logStep('mesh', 'nearby auto-start result', { started });
-        if (!started) {
-          void lanTransport.startServer(meshPort);
-        }
       });
-      void lanTransport.startServer(meshPort);
     }
-    const unsubscribeLan = lanTransport.subscribe((lanState) =>
-      setMeshState((current) => ({
-        ...current,
-        ...lanState,
-        nearbyRunning: current.nearbyRunning,
-        nearbyPeers: current.nearbyPeers,
-        nearbyError: current.nearbyError,
-      })),
-    );
     const unsubscribeNearby = nearbyTransport.subscribe((nearbyState) =>
       setMeshState((current) => ({
         ...current,
@@ -106,7 +88,6 @@ export default function App() {
     );
     setReady(true);
     return () => {
-      unsubscribeLan();
       unsubscribeNearby();
     };
   }, [account]);
@@ -136,7 +117,7 @@ export default function App() {
       logError('mesh', 'runtime mesh permissions denied', denied.map(([permission]) => permission));
       Alert.alert(
         'Mesh permission needed',
-        'Bluetooth, Nearby WiFi, and location permissions are needed for offline phone-to-phone discovery. LAN fallback will still try locally.',
+        'Bluetooth, Nearby WiFi, and location permissions are needed for offline phone-to-phone discovery.',
       );
       return false;
     }
@@ -209,7 +190,7 @@ export default function App() {
     const point = location ?? (await refreshLocation());
     const phrase = isImmediate ? 'SOS. Immediate rescue needed.' : `${selectedChip.phrase}. ${story}`.trim();
     const triage = triageSignal(phrase, isImmediate ? 'sos' : selectedChip.category);
-    const route = routeToNearestAdmins([...lanTransport.getAdminPeers(), ...nearbyTransport.getAdminPeers()]);
+    const route = routeToNearestAdmins(nearbyTransport.getAdminPeers());
     logStep('signal', 'creating signal packet', { isImmediate, route: route.routeReason });
     const signal: Signal = {
       id: createId('signal'),
@@ -237,7 +218,6 @@ export default function App() {
     saveSignal(signal);
     gossipPacket(signal);
     logStep('signal', 'signal saved and gossip queued', { id: signal.id });
-    lanTransport.syncAllPeers();
     void nearbyTransport.broadcast();
     setSignals(loadSignals());
     setSyncLogs(loadSyncLogs());
@@ -251,32 +231,33 @@ export default function App() {
     logStep('admin', 'status changed by admin', { signalId: signal.id, status });
     setSignals(loadSignals());
     setSyncLogs(loadSyncLogs());
-    lanTransport.syncAllPeers();
     void nearbyTransport.broadcast();
   }
 
   function syncPeers() {
     logStep('mesh', 'manual retry sync requested');
-    lanTransport.syncAllPeers();
     void nearbyTransport.broadcast();
     setSyncLogs(loadSyncLogs());
   }
 
   if (!ready) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaProvider>
+      <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safe}>
         <StatusBar style="light" backgroundColor={colors.black} />
         <View style={styles.centered}>
           <ActivityIndicator color={colors.critical} />
           <Text style={styles.muted}>Starting offline node...</Text>
         </View>
       </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   if (!account) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaProvider>
+      <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safe}>
         <StatusBar style="light" backgroundColor={colors.black} />
         <AuthScreen
           mode={mode}
@@ -290,11 +271,13 @@ export default function App() {
           onContinue={signInOrCreate}
         />
       </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaProvider>
+    <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safe}>
       <StatusBar style="light" backgroundColor={colors.black} />
       <View style={styles.appShell}>
         <Header account={account} stats={stats} />
@@ -334,5 +317,6 @@ export default function App() {
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} role={account.role} />
       </View>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
