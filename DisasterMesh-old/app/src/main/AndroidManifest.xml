@@ -55,6 +55,24 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Civilian signal form — USER role entry point -->
+        <activity
+            android:name=".civilian.CivilianActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Authority dashboard — AUTHORITY role entry point -->
+        <activity
+            android:name=".authority.AuthorityActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Authority area detail drill-down -->
+        <activity
+            android:name=".authority.AreaDetailActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
     </application>
 
 </manifest>

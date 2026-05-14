@@ -10,6 +10,10 @@ data class Message(
     val senderRole: String = Role.USER.name,
     val text: String,
     val targetRole: String = "ALL",
+    val messageType: String = "CHAT",       // "CHAT" or "SIGNAL"
+    val locationText: String? = null,       // manual location description
+    val latitude: Double? = null,           // GPS
+    val longitude: Double? = null,          // GPS
     val timestamp: Long = System.currentTimeMillis()
 ) {
     fun toJson(): String = JSONObject().apply {
@@ -19,6 +23,10 @@ data class Message(
         put("senderRole", senderRole)
         put("text", text)
         put("targetRole", targetRole)
+        put("messageType", messageType)
+        locationText?.let { put("locationText", it) }
+        latitude?.let { put("latitude", it) }
+        longitude?.let { put("longitude", it) }
         put("timestamp", timestamp)
     }.toString()
 
@@ -26,13 +34,17 @@ data class Message(
         fun fromJson(json: String): Message {
             val obj = JSONObject(json)
             return Message(
-                id         = obj.getString("id"),
-                senderId   = obj.getString("senderId"),
-                senderName = obj.getString("senderName"),
-                senderRole = obj.optString("senderRole", Role.USER.name),
-                text       = obj.getString("text"),
-                targetRole = obj.optString("targetRole", "ALL"),
-                timestamp  = obj.getLong("timestamp")
+                id           = obj.getString("id"),
+                senderId     = obj.getString("senderId"),
+                senderName   = obj.getString("senderName"),
+                senderRole   = obj.optString("senderRole", Role.USER.name),
+                text         = obj.getString("text"),
+                targetRole   = obj.optString("targetRole", "ALL"),
+                messageType  = obj.optString("messageType", "CHAT"),
+                locationText = if (obj.has("locationText")) obj.getString("locationText") else null,
+                latitude     = if (obj.has("latitude")) obj.getDouble("latitude") else null,
+                longitude    = if (obj.has("longitude")) obj.getDouble("longitude") else null,
+                timestamp    = obj.getLong("timestamp")
             )
         }
     }

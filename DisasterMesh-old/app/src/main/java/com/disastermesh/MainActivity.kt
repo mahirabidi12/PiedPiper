@@ -75,6 +75,21 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // Route to role-specific activity
+        when (session.role) {
+            Role.USER -> {
+                startActivity(Intent(this, com.disastermesh.civilian.CivilianActivity::class.java))
+                finish()
+                return
+            }
+            Role.AUTHORITY -> {
+                startActivity(Intent(this, com.disastermesh.authority.AuthorityActivity::class.java))
+                finish()
+                return
+            }
+            Role.VOLUNTEER -> { /* continues to volunteer chat below */ }
+        }
+
         setContentView(R.layout.activity_main)
         bindViews()
         applyRoleTheme()

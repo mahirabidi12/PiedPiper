@@ -168,6 +168,15 @@ class MeshManager(
         }
     }
 
+    // Broadcast a fully-formed Message (used by Civilian to send signal packets)
+    fun broadcastMessage(message: Message) {
+        if (repository.add(message)) {
+            onMessageReceived(message)
+            broadcast(message, excludeEndpoint = null)
+            Log.d(TAG, "Broadcast message: ${message.id} type=${message.messageType}")
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     // Send full message history to a newly connected peer so they get everything

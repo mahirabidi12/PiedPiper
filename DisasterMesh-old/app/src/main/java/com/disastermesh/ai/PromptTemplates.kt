@@ -34,4 +34,46 @@ object PromptTemplates {
      * [ASSISTANT_SYSTEM_INSTRUCTION] when calling [GemmaClient.generate].
      */
     fun helpAssistant(question: String): String = question.trim()
+
+    // ── Signal Classifier ─────────────────────────────────────────────────────
+
+    /**
+     * System instruction for the signal classifier.
+     * Gemma reads a civilian's emergency message and returns structured JSON.
+     * Pair with [classifySignal] as the user prompt.
+     */
+    val CLASSIFIER_SYSTEM_INSTRUCTION = """
+        You are an emergency signal classifier for a disaster response app.
+        Analyze the emergency message and return ONLY a valid JSON object — no explanation,
+        no markdown, no code block. Just raw JSON.
+
+        JSON schema:
+        {
+          "category": "MEDICAL" | "RESCUE" | "RESOURCE" | "SAFETY" | "OTHER",
+          "priority": "CRITICAL" | "HIGH" | "NORMAL" | "LOW",
+          "tags": [<up to 4 short keyword strings>],
+          "summary": "<one short sentence for the authority dashboard>",
+          "peopleCount": <integer or null>
+        }
+
+        Category rules:
+        - MEDICAL: injuries, illness, medicine, hospital, doctor, blood, pain
+        - RESCUE: trapped, stuck, stranded, flood, fire, collapse, missing
+        - RESOURCE: food, water, shelter, clothes, fuel, electricity, supplies
+        - SAFETY: safe zone, evacuation, danger area, threat, violence
+        - OTHER: anything that does not fit above
+
+        Priority rules:
+        - CRITICAL: immediate life threat, person trapped, severe injury, cardiac
+        - HIGH: urgent but not immediately life-threatening
+        - NORMAL: needs help but stable
+        - LOW: informational, no immediate danger
+    """.trimIndent()
+
+    /**
+     * User prompt for the classifier. Pass the civilian's raw message here.
+     * Pair with [CLASSIFIER_SYSTEM_INSTRUCTION] when calling [GemmaClient.generate].
+     */
+    fun classifySignal(rawMessage: String): String =
+        "Classify this emergency message: ${rawMessage.trim()}"
 }
