@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         setupMeshManager()
         setupSendButton()
         setupQuickChips()
+        setupAssistantButton()
         checkAndRequestPermissions()
     }
 
@@ -205,6 +206,13 @@ class MainActivity : AppCompatActivity() {
             etMessage.setSelection(etMessage.text.length)
             currentTarget = "ALL"
             spinnerTarget.setSelection(0)
+        }
+    }
+
+    // Opens the on-device Gemma Help Assistant. Self-contained — does not affect the mesh.
+    private fun setupAssistantButton() {
+        findViewById<Button>(R.id.btnAssistant).setOnClickListener {
+            startActivity(Intent(this, AssistantActivity::class.java))
         }
     }
 

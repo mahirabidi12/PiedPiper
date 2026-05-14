@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0D1117">
+
+    <!-- ── Header ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#161B22"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🤖 OFFLINE ASSISTANT"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="● Checking model…"
+            android:textColor="#F78166"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#21262D" />
+
+    <!-- ── Model download panel (shown only when the model is missing) ── -->
+    <LinearLayout
+        android:id="@+id/downloadPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#161B22"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvDownloadInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#E6EDF3"
+            android:textSize="14sp"
+            android:lineSpacingMultiplier="1.2" />
+
+        <ProgressBar
+            android:id="@+id/progressDownload"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:max="100"
+            android:progress="0"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvDownloadProgress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#8B949E"
+            android:textSize="12sp"
+            android:layout_marginTop="6dp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnDownload"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Download model"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1F6FEB"
+            android:stateListAnimator="@null" />
+
+    </LinearLayout>
+
+    <!-- ── Answer area ── -->
+    <ScrollView
+        android:id="@+id/scrollAnswer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"
+        android:fillViewport="true">
+
+        <TextView
+            android:id="@+id/tvAnswer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ask an emergency or survival question below.\n\nThe answer is generated fully on this device — no internet needed.\n\nExamples:\n• How do I treat a deep cut with no first-aid kit?\n• Is it safe to drink rainwater?\n• What should I do if I smell gas after an earthquake?"
+            android:textColor="#8B949E"
+            android:textSize="15sp"
+            android:lineSpacingMultiplier="1.25"
+            android:textIsSelectable="true" />
+
+    </ScrollView>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#21262D" />
+
+    <!-- ── Input bar ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:background="#161B22"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/etQuestion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Ask a survival question…"
+            android:textColorHint="#484F58"
+            android:textColor="#E6EDF3"
+            android:textSize="15sp"
+            android:background="@drawable/input_background"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="10dp"
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLines="4"
+            android:imeOptions="actionSend"
+            android:importantForAutofill="no" />
+
+        <Button
+            android:id="@+id/btnAsk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Ask"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1F6FEB"
+            android:paddingHorizontal="18dp"
+            android:stateListAnimator="@null" />
+
+    </LinearLayout>
+
+</LinearLayout>
