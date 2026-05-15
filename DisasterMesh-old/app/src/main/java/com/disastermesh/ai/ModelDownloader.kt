@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.disastermesh.AppConstants
 import java.io.File
 import java.io.RandomAccessFile
 import java.net.HttpURLConnection
@@ -110,8 +111,8 @@ object ModelDownloader {
             try {
                 val existing = if (partFile.exists()) partFile.length() else 0L
                 connection = (URL(MODEL_URL).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 30_000
-                    readTimeout = 30_000
+                    connectTimeout = AppConstants.CONNECT_TIMEOUT_MS
+                    readTimeout = AppConstants.READ_TIMEOUT_MS
                     if (existing > 0L) setRequestProperty("Range", "bytes=$existing-")
                 }
                 connection.connect()
@@ -134,7 +135,7 @@ object ModelDownloader {
                 var downloaded = startAt
 
                 connection.inputStream.use { input ->
-                    val buf = ByteArray(64 * 1024)
+                    val buf = ByteArray(AppConstants.DOWNLOAD_BUFFER_SIZE)
                     var lastPct = -1
                     var lastPostMs = 0L
                     while (true) {
@@ -153,7 +154,7 @@ object ModelDownloader {
                         // Throttle UI updates: on each 1% change, or at least every 400 ms.
                         val pct = if (total > 0L) ((downloaded * 100L) / total).toInt() else -1
                         val now = System.currentTimeMillis()
-                        if (pct != lastPct || now - lastPostMs > 400L) {
+                        if (pct != lastPct || now - lastPostMs > AppConstants.DOWNLOAD_UI_THROTTLE_MS) {
                             lastPct = pct
                             lastPostMs = now
                             update(Progress(State.DOWNLOADING, downloaded, total))

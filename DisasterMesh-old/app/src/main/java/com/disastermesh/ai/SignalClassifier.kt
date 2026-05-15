@@ -70,8 +70,8 @@ object SignalClassifier {
         return ClassificationResult(
             category    = SignalCategory.fromString(obj.optString("category")),
             priority    = Priority.fromString(obj.optString("priority")),
-            tags        = tags.take(4),
-            summary     = obj.optString("summary", rawMessage.take(80)).trim(),
+            tags        = tags.take(com.disastermesh.AppConstants.SIGNAL_MAX_TAGS),
+            summary     = obj.optString("summary", rawMessage.take(com.disastermesh.AppConstants.SIGNAL_SUMMARY_MAX_CHARS)).trim(),
             peopleCount = obj.optInt("peopleCount", 0).takeIf { it > 0 }
         )
     }

@@ -3,7 +3,6 @@ package com.disastermesh.ui
 import android.app.Activity
 import android.content.Intent
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.disastermesh.AssistantActivity
@@ -33,11 +32,11 @@ object BottomNavHelper {
         val accent = role.color()
         val muted = ContextCompat.getColor(activity, R.color.text_muted)
 
-        val navHome = activity.findViewById<LinearLayout>(R.id.navHome)
-        val navMap = activity.findViewById<LinearLayout>(R.id.navMap)
-        val navComms = activity.findViewById<LinearLayout>(R.id.navComms)
-        val navAi = activity.findViewById<LinearLayout>(R.id.navAi)
-        val navProfile = activity.findViewById<LinearLayout>(R.id.navProfile)
+        val navHome = activity.findViewById<View>(R.id.navHome)
+        val navMap = activity.findViewById<View>(R.id.navMap)
+        val navComms = activity.findViewById<View>(R.id.navComms)
+        val navAi = activity.findViewById<View>(R.id.navAi)
+        val navProfile = activity.findViewById<View>(R.id.navProfile)
 
         if (navHome == null || navMap == null || navComms == null || navAi == null || navProfile == null) {
             return
@@ -55,11 +54,11 @@ object BottomNavHelper {
         val aiIndicator = activity.findViewById<View>(R.id.navAiIndicator)
         val profileIndicator = activity.findViewById<View>(R.id.navProfileIndicator)
 
-        homeLabel?.text = when (role) {
-            Role.AUTHORITY -> "CMD"
-            Role.VOLUNTEER -> "TASKS"
-            else -> "HOME"
-        }
+        homeLabel?.text = activity.getString(when (role) {
+            Role.AUTHORITY -> R.string.nav_home_authority
+            Role.VOLUNTEER -> R.string.nav_home_volunteer
+            else           -> R.string.nav_home_default
+        })
 
         applyState(homeLabel, homeIndicator, active == NavItem.HOME, accent, muted)
         applyState(mapLabel, mapIndicator, active == NavItem.MAP, accent, muted)
@@ -116,6 +115,8 @@ object BottomNavHelper {
 
     private fun launch(activity: Activity, target: Class<*>) {
         if (activity.javaClass == target) return
-        activity.startActivity(Intent(activity, target))
+        activity.startActivity(
+            Intent(activity, target).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        )
     }
 }

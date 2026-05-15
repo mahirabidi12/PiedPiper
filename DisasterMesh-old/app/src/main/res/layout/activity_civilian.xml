@@ -5,6 +5,7 @@
     android:background="@color/background"
     android:orientation="vertical">
 
+    <!-- Top bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,6 +22,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/badge_civilian_bg"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
             android:paddingLeft="10dp"
             android:paddingTop="5dp"
             android:paddingRight="10dp"
@@ -47,6 +50,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/surface_panel_bg"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
             android:paddingLeft="8dp"
             android:paddingTop="6dp"
             android:paddingRight="8dp"
@@ -62,6 +67,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:background="@drawable/surface_panel_bg"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
             android:paddingLeft="8dp"
             android:paddingTop="6dp"
             android:paddingRight="8dp"
@@ -77,6 +84,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:background="@drawable/surface_panel_bg"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
             android:paddingLeft="8dp"
             android:paddingTop="6dp"
             android:paddingRight="8dp"
@@ -107,72 +116,37 @@
             android:paddingRight="14dp"
             android:paddingBottom="24dp">
 
+            <!-- Eyebrow label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CIVILIAN / OFFLINE OK"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="CIVILIAN · OFFLINE OK"
                 android:textColor="@color/text_muted"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="6dp"
+                android:background="@color/border" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="10dp"
                 android:text="Stay safe. Raise a signal when you need help."
                 android:textColor="@color/text_primary"
-                android:textSize="22sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Your phone keeps a local copy until the mesh carries it onward."
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
-
+            <!-- Signal Category header -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/surface_panel_bg"
-                    android:paddingLeft="10dp"
-                    android:paddingTop="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingBottom="10dp"
-                    android:text="SIGNALS\nREADY TO SEND"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/surface_panel_bg"
-                    android:paddingLeft="10dp"
-                    android:paddingTop="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingBottom="10dp"
-                    android:text="GPS\nOPTIONAL"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="12dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -180,20 +154,22 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Raise Signal"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="CATEGORIES"
-                    android:textColor="@color/text_dim"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:text="SIGNAL CATEGORY"
+                    android:textColor="@color/text_muted"
                     android:textSize="10sp"
                     android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:background="@color/border" />
             </LinearLayout>
 
+            <!-- 3-column category grid -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -201,82 +177,99 @@
                 android:orientation="horizontal">
 
                 <Button
-                    android:id="@+id/chipCivSos"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/color_critical"
-                    android:stateListAnimator="@null"
-                    android:text="SOS"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <Button
                     android:id="@+id/chipCivMedical"
                     android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginLeft="6dp"
-                    android:layout_marginRight="6dp"
+                    android:layout_height="46dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/color_high"
+                    android:background="@drawable/surface_outline_red_bg"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
                     android:stateListAnimator="@null"
                     android:text="MEDICAL"
                     android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="12sp"
+                    android:textColor="@color/color_critical"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/chipCivRescue"
                     android:layout_width="0dp"
-                    android:layout_height="42dp"
+                    android:layout_height="46dp"
                     android:layout_marginLeft="6dp"
+                    android:layout_marginRight="6dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/color_authority"
+                    android:background="@drawable/surface_outline_orange_bg"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
                     android:stateListAnimator="@null"
                     android:text="RESCUE"
                     android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="12sp"
+                    android:textColor="@color/color_high"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/chipCivSos"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_marginLeft="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/surface_outline_red_bg"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:stateListAnimator="@null"
+                    android:text="SOS"
+                    android:textAllCaps="false"
+                    android:textColor="@color/color_critical"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <Button
                 android:id="@+id/chipCivResource"
                 android:layout_width="match_parent"
-                android:layout_height="42dp"
+                android:layout_height="40dp"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="@color/color_user"
+                android:background="@drawable/surface_outline_blue_bg"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
                 android:stateListAnimator="@null"
                 android:text="RESOURCE / SUPPLY"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
+                android:textColor="@color/color_user"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
+            <!-- Compose area -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/surface_panel_strong_bg"
+                android:layout_marginTop="10dp"
+                android:background="@color/surface2"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:padding="12dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Describe the emergency"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:text="DESCRIBE THE EMERGENCY"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@color/border" />
 
                 <EditText
                     android:id="@+id/etCivMessage"
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"
+                    android:layout_height="90dp"
                     android:layout_marginTop="8dp"
                     android:background="@drawable/input_background"
                     android:gravity="top"
@@ -295,9 +288,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Location"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:text="LOCATION"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -329,11 +324,13 @@
                         android:layout_height="44dp"
                         android:layout_marginStart="8dp"
                         android:background="@drawable/surface_panel_bg"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.12"
                         android:stateListAnimator="@null"
                         android:text="GPS"
                         android:textAllCaps="false"
-                        android:textColor="@color/text_primary"
-                        android:textSize="12sp"
+                        android:textColor="@color/color_user"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -349,35 +346,69 @@
                 <Button
                     android:id="@+id/btnCivSend"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="14dp"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
                     android:backgroundTint="@color/color_critical"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
                     android:stateListAnimator="@null"
                     android:text="SEND EMERGENCY SIGNAL"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/btnCivAssistant"
+            <!-- AI Assistant card -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:background="@drawable/surface_outline_blue_bg"
-                android:gravity="left|center_vertical"
-                android:paddingLeft="14dp"
-                android:paddingTop="14dp"
-                android:paddingRight="14dp"
-                android:paddingBottom="14dp"
-                android:stateListAnimator="@null"
-                android:text="SURVIVAL ASSISTANT\nAsk Gemma on-device for first-aid and safety guidance."
-                android:textAllCaps="false"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:padding="14dp">
 
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.12"
+                        android:text="SURVIVAL ASSISTANT"
+                        android:textColor="@color/color_user"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Ask Gemma on-device for first-aid and safety guidance."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnCivAssistant"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/surface_panel_bg"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:stateListAnimator="@null"
+                    android:text="ASK"
+                    android:textAllCaps="false"
+                    android:textColor="@color/color_user"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- My Active Signals section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -389,19 +420,31 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="My Active Signals"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="LOCAL LOG"
-                    android:textColor="@color/text_dim"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:text="MY ACTIVE SIGNALS"
+                    android:textColor="@color/text_muted"
                     android:textSize="10sp"
                     android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:background="@color/border" />
             </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="LOCAL LOG"
+                android:textColor="@color/text_dim"
+                android:textSize="10sp"
+                android:textStyle="bold" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSentSignals"

@@ -36,15 +36,17 @@ class AreaDetailActivity : AppCompatActivity() {
         rv.adapter  = SignalAdapter(signals)
 
         findViewById<TextView>(R.id.tvDetailCount).text =
-            "${signals.size} signal${if (signals.size != 1) "s" else ""} in this area"
+            resources.getQuantityString(R.plurals.signals_in_area, signals.size, signals.size)
 
-        findViewById<TextView>(R.id.tvZoneTotal).text = "TOTAL\n$totalCount"
-        findViewById<TextView>(R.id.tvZoneOpen).text = "OPEN\n$openCount"
-        findViewById<TextView>(R.id.tvZoneAffected).text =
-            "AFFECTED\n${affectedCount ?: "--"}"
+        findViewById<TextView>(R.id.tvZoneTotal).text = getString(R.string.stat_total_format, totalCount)
+        findViewById<TextView>(R.id.tvZoneOpen).text = getString(R.string.stat_open_format, openCount)
+        findViewById<TextView>(R.id.tvZoneAffected).text = getString(
+            R.string.stat_affected_format,
+            affectedCount?.toString() ?: getString(R.string.stat_affected_unknown)
+        )
 
         findViewById<TextView>(R.id.tvZoneGemma).setOnClickListener {
-            Toast.makeText(this, "Gemma zone analysis shell ready.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.shell_zone_analysis_placeholder), Toast.LENGTH_SHORT).show()
         }
     }
 }

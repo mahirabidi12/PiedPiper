@@ -1,5 +1,6 @@
 package com.disastermesh.db
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -14,6 +15,9 @@ interface SignalDao {
     @Query("SELECT * FROM signals ORDER BY timestamp DESC")
     fun getAll(): List<SignalEntity>
 
+    @Query("SELECT * FROM signals ORDER BY timestamp DESC")
+    fun getAllLive(): LiveData<List<SignalEntity>>
+
     @Query("SELECT * FROM signals WHERE status != 'RESOLVED' ORDER BY timestamp DESC")
     fun getActive(): List<SignalEntity>
 
@@ -22,6 +26,12 @@ interface SignalDao {
 
     @Query("SELECT * FROM signals WHERE category = :category ORDER BY timestamp DESC")
     fun getByCategory(category: String): List<SignalEntity>
+
+    @Query("SELECT * FROM signals WHERE category = 'OTHER' ORDER BY timestamp DESC")
+    fun getUnclassified(): List<SignalEntity>
+
+    @Query("UPDATE signals SET category = :category, priority = :priority, tags = :tags, summary = :summary, peopleCount = :peopleCount WHERE id = :id")
+    fun updateClassification(id: String, category: String, priority: String, tags: String, summary: String, peopleCount: Int?)
 
     @Query("UPDATE signals SET status = :status WHERE id = :id")
     fun updateStatus(id: String, status: String)

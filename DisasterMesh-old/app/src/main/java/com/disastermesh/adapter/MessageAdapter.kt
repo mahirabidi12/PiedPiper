@@ -5,7 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.disastermesh.AppConstants
 import com.disastermesh.Message
 import com.disastermesh.R
 import com.disastermesh.Role
@@ -56,11 +58,11 @@ class MessageAdapter(
         holder.tvText.text = message.text
         holder.tvTime.text = timeFormat.format(Date(message.timestamp))
 
-        if (!isLocal && message.targetRole != "ALL") {
+        if (!isLocal && message.targetRole != AppConstants.TARGET_ALL) {
             holder.tvTarget.visibility = View.VISIBLE
             holder.tvTarget.text = when (message.targetRole) {
-                "VOLUNTEER" -> "To volunteers"
-                "AUTHORITY" -> "To authorities"
+                AppConstants.TARGET_VOLUNTEER -> holder.itemView.context.getString(R.string.target_volunteers)
+                AppConstants.TARGET_AUTHORITY -> holder.itemView.context.getString(R.string.target_authorities)
                 else -> ""
             }
             holder.tvTarget.setTextColor(role.color())
@@ -70,11 +72,11 @@ class MessageAdapter(
 
         if (isLocal) {
             holder.tvText.setBackgroundResource(R.drawable.bubble_local)
-            holder.tvText.setTextColor(Color.WHITE)
+            holder.tvText.setTextColor(ContextCompat.getColor(holder.itemView.context, android.R.color.white))
             (holder.itemView as ViewGroup).layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
             holder.tvText.setBackgroundResource(R.drawable.bubble_peer)
-            holder.tvText.setTextColor(Color.parseColor("#E6EDF3"))
+            holder.tvText.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.text_peer_message))
             (holder.itemView as ViewGroup).layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
     }

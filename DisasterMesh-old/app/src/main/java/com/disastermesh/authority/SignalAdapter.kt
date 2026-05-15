@@ -32,6 +32,7 @@ class SignalAdapter(private val signals: List<Signal>) :
         val rowActions: View = view.findViewById(R.id.rowSignalActions)
         val btnAck: TextView = view.findViewById(R.id.btnSignalAck)
         val btnResolve: TextView = view.findViewById(R.id.btnSignalResolve)
+        val viewPriorityBar: View = view.findViewById(R.id.viewPriorityBar)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -40,6 +41,9 @@ class SignalAdapter(private val signals: List<Signal>) :
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val signal = signals[position]
+
+        // Priority bar color
+        holder.viewPriorityBar.setBackgroundColor(Color.parseColor(signal.priority.colorHex))
 
         holder.tvSender.text = signal.senderName
         holder.tvSummary.text = signal.summary
@@ -70,14 +74,14 @@ class SignalAdapter(private val signals: List<Signal>) :
 
         if (location != null) {
             holder.tvLocation.visibility = View.VISIBLE
-            holder.tvLocation.text = "Location: $location"
+            holder.tvLocation.text = "LOC: $location"
         } else {
             holder.tvLocation.visibility = View.GONE
         }
 
         if (signal.peopleCount != null) {
             holder.tvPeople.visibility = View.VISIBLE
-            holder.tvPeople.text = "People affected: ${signal.peopleCount}"
+            holder.tvPeople.text = "PPL: ${signal.peopleCount}"
         } else {
             holder.tvPeople.visibility = View.GONE
         }

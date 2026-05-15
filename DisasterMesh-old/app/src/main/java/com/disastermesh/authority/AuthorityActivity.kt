@@ -1,6 +1,7 @@
 package com.disastermesh.authority
 
 import android.Manifest
+import androidx.lifecycle.Observer
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -14,18 +15,23 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.disastermesh.AppConstants
+import com.disastermesh.MessageType
 import com.disastermesh.MeshManager
 import com.disastermesh.R
 import com.disastermesh.Role
 import com.disastermesh.UserSession
 import com.disastermesh.ai.GemmaClient
 import com.disastermesh.ai.SignalClassifier
+import com.disastermesh.ui.GemmaStatusHelper
+import com.disastermesh.ui.MeshStatusHelper
 import com.disastermesh.db.AppDatabase
 import com.disastermesh.db.SignalEntity
 import com.disastermesh.map.LocationClusterer
 import com.disastermesh.models.AreaCluster
 import com.disastermesh.models.Priority
 import com.disastermesh.models.Signal
+import com.disastermesh.models.SignalCategory
 import com.disastermesh.models.SignalStatus
 import com.disastermesh.ui.BottomNavHelper
 import com.disastermesh.ui.NavItem
@@ -45,6 +51,7 @@ class AuthorityActivity : AppCompatActivity() {
     private lateinit var tvStatInProgress: TextView
     private lateinit var tvStatResolved: TextView
     private lateinit var btnSettings: TextView
+    private lateinit var btnClassifyAll: Button
     private lateinit var rvDashboard: RecyclerView
     private lateinit var dashboardAdapter: DashboardAdapter
 
@@ -83,7 +90,9 @@ class AuthorityActivity : AppCompatActivity() {
 
         bindViews()
         setupDashboard()
+        observeSignals()
         setupMesh()
+        setupClassifyAll()
         setupPrototypeActionShells()
         warmUpGemma()
         setupHeaderActions()
@@ -100,8 +109,13 @@ class AuthorityActivity : AppCompatActivity() {
         tvStatInProgress = findViewById(R.id.tvStatInProgress)
         tvStatResolved = findViewById(R.id.tvStatResolved)
         btnSettings = findViewById(R.id.btnAuthSettings)
+        btnClassifyAll = findViewById(R.id.btnClassifyAll)
         rvDashboard = findViewById(R.id.rvDashboard)
         findViewById<TextView>(R.id.tvAuthName).text = session.name
+    }
+
+    private fun observeSignals() {
+        db.signalDao().getAllLive().observe(this) { _ -> refreshDashboard() }
     }
 
     private fun setupDashboard() {
@@ -116,31 +130,67 @@ class AuthorityActivity : AppCompatActivity() {
             context = this,
             deviceName = session.name,
             onMessageReceived = { message ->
-                if (message.messageType == "SIGNAL" && message.senderRole == Role.USER.name) {
+                if (message.messageType == MessageType.SIGNAL && message.senderRole == Role.USER.name) {
                     classifyAndStore(message)
                 }
             },
             onPeersChanged = { count, _ ->
-                runOnUiThread {
-                    tvPeerStatus.text = "MESH ${count.toString().padStart(2, '0')}"
-                    tvPeerStatus.setTextColor(
-                        if (count > 0) Color.parseColor("#3FB950")
-                        else Color.parseColor("#A1A1AA")
-                    )
-                }
+                runOnUiThread { MeshStatusHelper.update(this, tvPeerStatus, count) }
             }
         )
     }
 
+    private fun setupClassifyAll() {
+        btnClassifyAll.setOnClickListener {
+            if (com.disastermesh.ai.GemmaClient.status != com.disastermesh.ai.GemmaClient.Status.READY) {
+                Toast.makeText(this, "Gemma not available", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val unclassified = db.signalDao().getUnclassified()
+            if (unclassified.isEmpty()) {
+                Toast.makeText(this, "No unclassified signals", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            btnClassifyAll.isEnabled = false
+            btnClassifyAll.text = "Classifying ${unclassified.size}…"
+            val remaining = java.util.concurrent.atomic.AtomicInteger(unclassified.size)
+            unclassified.forEach { entity ->
+                com.disastermesh.ai.SignalClassifier.classify(
+                    rawMessage = entity.rawMessage,
+                    onResult = { result ->
+                        db.signalDao().updateClassification(
+                            id = entity.id,
+                            category = result.category.name,
+                            priority = result.priority.name,
+                            tags = result.tags.take(AppConstants.SIGNAL_MAX_TAGS).joinToString(","),
+                            summary = result.summary,
+                            peopleCount = result.peopleCount
+                        )
+                        if (remaining.decrementAndGet() == 0) onClassifyAllDone()
+                    },
+                    onError = {
+                        if (remaining.decrementAndGet() == 0) onClassifyAllDone()
+                    }
+                )
+            }
+        }
+    }
+
+    private fun onClassifyAllDone() {
+        btnClassifyAll.isEnabled = true
+        btnClassifyAll.text = "CLASSIFY UNCLASSIFIED SIGNALS"
+        Toast.makeText(this, "Classification complete", Toast.LENGTH_SHORT).show()
+    }
+
     private fun setupPrototypeActionShells() {
         findViewById<Button>(R.id.btnAuthoritySafeZoneShell).setOnClickListener {
-            Toast.makeText(this, "Safe-zone shell is ready for fragment wiring.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.shell_safe_zone_placeholder), Toast.LENGTH_SHORT).show()
         }
         findViewById<Button>(R.id.btnAuthorityPlanShell).setOnClickListener {
-            Toast.makeText(this, "Resource-plan shell is ready for fragment wiring.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.shell_plan_placeholder), Toast.LENGTH_SHORT).show()
         }
         findViewById<Button>(R.id.btnAuthorityBroadcastShell).setOnClickListener {
-            Toast.makeText(this, "Broadcast shell is ready for fragment wiring.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.shell_broadcast_placeholder), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -151,20 +201,9 @@ class AuthorityActivity : AppCompatActivity() {
     }
 
     private fun warmUpGemma() {
-        tvGemmaStatus.text = "AI status loading"
-        tvGemmaStatus.setTextColor(Color.parseColor("#FFA033"))
-        GemmaClient.warmUp(this) { status ->
-            tvGemmaStatus.text = when (status) {
-                GemmaClient.Status.READY -> "AI ready / Gemma 3n E2B"
-                GemmaClient.Status.LOADING -> "AI loading model"
-                GemmaClient.Status.ABSENT -> "AI model missing / keyword fallback active"
-                GemmaClient.Status.ERROR -> "AI error / keyword fallback active"
-            }
-            tvGemmaStatus.setTextColor(
-                if (status == GemmaClient.Status.READY) Color.parseColor("#3FB950")
-                else Color.parseColor("#FFA033")
-            )
-        }
+        tvGemmaStatus.text = getString(R.string.ai_status_initialising)
+        tvGemmaStatus.setTextColor(getColor(R.color.color_high))
+        GemmaStatusHelper.bind(this, tvGemmaStatus, verbose = true)
     }
 
     private fun classifyAndStore(message: com.disastermesh.Message) {
@@ -185,9 +224,26 @@ class AuthorityActivity : AppCompatActivity() {
                     locationText = message.locationText
                 )
                 db.signalDao().insert(SignalEntity.fromSignal(signal))
-                runOnUiThread { refreshDashboard() }
+                // LiveData observer in observeSignals() handles the UI refresh automatically
             },
-            onError = { /* keyword fallback already applied in SignalClassifier */ }
+            onError = {
+                // Gemma not ready — store with unclassified defaults so it always appears
+                val signal = Signal(
+                    senderId = message.senderId,
+                    senderName = message.senderName,
+                    rawMessage = message.text,
+                    category = SignalCategory.OTHER,
+                    priority = Priority.NORMAL,
+                    tags = emptyList(),
+                    summary = message.text.take(AppConstants.SIGNAL_SUMMARY_MAX_CHARS),
+                    peopleCount = null,
+                    latitude = message.latitude,
+                    longitude = message.longitude,
+                    locationText = message.locationText
+                )
+                db.signalDao().insert(SignalEntity.fromSignal(signal))
+                // LiveData observer in observeSignals() handles the UI refresh automatically
+            }
         )
     }
 
@@ -202,11 +258,11 @@ class AuthorityActivity : AppCompatActivity() {
         }
         val resolvedCount = allSignals.count { it.status == SignalStatus.RESOLVED }
 
-        tvSignalCount.text = "${activeSignals.size} active signal${if (activeSignals.size != 1) "s" else ""}"
-        tvStatTotal.text = "TOTAL\n${allSignals.size}"
-        tvStatCritical.text = "CRITICAL\n$criticalCount"
-        tvStatInProgress.text = "IN PROGRESS\n$inProgressCount"
-        tvStatResolved.text = "RESOLVED\n$resolvedCount"
+        tvSignalCount.text = resources.getQuantityString(R.plurals.active_signals, activeSignals.size, activeSignals.size)
+        tvStatTotal.text = getString(R.string.stat_total_format, allSignals.size)
+        tvStatCritical.text = getString(R.string.stat_critical_format, criticalCount)
+        tvStatInProgress.text = getString(R.string.stat_in_progress_format, inProgressCount)
+        tvStatResolved.text = getString(R.string.stat_resolved_format, resolvedCount)
         dashboardAdapter.submitList(clusters)
     }
 
@@ -249,6 +305,6 @@ class AuthorityActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        meshManager.stop()
+        if (isFinishing) meshManager.stop()
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="active_signals">
+        <item quantity="one">%d active signal</item>
+        <item quantity="other">%d active signals</item>
+    </plurals>
+    <plurals name="signals_in_area">
+        <item quantity="one">%d signal in this area</item>
+        <item quantity="other">%d signals in this area</item>
+    </plurals>
+</resources>

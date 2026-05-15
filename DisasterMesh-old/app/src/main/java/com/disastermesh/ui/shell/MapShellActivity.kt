@@ -6,8 +6,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.disastermesh.R
 import com.disastermesh.UserSession
-import com.disastermesh.ai.GemmaClient
 import com.disastermesh.ui.BottomNavHelper
+import com.disastermesh.ui.GemmaStatusHelper
 import com.disastermesh.ui.NavItem
 
 class MapShellActivity : AppCompatActivity() {
@@ -30,21 +30,7 @@ class MapShellActivity : AppCompatActivity() {
             setBackgroundColor(session.role.color())
             setTextColor(Color.WHITE)
         }
-
-        val aiStatus = findViewById<TextView>(R.id.tvShellAiStatus)
-        GemmaClient.warmUp(this) { status ->
-            aiStatus.text = when (status) {
-                GemmaClient.Status.READY -> "AI READY"
-                GemmaClient.Status.LOADING -> "AI LOADING"
-                GemmaClient.Status.ABSENT -> "MODEL ABSENT"
-                GemmaClient.Status.ERROR -> "AI ERROR"
-            }
-            aiStatus.setTextColor(
-                if (status == GemmaClient.Status.READY) Color.parseColor("#3FB950")
-                else Color.parseColor("#71717A")
-            )
-        }
-
-        findViewById<TextView>(R.id.tvShellPeerStatus).text = "MESH --"
+        GemmaStatusHelper.bind(this, findViewById(R.id.tvShellAiStatus))
+        findViewById<TextView>(R.id.tvShellPeerStatus).text = getString(R.string.mesh_placeholder)
     }
 }
