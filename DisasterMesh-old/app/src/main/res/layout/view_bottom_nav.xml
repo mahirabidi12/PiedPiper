@@ -2,138 +2,154 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bottomNav"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:background="@color/surface"
-    android:orientation="horizontal"
-    android:paddingTop="6dp">
+    android:layout_height="wrap_content"
+    android:background="@color/background"
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border" />
 
     <LinearLayout
-        android:id="@+id/navHome"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal">
 
-        <View
-            android:id="@+id/navHomeIndicator"
-            android:layout_width="28dp"
-            android:layout_height="2dp"
-            android:background="@color/color_user"
-            android:visibility="invisible" />
+        <FrameLayout
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/navHomeLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="HOME"
-            android:textColor="@color/text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            <View
+                android:id="@+id/navHomeIndicator"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/color_user"
+                android:visibility="invisible" />
 
-    <LinearLayout
-        android:id="@+id/navMap"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
+            <TextView
+                android:id="@+id/navHomeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="HOME"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
-        <View
-            android:id="@+id/navMapIndicator"
-            android:layout_width="28dp"
-            android:layout_height="2dp"
-            android:background="@color/color_user"
-            android:visibility="invisible" />
+        <FrameLayout
+            android:id="@+id/navMap"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/navMapLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="MAP"
-            android:textColor="@color/text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            <View
+                android:id="@+id/navMapIndicator"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/color_user"
+                android:visibility="invisible" />
 
-    <LinearLayout
-        android:id="@+id/navComms"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
+            <TextView
+                android:id="@+id/navMapLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="MAP"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
-        <View
-            android:id="@+id/navCommsIndicator"
-            android:layout_width="28dp"
-            android:layout_height="2dp"
-            android:background="@color/color_user"
-            android:visibility="invisible" />
+        <FrameLayout
+            android:id="@+id/navComms"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/navCommsLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="COMMS"
-            android:textColor="@color/text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            <View
+                android:id="@+id/navCommsIndicator"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/color_user"
+                android:visibility="invisible" />
 
-    <LinearLayout
-        android:id="@+id/navAi"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
+            <TextView
+                android:id="@+id/navCommsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="COMMS"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
-        <View
-            android:id="@+id/navAiIndicator"
-            android:layout_width="28dp"
-            android:layout_height="2dp"
-            android:background="@color/color_user"
-            android:visibility="invisible" />
+        <FrameLayout
+            android:id="@+id/navAi"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/navAiLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="AI"
-            android:textColor="@color/text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            <View
+                android:id="@+id/navAiIndicator"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/color_user"
+                android:visibility="invisible" />
 
-    <LinearLayout
-        android:id="@+id/navProfile"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
+            <TextView
+                android:id="@+id/navAiLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="AI"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
-        <View
-            android:id="@+id/navProfileIndicator"
-            android:layout_width="28dp"
-            android:layout_height="2dp"
-            android:background="@color/color_user"
-            android:visibility="invisible" />
+        <FrameLayout
+            android:id="@+id/navProfile"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/navProfileLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="NODE"
-            android:textColor="@color/text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
+            <View
+                android:id="@+id/navProfileIndicator"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/color_user"
+                android:visibility="invisible" />
+
+            <TextView
+                android:id="@+id/navProfileLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
+                android:text="NODE"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
     </LinearLayout>
 </LinearLayout>

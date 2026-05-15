@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.disastermesh.adapter.MessageAdapter
 import com.disastermesh.ai.GemmaClient
 import com.disastermesh.ui.BottomNavHelper
+import com.disastermesh.ui.GemmaStatusHelper
+import com.disastermesh.ui.MeshStatusHelper
 import com.disastermesh.ui.NavItem
 import com.disastermesh.ui.shell.MapShellActivity
 import com.disastermesh.ui.shell.ProfileShellActivity
@@ -50,10 +52,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etMessage: EditText
     private lateinit var btnSend: Button
 
-    private var currentTarget = "ALL"
+    private var currentTarget = AppConstants.TARGET_ALL
 
     companion object {
-        private const val REQUEST_PERMISSIONS = 1001
+        private val REQUEST_PERMISSIONS = AppConstants.REQUEST_PERMISSIONS_MAIN
     }
 
     private val requiredPermissions: Array<String> by lazy {
@@ -149,24 +151,28 @@ class MainActivity : AppCompatActivity() {
         btnSend.backgroundTintList =
             android.content.res.ColorStateList.valueOf(role.color())
 
-        etMessage.hint = when (role) {
-            Role.USER -> "Describe your emergency..."
-            Role.VOLUNTEER -> "Broadcast to nearby responders..."
-            Role.AUTHORITY -> "Official message to all..."
-        }
+        etMessage.hint = getString(when (role) {
+            Role.USER      -> R.string.hint_civilian
+            Role.VOLUNTEER -> R.string.hint_volunteer
+            Role.AUTHORITY -> R.string.hint_authority
+        })
     }
 
     private fun setupTargetSpinner() {
-        val options = arrayOf("Everyone", "Volunteers only", "Authorities only")
+        val options = arrayOf(
+            getString(R.string.target_everyone),
+            getString(R.string.target_volunteers),
+            getString(R.string.target_authorities)
+        )
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerTarget.adapter = adapter
         spinnerTarget.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, pos: Int, id: Long) {
                 currentTarget = when (pos) {
-                    1 -> "VOLUNTEER"
-                    2 -> "AUTHORITY"
-                    else -> "ALL"
+                    1    -> AppConstants.TARGET_VOLUNTEER
+                    2    -> AppConstants.TARGET_AUTHORITY
+                    else -> AppConstants.TARGET_ALL
                 }
             }
 
@@ -198,13 +204,7 @@ class MainActivity : AppCompatActivity() {
                 }
             },
             onPeersChanged = { count, _ ->
-                runOnUiThread {
-                    tvPeerStatus.text = "MESH ${count.toString().padStart(2, '0')}"
-                    tvPeerStatus.setTextColor(
-                        if (count > 0) Color.parseColor("#3FB950")
-                        else Color.parseColor("#A1A1AA")
-                    )
-                }
+                runOnUiThread { MeshStatusHelper.update(this, tvPeerStatus, count) }
             }
         )
     }
@@ -223,20 +223,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupQuickChips() {
         findViewById<Button>(R.id.chipSos).setOnClickListener {
-            etMessage.setText("SOS - I need immediate rescue help")
-            currentTarget = "ALL"
+            etMessage.setText(getString(R.string.chip_sos_volunteer))
+            currentTarget = AppConstants.TARGET_ALL
             spinnerTarget.setSelection(0)
         }
         findViewById<Button>(R.id.chipMedical).setOnClickListener {
-            etMessage.setText("Medical emergency - ")
+            etMessage.setText(getString(R.string.chip_medical_prefix))
             etMessage.setSelection(etMessage.text.length)
-            currentTarget = "VOLUNTEER"
+            currentTarget = AppConstants.TARGET_VOLUNTEER
             spinnerTarget.setSelection(1)
         }
         findViewById<Button>(R.id.chipSupply).setOnClickListener {
-            etMessage.setText("Need supplies - ")
+            etMessage.setText(getString(R.string.chip_supply_prefix))
             etMessage.setSelection(etMessage.text.length)
-            currentTarget = "ALL"
+            currentTarget = AppConstants.TARGET_ALL
             spinnerTarget.setSelection(0)
         }
     }
@@ -252,25 +252,14 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, MapShellActivity::class.java))
         }
 
-        GemmaClient.warmUp(this) { status ->
-            btnAiStatus.text = when (status) {
-                GemmaClient.Status.READY -> "AI READY"
-                GemmaClient.Status.LOADING -> "AI LOADING"
-                GemmaClient.Status.ABSENT -> "MODEL ABSENT"
-                GemmaClient.Status.ERROR -> "AI ERROR"
-            }
-            btnAiStatus.setTextColor(
-                if (status == GemmaClient.Status.READY) Color.parseColor("#3FB950")
-                else Color.parseColor("#71717A")
-            )
-        }
+        GemmaStatusHelper.bind(this, btnAiStatus)
     }
 
     private fun sendMessage() {
         val text = etMessage.text.toString().trim()
         if (text.isEmpty()) return
 
-        val target = if (session.role == Role.USER) currentTarget else "ALL"
+        val target = if (session.role == Role.USER) currentTarget else AppConstants.TARGET_ALL
         meshManager.sendMessage(text, session.role.name, target)
         etMessage.text.clear()
     }

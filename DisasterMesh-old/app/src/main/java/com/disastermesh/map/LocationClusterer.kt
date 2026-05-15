@@ -1,5 +1,6 @@
 package com.disastermesh.map
 
+import com.disastermesh.AppConstants
 import com.disastermesh.models.AreaCluster
 import com.disastermesh.models.Priority
 import com.disastermesh.models.Signal
@@ -8,7 +9,7 @@ import kotlin.math.*
 
 object LocationClusterer {
 
-    private const val CLUSTER_RADIUS_METRES = 500.0
+    private val CLUSTER_RADIUS_METRES get() = AppConstants.CLUSTER_RADIUS_METRES
 
     fun cluster(signals: List<Signal>): List<AreaCluster> {
         if (signals.isEmpty()) return emptyList()
@@ -58,7 +59,7 @@ object LocationClusterer {
 
         val label = signals.firstOrNull { !it.locationText.isNullOrBlank() }?.locationText
             ?: centerLat?.let { "%.4f, %.4f".format(it, centerLon) }
-            ?: "Unknown location"
+            ?: AppConstants.LOCATION_UNKNOWN_LABEL
 
         return AreaCluster(
             areaLabel       = label,
@@ -76,7 +77,7 @@ object LocationClusterer {
     }
 
     private fun distanceMetres(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R    = 6_371_000.0
+        val R    = AppConstants.EARTH_RADIUS_METRES
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
         val a    = sin(dLat / 2).pow(2) +

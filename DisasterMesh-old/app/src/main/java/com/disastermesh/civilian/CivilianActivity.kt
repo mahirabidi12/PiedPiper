@@ -3,7 +3,6 @@ package com.disastermesh.civilian
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -16,14 +15,18 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.disastermesh.AppConstants
 import com.disastermesh.AssistantActivity
 import com.disastermesh.Message
+import com.disastermesh.MessageType
 import com.disastermesh.MeshManager
 import com.disastermesh.R
 import com.disastermesh.Role
 import com.disastermesh.UserSession
 import com.disastermesh.ai.GemmaClient
 import com.disastermesh.ui.BottomNavHelper
+import com.disastermesh.ui.GemmaStatusHelper
+import com.disastermesh.ui.MeshStatusHelper
 import com.disastermesh.ui.NavItem
 import com.disastermesh.ui.shell.ProfileShellActivity
 
@@ -45,10 +48,6 @@ class CivilianActivity : AppCompatActivity() {
     private val sentAdapter = SentSignalAdapter()
     private var currentLat: Double? = null
     private var currentLon: Double? = null
-
-    companion object {
-        private const val REQUEST_PERMISSIONS = 2001
-    }
 
     private val requiredPermissions: Array<String> by lazy {
         buildList {
@@ -107,22 +106,17 @@ class CivilianActivity : AppCompatActivity() {
             deviceName = session.name,
             onMessageReceived = { /* civilians do not process incoming signals yet */ },
             onPeersChanged = { count, _ ->
-                runOnUiThread {
-                    tvPeerStatus.text = if (count == 0) "MESH 00" else "MESH ${count.toString().padStart(2, '0')}"
-                    tvPeerStatus.setTextColor(
-                        if (count > 0) Color.parseColor("#3FB950") else Color.parseColor("#A1A1AA")
-                    )
-                }
+                runOnUiThread { MeshStatusHelper.update(this, tvPeerStatus, count) }
             }
         )
     }
 
     private fun setupChips() {
         mapOf(
-            R.id.chipCivSos to "SOS - I need immediate rescue",
-            R.id.chipCivMedical to "Medical emergency - ",
-            R.id.chipCivRescue to "Rescue needed - ",
-            R.id.chipCivResource to "Need supplies - "
+            R.id.chipCivSos      to getString(R.string.chip_sos),
+            R.id.chipCivMedical  to getString(R.string.chip_medical_prefix),
+            R.id.chipCivRescue   to getString(R.string.chip_rescue_prefix),
+            R.id.chipCivResource to getString(R.string.chip_supply_prefix)
         ).forEach { (id, text) ->
             findViewById<Button>(id).setOnClickListener {
                 etMessage.setText(text)
@@ -135,7 +129,7 @@ class CivilianActivity : AppCompatActivity() {
         btnSend.setOnClickListener {
             val text = etMessage.text.toString().trim()
             if (text.isEmpty()) {
-                Toast.makeText(this, "Please describe the emergency", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.error_signal_empty), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -144,17 +138,17 @@ class CivilianActivity : AppCompatActivity() {
                 senderName = session.name,
                 senderRole = Role.USER.name,
                 text = text,
-                targetRole = "ALL",
-                messageType = "SIGNAL",
+                targetRole = AppConstants.TARGET_ALL,
+                messageType = MessageType.SIGNAL,
                 locationText = etLocation.text.toString().trim().ifEmpty { null },
                 latitude = currentLat,
                 longitude = currentLon
             )
             meshManager.broadcastMessage(message)
-            sentAdapter.addItem("${text.take(60)}${if (text.length > 60) "..." else ""}")
+            sentAdapter.addItem("${text.take(AppConstants.SIGNAL_TEXT_PREVIEW_CHARS)}${if (text.length > AppConstants.SIGNAL_TEXT_PREVIEW_CHARS) "..." else ""}")
             rvSent.scrollToPosition(0)
             etMessage.text.clear()
-            Toast.makeText(this, "Signal sent to mesh", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.signal_sent), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -175,27 +169,13 @@ class CivilianActivity : AppCompatActivity() {
         btnSettings.setOnClickListener {
             startActivity(Intent(this, ProfileShellActivity::class.java))
         }
-
-        GemmaClient.warmUp(this) { status ->
-            btnAiStatus.text = when (status) {
-                GemmaClient.Status.READY -> "AI READY"
-                GemmaClient.Status.LOADING -> "AI LOADING"
-                GemmaClient.Status.ABSENT -> "MODEL ABSENT"
-                GemmaClient.Status.ERROR -> "AI ERROR"
-            }
-            btnAiStatus.setTextColor(
-                if (status == GemmaClient.Status.READY) Color.parseColor("#3FB950")
-                else Color.parseColor("#71717A")
-            )
-        }
+        GemmaStatusHelper.bind(this, btnAiStatus)
     }
 
     private fun captureGps() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        ) return
 
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -205,10 +185,10 @@ class CivilianActivity : AppCompatActivity() {
             currentLat = location.latitude
             currentLon = location.longitude
             tvGpsStatus.text = "GPS %.4f, %.4f".format(location.latitude, location.longitude)
-            tvGpsStatus.setTextColor(Color.parseColor("#3FB950"))
+            tvGpsStatus.setTextColor(getColor(R.color.color_peer_connected))
         } else {
-            tvGpsStatus.text = "No GPS fix. Describe the closest landmark below."
-            tvGpsStatus.setTextColor(Color.parseColor("#F97316"))
+            tvGpsStatus.text = getString(R.string.gps_no_fix)
+            tvGpsStatus.setTextColor(getColor(R.color.color_gps_warning))
         }
     }
 
@@ -220,7 +200,7 @@ class CivilianActivity : AppCompatActivity() {
             meshManager.start()
             captureGps()
         } else {
-            ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQUEST_PERMISSIONS)
+            ActivityCompat.requestPermissions(this, missing.toTypedArray(), AppConstants.REQUEST_PERMISSIONS_CIVILIAN)
         }
     }
 
@@ -230,7 +210,9 @@ class CivilianActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_PERMISSIONS && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+        if (requestCode == AppConstants.REQUEST_PERMISSIONS_CIVILIAN
+            && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        ) {
             meshManager.start()
             captureGps()
         }
@@ -238,6 +220,6 @@ class CivilianActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        meshManager.stop()
+        if (isFinishing) meshManager.stop()
     }
 }

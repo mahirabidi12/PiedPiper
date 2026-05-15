@@ -21,4 +21,13 @@
     <color name="color_low">#71717A</color>
     <color name="color_sos">#B91C1C</color>
     <color name="primary">#58A6FF</color>
+    <color name="color_warning">#D29922</color>
+    <color name="color_gps_warning">#F97316</color>
+    <color name="text_peer_message">#E6EDF3</color>
+    <color name="color_peer_connected">#3FB950</color>
+    <color name="color_peer_disconnected">#A1A1AA</color>
+    <color name="color_ai_ready">#3FB950</color>
+    <color name="color_ai_inactive">#71717A</color>
+    <color name="card_unselected_bg">#161B22</color>
+    <color name="card_unselected_border">#30363D</color>
 </resources>

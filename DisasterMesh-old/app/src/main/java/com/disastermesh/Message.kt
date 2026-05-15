@@ -3,14 +3,19 @@ package com.disastermesh
 import org.json.JSONObject
 import java.util.UUID
 
+object MessageType {
+    const val CHAT = "CHAT"
+    const val SIGNAL = "SIGNAL"
+}
+
 data class Message(
     val id: String = UUID.randomUUID().toString(),
     val senderId: String,
     val senderName: String,
     val senderRole: String = Role.USER.name,
     val text: String,
-    val targetRole: String = "ALL",
-    val messageType: String = "CHAT",       // "CHAT" or "SIGNAL"
+    val targetRole: String = AppConstants.TARGET_ALL,
+    val messageType: String = MessageType.CHAT,
     val locationText: String? = null,       // manual location description
     val latitude: Double? = null,           // GPS
     val longitude: Double? = null,          // GPS
@@ -39,8 +44,8 @@ data class Message(
                 senderName   = obj.getString("senderName"),
                 senderRole   = obj.optString("senderRole", Role.USER.name),
                 text         = obj.getString("text"),
-                targetRole   = obj.optString("targetRole", "ALL"),
-                messageType  = obj.optString("messageType", "CHAT"),
+                targetRole   = obj.optString("targetRole", AppConstants.TARGET_ALL),
+                messageType  = obj.optString("messageType", MessageType.CHAT),
                 locationText = if (obj.has("locationText")) obj.getString("locationText") else null,
                 latitude     = if (obj.has("latitude")) obj.getDouble("latitude") else null,
                 longitude    = if (obj.has("longitude")) obj.getDouble("longitude") else null,
@@ -50,9 +55,9 @@ data class Message(
     }
 
     fun isVisibleTo(myRole: Role): Boolean = when (targetRole) {
-        "VOLUNTEER" -> myRole == Role.VOLUNTEER || myRole == Role.AUTHORITY
-        "AUTHORITY" -> myRole == Role.AUTHORITY
-        else        -> true
+        AppConstants.TARGET_VOLUNTEER -> myRole == Role.VOLUNTEER || myRole == Role.AUTHORITY
+        AppConstants.TARGET_AUTHORITY -> myRole == Role.AUTHORITY
+        else                          -> true
     }
 
     fun role(): Role = Role.fromName(senderRole)

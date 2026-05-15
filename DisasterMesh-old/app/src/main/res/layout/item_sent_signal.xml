@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/surface_panel_strong_bg"
+    android:layout_marginBottom="6dp"
+    android:background="@color/surface2"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingLeft="12dp"
@@ -12,8 +12,8 @@
     android:paddingBottom="10dp">
 
     <View
-        android:layout_width="8dp"
-        android:layout_height="8dp"
+        android:layout_width="6dp"
+        android:layout_height="6dp"
         android:background="@drawable/dot_selected" />
 
     <TextView

@@ -35,6 +35,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
                 android:text="SECURE INIT"
                 android:textColor="@color/text_secondary"
                 android:textSize="10sp"
@@ -54,6 +56,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
             android:text="OFFLINE PEER-TO-PEER RELIEF MESH"
             android:textColor="@color/text_muted"
             android:textSize="11sp"
@@ -85,20 +89,36 @@
             android:textColorHint="@color/text_dim"
             android:textSize="15sp" />
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Select Role"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Select Role"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@color/border" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/cardUser"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:background="@drawable/surface_panel_strong_bg"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="14dp"
@@ -110,7 +130,9 @@
                 android:layout_width="42dp"
                 android:layout_height="42dp"
                 android:background="@drawable/badge_civilian_bg"
+                android:fontFamily="monospace"
                 android:gravity="center"
+                android:letterSpacing="0.12"
                 android:text="CIV"
                 android:textColor="@color/color_user"
                 android:textSize="12sp"
@@ -153,6 +175,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:background="@drawable/surface_panel_strong_bg"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="14dp"
@@ -164,7 +187,9 @@
                 android:layout_width="42dp"
                 android:layout_height="42dp"
                 android:background="@drawable/badge_volunteer_bg"
+                android:fontFamily="monospace"
                 android:gravity="center"
+                android:letterSpacing="0.12"
                 android:text="VOL"
                 android:textColor="@color/color_volunteer"
                 android:textSize="12sp"
@@ -207,6 +232,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:background="@drawable/surface_panel_strong_bg"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="14dp"
@@ -218,7 +244,9 @@
                 android:layout_width="42dp"
                 android:layout_height="42dp"
                 android:background="@drawable/badge_authority_bg"
+                android:fontFamily="monospace"
                 android:gravity="center"
+                android:letterSpacing="0.12"
                 android:text="CMD"
                 android:textColor="@color/color_authority"
                 android:textSize="12sp"
@@ -262,6 +290,8 @@
             android:layout_height="52dp"
             android:layout_marginTop="24dp"
             android:backgroundTint="@color/color_user"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
             android:stateListAnimator="@null"
             android:text="JOIN MESH"
             android:textAllCaps="false"
@@ -280,6 +310,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
                 android:text="NODE a3f4-9b2c"
                 android:textColor="@color/text_dim"
                 android:textSize="10sp"
@@ -288,6 +320,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.12"
                 android:text="DISCOVERING PEERS"
                 android:textColor="@color/text_dim"
                 android:textSize="10sp"

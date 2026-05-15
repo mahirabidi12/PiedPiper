@@ -37,6 +37,8 @@ class DashboardAdapter(
         val tvTotal: TextView = view.findViewById(R.id.tvClusterTotal)
         val btnGemma: TextView = view.findViewById(R.id.btnClusterGemma)
         val btnOpen: TextView = view.findViewById(R.id.btnClusterOpen)
+        val viewPriorityBar: View = view.findViewById(R.id.viewPriorityBar)
+        val tvSubLabel: TextView? = view.findViewById(R.id.tvClusterSubLabel)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -48,12 +50,54 @@ class DashboardAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val cluster = clusters[position]
         holder.tvLocation.text = cluster.areaLabel
-        holder.tvMedical.text = "MEDICAL   ${cluster.medicalCount}"
-        holder.tvRescue.text = "RESCUE    ${cluster.rescueCount}"
-        holder.tvResource.text = "RESOURCE  ${cluster.resourceCount}"
-        holder.tvSafety.text = "SAFETY    ${cluster.safetyCount}"
-        holder.tvTotal.text = "${cluster.totalCount} signals"
-        holder.tvTime.text = "Last update ${timeFormat.format(Date(cluster.latestTimestamp))}"
+
+        // Priority bar color
+        val priorityColor = when {
+            cluster.criticalCount > 0 -> Color.parseColor("#FF4D4D")
+            cluster.medicalCount > 0 || cluster.rescueCount > 0 -> Color.parseColor("#FFA033")
+            else -> Color.parseColor("#71717A")
+        }
+        holder.viewPriorityBar.setBackgroundColor(priorityColor)
+        holder.tvTotal.setTextColor(priorityColor)
+        holder.tvTotal.text = cluster.totalCount.toString()
+
+        // Sub label
+        holder.tvSubLabel?.text = "${cluster.totalCount} signals · ${timeFormat.format(Date(cluster.latestTimestamp))}"
+
+        // Category counts - hide if zero
+        if (cluster.medicalCount > 0) {
+            holder.tvMedical.visibility = View.VISIBLE
+            holder.tvMedical.text = "MED ${cluster.medicalCount}"
+            holder.tvMedical.setTextColor(Color.parseColor("#FF4D4D"))
+        } else {
+            holder.tvMedical.visibility = View.GONE
+        }
+
+        if (cluster.rescueCount > 0) {
+            holder.tvRescue.visibility = View.VISIBLE
+            holder.tvRescue.text = "RESC ${cluster.rescueCount}"
+            holder.tvRescue.setTextColor(Color.parseColor("#FFA033"))
+        } else {
+            holder.tvRescue.visibility = View.GONE
+        }
+
+        if (cluster.resourceCount > 0) {
+            holder.tvResource.visibility = View.VISIBLE
+            holder.tvResource.text = "RES ${cluster.resourceCount}"
+            holder.tvResource.setTextColor(Color.parseColor("#58A6FF"))
+        } else {
+            holder.tvResource.visibility = View.GONE
+        }
+
+        if (cluster.safetyCount > 0) {
+            holder.tvSafety.visibility = View.VISIBLE
+            holder.tvSafety.text = "SAF ${cluster.safetyCount}"
+            holder.tvSafety.setTextColor(Color.parseColor("#3FB950"))
+        } else {
+            holder.tvSafety.visibility = View.GONE
+        }
+
+        holder.tvTime.text = "Last ${timeFormat.format(Date(cluster.latestTimestamp))}"
 
         if (cluster.criticalCount > 0) {
             holder.tvCritical.visibility = View.VISIBLE

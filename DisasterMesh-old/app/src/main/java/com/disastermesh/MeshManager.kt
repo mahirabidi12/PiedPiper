@@ -16,7 +16,7 @@ class MeshManager(
     private val repository = MessageRepository(context)
 
     companion object {
-        private const val SERVICE_ID = "com.disastermesh.mesh"
+        private val SERVICE_ID = AppConstants.MESH_SERVICE_ID
         private const val TAG = "DisasterMesh"
     }
 
@@ -36,7 +36,7 @@ class MeshManager(
         Log.d(TAG, "Mesh stopped")
     }
 
-    fun sendMessage(text: String, senderRole: String = Role.USER.name, targetRole: String = "ALL") {
+    fun sendMessage(text: String, senderRole: String = Role.USER.name, targetRole: String = AppConstants.TARGET_ALL) {
         val message = Message(
             senderId   = deviceName,
             senderName = deviceName,
@@ -190,6 +190,8 @@ class MeshManager(
     }
 
     private fun notifyPeers() {
-        onPeersChanged(connectedEndpoints.size, connectedEndpoints.values.toList())
+        val count = connectedEndpoints.size
+        MeshState.update(count)
+        onPeersChanged(count, connectedEndpoints.values.toList())
     }
 }
