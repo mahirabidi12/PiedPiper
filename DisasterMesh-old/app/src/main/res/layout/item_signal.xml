@@ -2,25 +2,23 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_marginBottom="8dp"
     android:background="@drawable/cluster_card_bg"
-    android:padding="14dp"
-    android:layout_marginBottom="8dp">
+    android:orientation="vertical"
+    android:padding="14dp">
 
-    <!-- Top row: sender + priority + category + time -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/tvSignalSender"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#E6EDF3"
+            android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -28,78 +26,108 @@
             android:id="@+id/tvSignalPriority"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingTop="3dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="3dp"
+            android:textColor="@color/white"
             android:textSize="10sp"
-            android:textStyle="bold"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
-            android:background="@drawable/badge_bg"
-            android:layout_marginStart="6dp" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvSignalTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#484F58"
-            android:textSize="10sp"
-            android:layout_marginStart="8dp" />
+            android:layout_marginStart="8dp"
+            android:textColor="@color/text_dim"
+            android:textSize="10sp" />
     </LinearLayout>
 
-    <!-- Category -->
     <TextView
         android:id="@+id/tvSignalCategory"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginTop="10dp"
+        android:textSize="11sp"
+        android:textStyle="bold" />
 
-    <!-- Summary -->
     <TextView
         android:id="@+id/tvSignalSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#E6EDF3"
-        android:textSize="14sp"
-        android:lineSpacingMultiplier="1.3"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginTop="8dp"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
 
-    <!-- Raw message -->
     <TextView
         android:id="@+id/tvSignalRaw"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#8B949E"
-        android:textSize="12sp"
-        android:fontFamily="monospace"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginTop="8dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
 
-    <!-- Tags -->
     <TextView
         android:id="@+id/tvSignalTags"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#58A6FF"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/color_user"
         android:textSize="11sp"
-        android:layout_marginBottom="4dp"
         android:visibility="gone" />
 
-    <!-- Location -->
     <TextView
         android:id="@+id/tvSignalLocation"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#8B949E"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/text_secondary"
         android:textSize="11sp"
-        android:layout_marginBottom="2dp"
         android:visibility="gone" />
 
-    <!-- People count -->
     <TextView
         android:id="@+id/tvSignalPeople"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#8B949E"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/text_secondary"
         android:textSize="11sp"
         android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/rowSignalActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnSignalAck"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/surface_outline_orange_bg"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="ACK"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnSignalResolve"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/surface_outline_green_bg"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="RESOLVE"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </LinearLayout>
