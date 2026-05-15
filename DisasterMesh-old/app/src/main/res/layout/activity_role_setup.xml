@@ -2,102 +2,142 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0D1117"
+    android:background="@color/background"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/grid_background"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingBottom="32dp"
-        android:gravity="center_horizontal">
+        android:paddingLeft="20dp"
+        android:paddingTop="40dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="24dp">
 
-        <!-- Logo -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/surface_panel_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="10dp"
+            android:paddingTop="6dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="6dp">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/dot_selected" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="SECURE INIT"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚡"
-            android:textSize="52sp"
-            android:layout_marginTop="52dp" />
+            android:layout_marginTop="18dp"
+            android:text="@string/app_title"
+            android:textColor="@color/text_primary"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="DISASTER MESH"
-            android:textColor="#FFFFFF"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1"
-            android:layout_marginTop="14dp" />
+            android:layout_marginTop="6dp"
+            android:text="OFFLINE PEER-TO-PEER RELIEF MESH"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Emergency Coordination Network"
-            android:textColor="#8B949E"
-            android:textSize="14sp"
-            android:layout_marginTop="6dp" />
-
-        <!-- Offline badge -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="● Works without internet"
-            android:textColor="#3FB950"
-            android:textSize="12sp"
-            android:layout_marginTop="10dp" />
-
-        <!-- Role heading -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Who are you in this emergency?"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="44dp"
-            android:layout_marginBottom="14dp" />
+            android:layout_marginTop="24dp"
+            android:text="Display Name"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-        <!-- CIVILIAN card -->
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/input_background"
+            android:hint="e.g. Priya K."
+            android:importantForAutofill="no"
+            android:inputType="textPersonName|textCapWords"
+            android:paddingLeft="14dp"
+            android:paddingTop="14dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="14dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_dim"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Select Role"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:id="@+id/cardUser"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
+            android:orientation="horizontal"
+            android:paddingLeft="14dp"
+            android:paddingTop="14dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="14dp">
 
             <TextView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="👤"
-                android:textSize="24sp"
-                android:gravity="center" />
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/badge_civilian_bg"
+                android:gravity="center"
+                android:text="CIV"
+                android:textColor="@color/color_user"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="14dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Civilian"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="I need help or want to report"
-                    android:textColor="#8B949E"
-                    android:textSize="13sp"
-                    android:layout_marginTop="2dp" />
+                    android:layout_marginTop="4dp"
+                    android:text="Request help. Receive guidance. See safe zones."
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <View
@@ -108,45 +148,50 @@
                 android:visibility="invisible" />
         </LinearLayout>
 
-        <!-- VOLUNTEER card -->
         <LinearLayout
             android:id="@+id/cardVolunteer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
+            android:orientation="horizontal"
+            android:paddingLeft="14dp"
+            android:paddingTop="14dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="14dp">
 
             <TextView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="🤝"
-                android:textSize="24sp"
-                android:gravity="center" />
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/badge_volunteer_bg"
+                android:gravity="center"
+                android:text="VOL"
+                android:textColor="@color/color_volunteer"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="14dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Volunteer"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="I'm here to help people"
-                    android:textColor="#8B949E"
-                    android:textSize="13sp"
-                    android:layout_marginTop="2dp" />
+                    android:layout_marginTop="4dp"
+                    android:text="Take tasks. Reach signals. Report status."
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <View
@@ -157,45 +202,50 @@
                 android:visibility="invisible" />
         </LinearLayout>
 
-        <!-- AUTHORITY card -->
         <LinearLayout
             android:id="@+id/cardAuthority"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
+            android:orientation="horizontal"
+            android:paddingLeft="14dp"
+            android:paddingTop="14dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="14dp">
 
             <TextView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="🛡️"
-                android:textSize="24sp"
-                android:gravity="center" />
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/badge_authority_bg"
+                android:gravity="center"
+                android:text="CMD"
+                android:textColor="@color/color_authority"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="14dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Authority"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Official emergency responder"
-                    android:textColor="#8B949E"
-                    android:textSize="13sp"
-                    android:layout_marginTop="2dp" />
+                    android:layout_marginTop="4dp"
+                    android:text="Triage. Assign. Designate safe zones."
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <View
@@ -206,51 +256,42 @@
                 android:visibility="invisible" />
         </LinearLayout>
 
-        <!-- Name input -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Your name"
-            android:textColor="#8B949E"
-            android:textSize="13sp"
-            android:layout_marginTop="28dp"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/etName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g. Mahira, Officer Singh, Rahul..."
-            android:textColorHint="#484F58"
-            android:textColor="#E6EDF3"
-            android:textSize="16sp"
-            android:background="@drawable/input_background"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="14dp"
-            android:inputType="textPersonName|textCapWords"
-            android:importantForAutofill="no" />
-
-        <!-- Join button -->
         <Button
             android:id="@+id/btnJoin"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="JOIN MESH"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.08"
-            android:backgroundTint="#58A6FF"
+            android:layout_height="52dp"
             android:layout_marginTop="24dp"
-            android:stateListAnimator="@null" />
+            android:backgroundTint="@color/color_user"
+            android:stateListAnimator="@null"
+            android:text="JOIN MESH"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="No internet required · Peer-to-peer only"
-            android:textColor="#484F58"
-            android:textSize="11sp"
-            android:layout_marginTop="12dp" />
+            android:layout_marginTop="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="NODE a3f4-9b2c"
+                android:textColor="@color/text_dim"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DISCOVERING PEERS"
+                android:textColor="@color/text_dim"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

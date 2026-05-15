@@ -2,88 +2,92 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_marginBottom="10dp"
     android:background="@drawable/cluster_card_bg"
-    android:padding="16dp"
-    android:layout_marginBottom="10dp">
+    android:orientation="vertical"
+    android:padding="14dp">
 
-    <!-- Location + total -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/tvClusterLocation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvClusterTotal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#8B949E"
-            android:textSize="12sp" />
+            android:background="@drawable/surface_panel_bg"
+            android:paddingLeft="8dp"
+            android:paddingTop="4dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Category counts -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/tvClusterMedical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#E6EDF3"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
+            android:textColor="@color/text_primary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tvClusterRescue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#E6EDF3"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tvClusterResource"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#E6EDF3"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tvClusterSafety"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#E6EDF3"
-            android:textSize="14sp" />
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- Footer: critical badge + time -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
         android:gravity="center_vertical"
-        android:layout_marginTop="12dp">
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/tvClusterCritical"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="12sp"
+            android:textColor="@color/color_critical"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:visibility="gone" />
 
@@ -91,16 +95,42 @@
             android:id="@+id/tvClusterTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#484F58"
-            android:textSize="11sp"
-            android:layout_marginEnd="12dp" />
+            android:textColor="@color/text_dim"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/btnClusterGemma"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="View →"
-            android:textColor="#58A6FF"
-            android:textSize="12sp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/surface_outline_blue_bg"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="RESOLVE VIA GEMMA"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnClusterOpen"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/surface_panel_bg"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="OPEN ZONE"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
 

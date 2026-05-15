@@ -13,6 +13,10 @@ class UserSession(context: Context) {
         get() = Role.fromName(prefs.getString("role", null))
         set(v) { prefs.edit().putString("role", v.name).apply() }
 
+    var nodeId: String
+        get() = prefs.getString("node_id", "") ?: ""
+        set(v) { prefs.edit().putString("node_id", v).apply() }
+
     val isSetup: Boolean
         get() = prefs.contains("role") && name.isNotBlank()
 
