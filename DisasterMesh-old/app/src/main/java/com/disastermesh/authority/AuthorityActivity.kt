@@ -225,7 +225,7 @@ class AuthorityActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         if (missing.isEmpty()) {
-            meshManager.start()
+            meshManager.start(initiateConnections = false)
         } else {
             ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQUEST_PERMISSIONS)
         }
@@ -238,7 +238,7 @@ class AuthorityActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_PERMISSIONS && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-            meshManager.start()
+            meshManager.start(initiateConnections = false)
         }
     }
 
