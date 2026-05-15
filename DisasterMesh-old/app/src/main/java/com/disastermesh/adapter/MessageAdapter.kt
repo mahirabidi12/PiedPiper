@@ -27,11 +27,11 @@ class MessageAdapter(
     }
 
     inner class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvSender: TextView   = view.findViewById(R.id.tvSenderName)
-        val tvBadge: TextView    = view.findViewById(R.id.tvRoleBadge)
-        val tvText: TextView     = view.findViewById(R.id.tvMessageText)
-        val tvTime: TextView     = view.findViewById(R.id.tvTimestamp)
-        val tvTarget: TextView   = view.findViewById(R.id.tvTargetLabel)
+        val tvSender: TextView = view.findViewById(R.id.tvSenderName)
+        val tvBadge: TextView = view.findViewById(R.id.tvRoleBadge)
+        val tvText: TextView = view.findViewById(R.id.tvMessageText)
+        val tvTime: TextView = view.findViewById(R.id.tvTimestamp)
+        val tvTarget: TextView = view.findViewById(R.id.tvTargetLabel)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
@@ -41,51 +41,43 @@ class MessageAdapter(
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        val msg     = messages[position]
-        val isLocal = msg.senderId == localDeviceId
-        val role    = msg.role()
+        val message = messages[position]
+        val isLocal = message.senderId == localDeviceId
+        val role = message.role()
 
-        // Sender name
-        holder.tvSender.text = if (isLocal) "You" else msg.senderName
+        holder.tvSender.text = if (isLocal) "You" else message.senderName
         holder.tvSender.setTextColor(role.color())
 
-        // Role badge
         holder.tvBadge.text = role.badgeLabel
         holder.tvBadge.setTextColor(Color.WHITE)
         holder.tvBadge.setBackgroundColor(role.color())
         holder.tvBadge.visibility = if (isLocal) View.GONE else View.VISIBLE
 
-        // Message text
-        holder.tvText.text = msg.text
+        holder.tvText.text = message.text
+        holder.tvTime.text = timeFormat.format(Date(message.timestamp))
 
-        // Timestamp
-        holder.tvTime.text = timeFormat.format(Date(msg.timestamp))
-
-        // Target label — show if message wasn't sent to everyone
-        if (!isLocal && msg.targetRole != "ALL") {
+        if (!isLocal && message.targetRole != "ALL") {
             holder.tvTarget.visibility = View.VISIBLE
-            holder.tvTarget.text = when (msg.targetRole) {
-                "VOLUNTEER" -> "→ Volunteers"
-                "AUTHORITY" -> "→ Authorities"
-                else        -> ""
+            holder.tvTarget.text = when (message.targetRole) {
+                "VOLUNTEER" -> "To volunteers"
+                "AUTHORITY" -> "To authorities"
+                else -> ""
             }
             holder.tvTarget.setTextColor(role.color())
         } else {
             holder.tvTarget.visibility = View.GONE
         }
 
-        // Bubble style + alignment
         if (isLocal) {
             holder.tvText.setBackgroundResource(R.drawable.bubble_local)
             holder.tvText.setTextColor(Color.WHITE)
             (holder.itemView as ViewGroup).layoutDirection = View.LAYOUT_DIRECTION_RTL
         } else {
-            // Peer bubble colour changes slightly per role
             holder.tvText.setBackgroundResource(R.drawable.bubble_peer)
             holder.tvText.setTextColor(Color.parseColor("#E6EDF3"))
             (holder.itemView as ViewGroup).layoutDirection = View.LAYOUT_DIRECTION_LTR
         }
     }
 
-    override fun getItemCount() = messages.size
+    override fun getItemCount(): Int = messages.size
 }
