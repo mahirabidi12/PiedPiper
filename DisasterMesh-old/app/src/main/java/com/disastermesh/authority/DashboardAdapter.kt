@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.disastermesh.R
 import com.disastermesh.models.AreaCluster
@@ -26,39 +27,52 @@ class DashboardAdapter(
     }
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvLocation:  TextView = view.findViewById(R.id.tvClusterLocation)
-        val tvMedical:   TextView = view.findViewById(R.id.tvClusterMedical)
-        val tvRescue:    TextView = view.findViewById(R.id.tvClusterRescue)
-        val tvResource:  TextView = view.findViewById(R.id.tvClusterResource)
-        val tvSafety:    TextView = view.findViewById(R.id.tvClusterSafety)
-        val tvCritical:  TextView = view.findViewById(R.id.tvClusterCritical)
-        val tvTime:      TextView = view.findViewById(R.id.tvClusterTime)
-        val tvTotal:     TextView = view.findViewById(R.id.tvClusterTotal)
+        val tvLocation: TextView = view.findViewById(R.id.tvClusterLocation)
+        val tvMedical: TextView = view.findViewById(R.id.tvClusterMedical)
+        val tvRescue: TextView = view.findViewById(R.id.tvClusterRescue)
+        val tvResource: TextView = view.findViewById(R.id.tvClusterResource)
+        val tvSafety: TextView = view.findViewById(R.id.tvClusterSafety)
+        val tvCritical: TextView = view.findViewById(R.id.tvClusterCritical)
+        val tvTime: TextView = view.findViewById(R.id.tvClusterTime)
+        val tvTotal: TextView = view.findViewById(R.id.tvClusterTotal)
+        val btnGemma: TextView = view.findViewById(R.id.btnClusterGemma)
+        val btnOpen: TextView = view.findViewById(R.id.btnClusterOpen)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        VH(LayoutInflater.from(parent.context).inflate(R.layout.item_area_cluster, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        return VH(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_area_cluster, parent, false)
+        )
+    }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        val c = clusters[position]
-        holder.tvLocation.text = "📍 ${c.areaLabel}"
-        holder.tvMedical.text  = "🔴 Medical    ${c.medicalCount}"
-        holder.tvRescue.text   = "🟠 Rescue      ${c.rescueCount}"
-        holder.tvResource.text = "🔵 Resource   ${c.resourceCount}"
-        holder.tvSafety.text   = "🟢 Safety      ${c.safetyCount}"
-        holder.tvTotal.text    = "${c.totalCount} signal${if (c.totalCount != 1) "s" else ""}"
-        holder.tvTime.text     = timeFormat.format(Date(c.latestTimestamp))
+        val cluster = clusters[position]
+        holder.tvLocation.text = cluster.areaLabel
+        holder.tvMedical.text = "MEDICAL   ${cluster.medicalCount}"
+        holder.tvRescue.text = "RESCUE    ${cluster.rescueCount}"
+        holder.tvResource.text = "RESOURCE  ${cluster.resourceCount}"
+        holder.tvSafety.text = "SAFETY    ${cluster.safetyCount}"
+        holder.tvTotal.text = "${cluster.totalCount} signals"
+        holder.tvTime.text = "Last update ${timeFormat.format(Date(cluster.latestTimestamp))}"
 
-        if (c.criticalCount > 0) {
+        if (cluster.criticalCount > 0) {
             holder.tvCritical.visibility = View.VISIBLE
-            holder.tvCritical.text = "⚠ ${c.criticalCount} CRITICAL"
-            holder.tvCritical.setTextColor(Color.parseColor("#EF4444"))
+            holder.tvCritical.text = "${cluster.criticalCount} CRITICAL"
+            holder.tvCritical.setTextColor(Color.parseColor("#FF4D4D"))
         } else {
             holder.tvCritical.visibility = View.GONE
         }
 
-        holder.itemView.setOnClickListener { onClusterTap(c) }
+        holder.btnOpen.setOnClickListener { onClusterTap(cluster) }
+        holder.btnGemma.setOnClickListener {
+            Toast.makeText(
+                holder.itemView.context,
+                "Gemma zone resolver shell is ready.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        holder.itemView.setOnClickListener { onClusterTap(cluster) }
     }
 
-    override fun getItemCount() = clusters.size
+    override fun getItemCount(): Int = clusters.size
 }

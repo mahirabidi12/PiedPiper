@@ -8,13 +8,25 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.disastermesh.adapter.MessageAdapter
+import com.disastermesh.ai.GemmaClient
+import com.disastermesh.ui.BottomNavHelper
+import com.disastermesh.ui.NavItem
+import com.disastermesh.ui.shell.MapShellActivity
+import com.disastermesh.ui.shell.ProfileShellActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,17 +34,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var meshManager: MeshManager
     private lateinit var messageAdapter: MessageAdapter
 
-    // Header
     private lateinit var tvUserName: TextView
     private lateinit var tvRoleBadge: TextView
     private lateinit var tvPeerStatus: TextView
 
-    // User-only controls
+    private lateinit var btnAiStatus: TextView
+    private lateinit var btnSettings: TextView
+    private lateinit var btnVolunteerMap: TextView
+
     private lateinit var rowChips: LinearLayout
     private lateinit var rowTarget: LinearLayout
     private lateinit var spinnerTarget: Spinner
 
-    // Message list + input
     private lateinit var rvMessages: RecyclerView
     private lateinit var etMessage: EditText
     private lateinit var btnSend: Button
@@ -68,26 +81,28 @@ class MainActivity : AppCompatActivity() {
 
         session = UserSession(this)
 
-        // Redirect to setup if not configured
         if (!session.isSetup) {
             startActivity(Intent(this, RoleSetupActivity::class.java))
             finish()
             return
         }
 
-        // Route to role-specific activity
         when (session.role) {
             Role.USER -> {
                 startActivity(Intent(this, com.disastermesh.civilian.CivilianActivity::class.java))
                 finish()
                 return
             }
+
             Role.AUTHORITY -> {
                 startActivity(Intent(this, com.disastermesh.authority.AuthorityActivity::class.java))
                 finish()
                 return
             }
-            Role.VOLUNTEER -> { /* continues to volunteer chat below */ }
+
+            Role.VOLUNTEER -> {
+                // Volunteer stays on this mesh-comms screen for now.
+            }
         }
 
         setContentView(R.layout.activity_main)
@@ -98,45 +113,45 @@ class MainActivity : AppCompatActivity() {
         setupMeshManager()
         setupSendButton()
         setupQuickChips()
-        setupAssistantButton()
+        setupHeaderActions()
+        BottomNavHelper.bind(this, NavItem.HOME)
         checkAndRequestPermissions()
     }
 
     private fun bindViews() {
-        tvUserName    = findViewById(R.id.tvUserName)
-        tvRoleBadge   = findViewById(R.id.tvRoleBadge)
-        tvPeerStatus  = findViewById(R.id.tvPeerStatus)
-        rowChips      = findViewById(R.id.rowChips)
-        rowTarget     = findViewById(R.id.rowTarget)
+        tvUserName = findViewById(R.id.tvUserName)
+        tvRoleBadge = findViewById(R.id.tvRoleBadge)
+        tvPeerStatus = findViewById(R.id.tvPeerStatus)
+        rowChips = findViewById(R.id.rowChips)
+        rowTarget = findViewById(R.id.rowTarget)
         spinnerTarget = findViewById(R.id.spinnerTarget)
-        rvMessages    = findViewById(R.id.rvMessages)
-        etMessage     = findViewById(R.id.etMessage)
-        btnSend       = findViewById(R.id.btnSend)
+        rvMessages = findViewById(R.id.rvMessages)
+        etMessage = findViewById(R.id.etMessage)
+        btnSend = findViewById(R.id.btnSend)
+        btnAiStatus = findViewById(R.id.btnAiStatus)
+        btnSettings = findViewById(R.id.btnSettings)
+        btnVolunteerMap = findViewById(R.id.btnVolunteerMap)
 
-        tvUserName.text  = session.name
+        tvUserName.text = session.name
         tvRoleBadge.text = session.role.badgeLabel
     }
 
     private fun applyRoleTheme() {
         val role = session.role
 
-        // Role badge styling
         tvRoleBadge.setTextColor(Color.WHITE)
         tvRoleBadge.setBackgroundColor(role.color())
 
-        // Show/hide user-only rows
         val isUser = role == Role.USER
-        rowChips.visibility  = if (isUser) View.VISIBLE else View.GONE
+        rowChips.visibility = if (isUser) View.VISIBLE else View.GONE
         rowTarget.visibility = if (isUser) View.VISIBLE else View.GONE
 
-        // Send button colour follows role
         btnSend.backgroundTintList =
             android.content.res.ColorStateList.valueOf(role.color())
 
-        // Hint text for input based on role
         etMessage.hint = when (role) {
-            Role.USER      -> "Describe your emergency..."
-            Role.VOLUNTEER -> "Broadcast to all peers..."
+            Role.USER -> "Describe your emergency..."
+            Role.VOLUNTEER -> "Broadcast to nearby responders..."
             Role.AUTHORITY -> "Official message to all..."
         }
     }
@@ -154,14 +169,15 @@ class MainActivity : AppCompatActivity() {
                     else -> "ALL"
                 }
             }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+
+            override fun onNothingSelected(parent: AdapterView<*>) = Unit
         }
     }
 
     private fun setupRecyclerView() {
         messageAdapter = MessageAdapter(
             localDeviceId = session.name,
-            myRole        = session.role
+            myRole = session.role
         )
         rvMessages.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -171,7 +187,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupMeshManager() {
         meshManager = MeshManager(
-            context    = this,
+            context = this,
             deviceName = session.name,
             onMessageReceived = { message ->
                 runOnUiThread {
@@ -183,14 +199,10 @@ class MainActivity : AppCompatActivity() {
             },
             onPeersChanged = { count, _ ->
                 runOnUiThread {
-                    tvPeerStatus.text = when (count) {
-                        0    -> "● Searching for peers..."
-                        1    -> "● 1 peer connected"
-                        else -> "● $count peers connected"
-                    }
+                    tvPeerStatus.text = "MESH ${count.toString().padStart(2, '0')}"
                     tvPeerStatus.setTextColor(
                         if (count > 0) Color.parseColor("#3FB950")
-                        else Color.parseColor("#F78166")
+                        else Color.parseColor("#A1A1AA")
                     )
                 }
             }
@@ -200,62 +212,92 @@ class MainActivity : AppCompatActivity() {
     private fun setupSendButton() {
         btnSend.setOnClickListener { sendMessage() }
         etMessage.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEND) { sendMessage(); true } else false
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                sendMessage()
+                true
+            } else {
+                false
+            }
         }
     }
 
     private fun setupQuickChips() {
         findViewById<Button>(R.id.chipSos).setOnClickListener {
-            etMessage.setText("🚨 SOS — I need immediate rescue help")
+            etMessage.setText("SOS - I need immediate rescue help")
             currentTarget = "ALL"
             spinnerTarget.setSelection(0)
         }
         findViewById<Button>(R.id.chipMedical).setOnClickListener {
-            etMessage.setText("🏥 Medical emergency — ")
+            etMessage.setText("Medical emergency - ")
             etMessage.setSelection(etMessage.text.length)
             currentTarget = "VOLUNTEER"
             spinnerTarget.setSelection(1)
         }
         findViewById<Button>(R.id.chipSupply).setOnClickListener {
-            etMessage.setText("📦 Need supplies — ")
+            etMessage.setText("Need supplies - ")
             etMessage.setSelection(etMessage.text.length)
             currentTarget = "ALL"
             spinnerTarget.setSelection(0)
         }
     }
 
-    // Opens the on-device Gemma Help Assistant. Self-contained — does not affect the mesh.
-    private fun setupAssistantButton() {
-        findViewById<Button>(R.id.btnAssistant).setOnClickListener {
+    private fun setupHeaderActions() {
+        btnAiStatus.setOnClickListener {
             startActivity(Intent(this, AssistantActivity::class.java))
+        }
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, ProfileShellActivity::class.java))
+        }
+        btnVolunteerMap.setOnClickListener {
+            startActivity(Intent(this, MapShellActivity::class.java))
+        }
+
+        GemmaClient.warmUp(this) { status ->
+            btnAiStatus.text = when (status) {
+                GemmaClient.Status.READY -> "AI READY"
+                GemmaClient.Status.LOADING -> "AI LOADING"
+                GemmaClient.Status.ABSENT -> "MODEL ABSENT"
+                GemmaClient.Status.ERROR -> "AI ERROR"
+            }
+            btnAiStatus.setTextColor(
+                if (status == GemmaClient.Status.READY) Color.parseColor("#3FB950")
+                else Color.parseColor("#71717A")
+            )
         }
     }
 
     private fun sendMessage() {
         val text = etMessage.text.toString().trim()
         if (text.isEmpty()) return
+
         val target = if (session.role == Role.USER) currentTarget else "ALL"
         meshManager.sendMessage(text, session.role.name, target)
         etMessage.text.clear()
     }
 
-    // ── Permissions ───────────────────────────────────────────────────────────
-
     private fun checkAndRequestPermissions() {
         val missing = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
-        if (missing.isEmpty()) meshManager.start()
-        else ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQUEST_PERMISSIONS)
+        if (missing.isEmpty()) {
+            meshManager.start()
+        } else {
+            ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQUEST_PERMISSIONS)
+        }
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_PERMISSIONS) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) meshManager.start()
-            else Toast.makeText(this, "All permissions are required for mesh networking", Toast.LENGTH_LONG).show()
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                meshManager.start()
+            } else {
+                Toast.makeText(this, "All permissions are required for mesh networking", Toast.LENGTH_LONG).show()
+            }
         }
     }
 

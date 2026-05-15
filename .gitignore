@@ -1,0 +1,70 @@
+# ── OS / Editor ────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# JetBrains IDEs (Android Studio / IntelliJ)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# ── Android / Gradle ──────────────────────────────────────────────────────────
+.gradle/
+**/build/
+**/local.properties
+**/captures/
+**/.cxx/
+**/.externalNativeBuild/
+**/generated/
+**/.navigation/
+
+# Keystore / signing secrets — NEVER commit these
+*.apk
+*.aab
+*.keystore
+*.jks
+release/
+keystore.properties
+
+# NDK
+obj/
+libs/
+
+# ── Node / Web prototype ──────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+dist/
+.cache/
+.parcel-cache/
+
+# ── Python (if any tooling) ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+*.egg-info/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.swp
+*.bak
+*.orig
+.history/

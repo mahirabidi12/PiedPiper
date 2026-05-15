@@ -73,6 +73,22 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Prototype shells (map, comms, profile) -->
+        <activity
+            android:name=".ui.shell.MapShellActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.shell.CommsShellActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.shell.ProfileShellActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
     </application>
 
 </manifest>
