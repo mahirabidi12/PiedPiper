@@ -1,6 +1,8 @@
 package com.disastermesh
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
@@ -102,20 +104,34 @@ class MeshManager(
 
     // ── Callbacks ─────────────────────────────────────────────────────────────
 
+    private val retryHandler = Handler(Looper.getMainLooper())
+
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
             Log.d(TAG, "Found peer: $endpointId (${info.endpointName})")
-            client.requestConnection(deviceName, endpointId, connectionLifecycleCallback)
-                .addOnFailureListener { e ->
-                    // This fires if the other device already requested connection to us first.
-                    // That's fine — one of the two requests will succeed.
-                    Log.d(TAG, "Request connection note: ${e.message}")
-                }
+            connectWithRetry(endpointId, attempt = 1)
         }
 
         override fun onEndpointLost(endpointId: String) {
             Log.d(TAG, "Lost sight of peer: $endpointId")
         }
+    }
+
+    private fun connectWithRetry(endpointId: String, attempt: Int) {
+        if (connectedEndpoints.containsKey(endpointId)) return
+        if (attempt > 5) {
+            Log.e(TAG, "Giving up on $endpointId after $attempt attempts")
+            return
+        }
+        client.requestConnection(deviceName, endpointId, connectionLifecycleCallback)
+            .addOnSuccessListener {
+                Log.d(TAG, "Connection requested: $endpointId (attempt $attempt)")
+            }
+            .addOnFailureListener { e ->
+                Log.d(TAG, "Retry $attempt for $endpointId: ${e.message}")
+                val delay = (300L * attempt) + (Math.random() * 500).toLong()
+                retryHandler.postDelayed({ connectWithRetry(endpointId, attempt + 1) }, delay)
+            }
     }
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
