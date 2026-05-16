@@ -128,6 +128,8 @@ class AuthorityActivity : AppCompatActivity() {
     private fun setupMesh() {
         meshManager = MeshManager(
             context = this,
+            localNodeId = session.nodeId,
+            localRole = session.role.name,
             deviceName = session.name,
             onMessageReceived = { message ->
                 if (message.messageType == MessageType.SIGNAL && message.senderRole == Role.USER.name) {

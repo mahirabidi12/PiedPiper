@@ -67,13 +67,7 @@ class ProfileShellFragment : Fragment(R.layout.fragment_profile_shell) {
         peerListener = null
     }
 
-    private fun ensureNodeId(): String {
-        val existing = session.nodeId
-        if (existing.isNotBlank()) return existing
-        val generated = java.util.UUID.randomUUID().toString()
-        session.nodeId = generated
-        return generated
-    }
+    private fun ensureNodeId(): String = session.nodeId
 
     private fun batteryPercent(): Int {
         val manager = requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager

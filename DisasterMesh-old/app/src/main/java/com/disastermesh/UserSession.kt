@@ -13,9 +13,14 @@ class UserSession(context: Context) {
         get() = Role.fromName(prefs.getString("role", null))
         set(v) { prefs.edit().putString("role", v.name).apply() }
 
-    var nodeId: String
-        get() = prefs.getString("node_id", "") ?: ""
-        set(v) { prefs.edit().putString("node_id", v).apply() }
+    val nodeId: String
+        get() {
+            val existing = prefs.getString("node_id", null)
+            if (!existing.isNullOrBlank()) return existing
+            val generated = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString("node_id", generated).apply()
+            return generated
+        }
 
     val isSetup: Boolean
         get() = prefs.contains("role") && name.isNotBlank()

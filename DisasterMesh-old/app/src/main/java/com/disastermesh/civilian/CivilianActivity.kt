@@ -103,6 +103,8 @@ class CivilianActivity : AppCompatActivity() {
     private fun setupMesh() {
         meshManager = MeshManager(
             context = this,
+            localNodeId = session.nodeId,
+            localRole = session.role.name,
             deviceName = session.name,
             onMessageReceived = { /* civilians do not process incoming signals yet */ },
             onPeersChanged = { count, _ ->
