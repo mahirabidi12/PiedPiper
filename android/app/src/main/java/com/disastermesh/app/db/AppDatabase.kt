@@ -22,9 +22,10 @@ import kotlinx.coroutines.launch
         InventoryEntity::class,
         DirectMessageEntity::class,
         AiSessionEntity::class,
-        AiMessageEntity::class
+        AiMessageEntity::class,
+        AuditLogEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,6 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun directMessageDao(): DirectMessageDao
     abstract fun aiSessionDao(): AiSessionDao
     abstract fun aiMessageDao(): AiMessageDao
+    abstract fun auditLogDao(): AuditLogDao
 
     companion object {
         private const val DB_NAME = "disaster_mesh.db"
@@ -114,6 +116,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // v4 → v5: Added timestamp/tracking columns to inventory and created audit_log table.
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE inventory ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE inventory ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE inventory ADD COLUMN updated_by_name TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE inventory ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `audit_log` (
+                        `id`           TEXT    NOT NULL,
+                        `entity_type`  TEXT    NOT NULL,
+                        `entity_id`    TEXT    NOT NULL,
+                        `entity_label` TEXT    NOT NULL,
+                        `action`       TEXT    NOT NULL,
+                        `actor_node_id` TEXT   NOT NULL,
+                        `actor_name`   TEXT    NOT NULL,
+                        `detail`       TEXT    NOT NULL,
+                        `created_at`   INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_audit_log_entity_type` ON `audit_log` (`entity_type`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_audit_log_created_at` ON `audit_log` (`created_at`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -121,7 +149,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DB_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

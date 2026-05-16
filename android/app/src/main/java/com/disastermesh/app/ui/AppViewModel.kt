@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.disastermesh.app.db.AppDatabase
+import com.disastermesh.app.db.entities.AuditLogEntity
 import com.disastermesh.app.db.entities.DirectMessageEntity
 import com.disastermesh.app.db.entities.InventoryEntity
 import com.disastermesh.app.db.entities.SignalEntity
@@ -27,6 +28,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val inventory: StateFlow<List<InventoryEntity>> = db.inventoryDao().observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val auditLog: StateFlow<List<AuditLogEntity>> = db.auditLogDao().observeRecent()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     val dmInbox: StateFlow<List<DirectMessageEntity>> = db.directMessageDao().observeLatestPerThread()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -38,6 +42,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun adjustInventory(key: String, delta: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             db.inventoryDao().adjustCount(key, delta)
+        }
+    }
+
+    fun addInventory(key: String, label: String, unit: String, count: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            db.inventoryDao().upsert(InventoryEntity(key, label, unit, count))
+        }
+    }
+
+    fun deleteInventory(key: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            db.inventoryDao().markDeleted(key, by = "", byName = "")
         }
     }
 
