@@ -1,0 +1,8 @@
+// Top-level build file
+plugins {
+    id 'com.android.application' version '8.13.2' apply false
+    id 'org.jetbrains.kotlin.android' version '2.3.21' apply false
+    // KSP versioning is now decoupled from Kotlin version.
+    // Recommended version for Kotlin 2.3.x is 2.3.8
+    id 'com.google.devtools.ksp' version '2.3.8' apply false
+}

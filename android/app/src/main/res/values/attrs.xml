@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TacticalCardView custom attributes -->
+    <declare-styleable name="TacticalCardView">
+        <attr name="accentColor" format="color" />
+        <attr name="cornerLength" format="dimension" />
+        <attr name="strokeWidth" format="dimension" />
+        <attr name="cardBackground" format="color" />
+        <attr name="showBorder" format="boolean" />
+    </declare-styleable>
+
+    <!-- RadarView custom attributes -->
+    <declare-styleable name="RadarView">
+        <attr name="radarColor" format="color" />
+        <attr name="ringCount" format="integer" />
+    </declare-styleable>
+</resources>

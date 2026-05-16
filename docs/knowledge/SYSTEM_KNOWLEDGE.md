@@ -1,13 +1,17 @@
 # DisasterMesh — System Knowledge & Design
 
-> **Status:** unified source of truth. This document **supersedes and consolidates**
-> [`SYSTEM_ARCHITECTURE.md`](./SYSTEM_ARCHITECTURE.md) (what the native Android code does today) and
-> [`SYSTEM_KNOWLEDGE_SPEC.md`](./SYSTEM_KNOWLEDGE_SPEC.md) (the React Native rewrite on the
-> `disaster-mesh-new` branch). Where the two disagreed, the **native Android architecture wins** —
-> that is the codebase this project builds on.
+> **Status:** unified source of truth. This document supersedes the deleted `SYSTEM_ARCHITECTURE.md`
+> and `SYSTEM_KNOWLEDGE_SPEC.md`. Where those disagreed, the **native Android architecture wins**.
+>
+> **Build targets:**
+> - [`DisasterMesh-old/`](../../DisasterMesh-old/) — the original working mesh prototype. **Read-only
+>   knowledge base going forward.** Do not extend it; treat it as the reference implementation.
+> - [`android/`](../../android/) — the new clean-slate Android module. **All new code goes here.**
+>   Package `com.disastermesh.app`, minSdk 24.
 >
 > Every section is tagged so intent is never confused with reality:
-> **✅ Built** = present in [`DisasterMesh-old/`](../../DisasterMesh-old/) on `main` ·
+> **✅ Built** = in `DisasterMesh-old/` (reference) or `android/` (active) ·
+> **🚧 In Progress** = currently being coded in `android/` ·
 > **🔧 Planned** = designed here, not yet coded ·
 > **💡 Borrowed** = concept lifted from the RN spec, re-targeted to native Android.
 
@@ -632,16 +636,16 @@ the [`Message`](../../DisasterMesh-old/app/src/main/java/com/disastermesh/Messag
 propagation, store-and-forward history sync, dark themed UI. The `ai/ map/ civilian/ volunteer/
 authority/ models/` packages are **empty scaffolding** (`README.txt` only).
 
-### 11.2 🔧 Build roadmap
+### 11.2 Build roadmap
 
-| Phase | Deliverable |
-|---|---|
-| **1 — Domain & routing** | Replace `Message` with `Signal`; `signals` table + migration; `GossipRouter` with TTL/hop-count; `seen_packets`, `peers`, `sync_log`; stable `node_id`; structured intake form + GPS capture. |
-| **2 — Response loop** | `signal_updates` table + lifecycle folding; volunteer/authority response UI; `accounts` table. |
-| **3 — AI core** | LiteRT `GemmaClient`; deterministic Layer-1 triage; Gemma Layer-2 enrichment; `inference_cache`; LLM job queue. |
-| **4 — Assist & translate** | Help Assistant + keyword RAG over bundled `emergency_kb.json`; language conversion; `chat_messages`. |
-| **5 — Model distribution** | `mesh_models` registry; P2P FILE transfer state machine; SHA-256 verifier; `BatteryWatchdog` + transfer throttle. |
-| **6 — Coordination & maps** | OSMDroid offline maps; `safe_zones`; signal clustering; `resource_plans` + `tasks`; full civilian/volunteer/authority Fragment screens. |
+| Phase | Deliverable | Status |
+|---|---|---|
+| **1 — Connection mesh** | `MeshPacket` wire protocol (HELLO/SIGNAL/SIGNAL_UPDATE/CHAT); `GossipRouter` TTL=8 bounded flood; `MeshService` foreground service; `seen_packets`/`peers`/`sync_log` tables; stable `node_id`; `signals` + `mesh_chat_messages` DB tables; structured signal intake + GPS; chat rooms on new protocol; role setup screen. | 🚧 **In Progress** — `android/` |
+| **2 — Response loop** | `signal_updates` table + lifecycle folding; volunteer/authority response UI; `accounts` table. | 🔧 Planned |
+| **3 — AI core** | LiteRT `GemmaClient`; deterministic Layer-1 triage; Gemma Layer-2 enrichment; `inference_cache`; LLM job queue. | 🔧 Planned |
+| **4 — Assist & translate** | Help Assistant + keyword RAG over bundled `emergency_kb.json`; language conversion; `chat_messages`. | 🔧 Planned |
+| **5 — Model distribution** | `mesh_models` registry; P2P FILE transfer state machine; SHA-256 verifier; `BatteryWatchdog` + transfer throttle. | 🔧 Planned |
+| **6 — Coordination & maps** | OSMDroid offline maps; `safe_zones`; signal clustering; `resource_plans` + `tasks`; full Fragment screens. | 🔧 Planned |
 
 ---
 

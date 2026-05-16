@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ── Ink scale (dark background palette) ─────────────────────────── -->
+    <color name="ink_950">#06070A</color>
+    <color name="ink_900">#0D0F14</color>
+    <color name="ink_800">#161B22</color>
+    <color name="ink_700">#1E2430</color>
+    <color name="ink_600">#2A3242</color>
+
+    <!-- ── Role accents ────────────────────────────────────────────────── -->
+    <color name="civilian">#58A6FF</color>
+    <color name="civilian_tint">#0D1F33</color>
+    <color name="volunteer">#3FB950</color>
+    <color name="volunteer_tint">#0D2B13</color>
+    <color name="authority">#F78166</color>
+    <color name="authority_tint">#331B15</color>
+
+    <!-- ── Priority ────────────────────────────────────────────────────── -->
+    <color name="priority_critical">#FF4D4D</color>
+    <color name="priority_high">#FFA033</color>
+    <color name="priority_normal">#FFD43B</color>
+    <color name="priority_low">#71717A</color>
+    <color name="critical_tint">#2B0A0A</color>
+
+    <!-- ── Signal status ───────────────────────────────────────────────── -->
+    <color name="status_new">#58A6FF</color>
+    <color name="status_acknowledged">#FFA033</color>
+    <color name="status_in_progress">#3FB950</color>
+    <color name="status_resolved">#71717A</color>
+
+    <!-- ── Task status ─────────────────────────────────────────────────── -->
+    <color name="task_assigned">#58A6FF</color>
+    <color name="task_accepted">#FFA033</color>
+    <color name="task_en_route">#3FB950</color>
+    <color name="task_done">#71717A</color>
+
+    <!-- ── Category ────────────────────────────────────────────────────── -->
+    <color name="category_medical">#FF4D4D</color>
+    <color name="category_rescue">#FFA033</color>
+    <color name="category_resource">#3FB950</color>
+    <color name="category_safety">#FFD43B</color>
+    <color name="category_info">#58A6FF</color>
+
+    <!-- ── Text scale ──────────────────────────────────────────────────── -->
+    <color name="text_primary">#E6EDF3</color>
+    <color name="text_secondary">#B0BAC6</color>
+    <color name="text_muted">#6A737D</color>
+    <color name="text_dim">#404858</color>
+
+    <!-- ── Borders ─────────────────────────────────────────────────────── -->
+    <color name="border_default">#1E2430</color>
+    <color name="border_strong">#2A3242</color>
+
+    <!-- ── Mesh / AI status pills ──────────────────────────────────────── -->
+    <color name="mesh_online">#3FB950</color>
+    <color name="mesh_searching">#FFA033</color>
+    <color name="mesh_offline">#71717A</color>
+    <color name="ai_ready">#3FB950</color>
+    <color name="ai_loading">#FFA033</color>
+    <color name="ai_absent">#71717A</color>
+
+    <!-- ── Chat room accents ───────────────────────────────────────────── -->
+    <color name="room_all">#58A6FF</color>
+    <color name="room_vol">#3FB950</color>
+    <color name="room_auth">#F78166</color>
+</resources>

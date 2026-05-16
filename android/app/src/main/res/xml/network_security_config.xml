@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Config — DisasterMesh
+    ───────────────────────────────────────────────────────────────────────────
+    Production rule: no cleartext HTTP is permitted to any host.
+    The only outbound network call is the Gemma model download from HuggingFace,
+    which already uses HTTPS.
+
+    The Nearby Connections mesh (BLE / Wi-Fi Direct) is handled entirely by the
+    Google Play Services layer and does NOT route through the Android HTTP stack,
+    so no cleartext exception is required for the mesh transport.
+
+    Debug rule: user-installed certificates are trusted so developers can inspect
+    traffic via a proxy (Charles, mitmproxy) without code changes.
+-->
+<network-security-config>
+
+    <!-- All connections must use HTTPS; cleartext is blocked in production. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Debug builds only: trust user-installed certs (proxy / CA testing). -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+</network-security-config>

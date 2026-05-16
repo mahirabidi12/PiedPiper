@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/ink_900">
+
+    <!-- Drag handle -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:background="@color/border_strong" />
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="7sp"
+                android:textColor="@color/authority"
+                android:letterSpacing="0.14"
+                android:text="AUTHORITY ACTION"
+                android:layout_marginBottom="3dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:text="BROADCAST" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnBroadcastClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="16sp"
+            android:textColor="@color/text_dim"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="✕" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Audience chips -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/text_dim"
+            android:letterSpacing="0.10"
+            android:text="SEND TO"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="14dp">
+
+            <TextView
+                android:id="@+id/chipAll"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.08"
+                android:textColor="@color/authority"
+                android:background="@drawable/bg_btn_authority"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="ALL" />
+
+            <TextView
+                android:id="@+id/chipVolunteers"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.08"
+                android:textColor="@color/text_muted"
+                android:background="@drawable/bg_btn_neutral"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="VOLUNTEERS" />
+
+            <TextView
+                android:id="@+id/chipCivilians"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.08"
+                android:textColor="@color/text_muted"
+                android:background="@drawable/bg_btn_neutral"
+                android:layout_marginStart="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="CIVILIANS" />
+        </LinearLayout>
+
+        <!-- Message input -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/text_dim"
+            android:letterSpacing="0.10"
+            android:text="MESSAGE"
+            android:layout_marginBottom="6dp" />
+
+        <EditText
+            android:id="@+id/etBroadcastMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_input_dark"
+            android:padding="12dp"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_dim"
+            android:hint="Enter your message to all personnel…"
+            android:inputType="textMultiLine|textCapSentences"
+            android:minLines="3"
+            android:maxLines="5"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Broadcast button -->
+        <LinearLayout
+            android:id="@+id/btnSendBroadcast"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_authority"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:letterSpacing="0.12"
+                android:textColor="@color/authority"
+                android:text="◈  BROADCAST TO MESH" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/text_dim"
+            android:gravity="center"
+            android:text="Delivered to all connected peers via gossip relay" />
+    </LinearLayout>
+</LinearLayout>

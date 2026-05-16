@@ -1,0 +1,106 @@
+package com.disastermesh.app.mesh
+
+import org.json.JSONObject
+
+/**
+ * Unified wire envelope for every message on the mesh.
+ *
+ * JSON layout:
+ * {
+ *   "id":           "<UUID>",
+ *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|CHAT",
+ *   "ttl":          8,
+ *   "hopCount":     0,
+ *   "originNodeId": "<UUID>",
+ *   "originRole":   "CIVILIAN|VOLUNTEER|AUTHORITY",
+ *   "originName":   "Rahul",
+ *   "sentAt":       1715600000000,
+ *   "payload":      "{ ... }"   <- type-specific JSON string
+ * }
+ *
+ * GossipRouter owns the TTL/hopCount logic; this class is pure data.
+ */
+data class MeshPacket(
+    val id: String,
+    val type: PacketType,
+    val ttl: Int,
+    val hopCount: Int,
+    val originNodeId: String,
+    val originRole: String,
+    val originName: String,
+    val sentAt: Long,
+    val payload: String          // JSON string; structure determined by type
+) {
+
+    enum class PacketType { HELLO, SIGNAL, SIGNAL_UPDATE, CHAT, DM }
+
+    fun toJson(): String = JSONObject().apply {
+        put("id", id)
+        put("type", type.name)
+        put("ttl", ttl)
+        put("hopCount", hopCount)
+        put("originNodeId", originNodeId)
+        put("originRole", originRole)
+        put("originName", originName)
+        put("sentAt", sentAt)
+        put("payload", payload)
+    }.toString()
+
+    companion object {
+        fun fromJson(json: String): MeshPacket {
+            val o = JSONObject(json)
+            return MeshPacket(
+                id           = o.getString("id"),
+                type         = PacketType.valueOf(o.getString("type")),
+                ttl          = o.optInt("ttl", 8),
+                hopCount     = o.optInt("hopCount", 0),
+                originNodeId = o.getString("originNodeId"),
+                originRole   = o.getString("originRole"),
+                originName   = o.getString("originName"),
+                sentAt       = o.getLong("sentAt"),
+                payload      = o.getString("payload")
+            )
+        }
+
+        // ── Payload builders ───────────────────────────────────────────
+
+        fun helloPayload(hasAi: Boolean, batteryPct: Int): String =
+            JSONObject().apply {
+                put("hasAi", hasAi)
+                put("batteryPct", batteryPct)
+            }.toString()
+
+        fun signalPayload(
+            signalId: String, category: String, priority: String,
+            message: String, peopleCount: Int?, latitude: Double?,
+            longitude: Double?, status: String
+        ): String = JSONObject().apply {
+            put("signalId", signalId)
+            put("category", category)
+            put("priority", priority)
+            put("message", message)
+            if (peopleCount != null) put("peopleCount", peopleCount)
+            if (latitude != null)   put("latitude", latitude)
+            if (longitude != null)  put("longitude", longitude)
+            put("status", status)
+        }.toString()
+
+        fun chatPayload(roomId: String, text: String): String =
+            JSONObject().apply {
+                put("roomId", roomId)
+                put("text", text)
+            }.toString()
+
+        fun signalUpdatePayload(signalId: String, status: String): String =
+            JSONObject().apply {
+                put("signalId", signalId)
+                put("status", status)
+            }.toString()
+
+        fun dmPayload(recipientNodeId: String, text: String): String =
+            JSONObject().apply {
+                put("recipientNodeId", recipientNodeId)
+                put("text", text)
+            }.toString()
+    }
+}

@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ink_950">
+
+    <!-- ── Header ───────────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+
+            <View
+                android:layout_width="2dp"
+                android:layout_height="12dp"
+                android:background="@color/civilian"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textColor="@color/text_muted"
+                android:letterSpacing="0.10"
+                android:text="CIVILIAN · OFFLINE OK" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:text="Stay safe. Raise a signal." />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@color/text_muted"
+            android:layout_marginTop="4dp"
+            android:text="Describe your situation. Gemma 4 will categorize it." />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <!-- ── Quick chips ─────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/chipSos"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.08"
+            android:textStyle="bold"
+            android:textColor="@color/priority_critical"
+            android:background="@drawable/bg_btn_critical"
+            android:layout_marginEnd="3dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="SOS" />
+
+        <TextView
+            android:id="@+id/chipMedical"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.06"
+            android:textColor="@color/category_medical"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="✚ MEDICAL" />
+
+        <TextView
+            android:id="@+id/chipRescue"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.06"
+            android:textColor="@color/category_rescue"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="⬆ RESCUE" />
+
+        <TextView
+            android:id="@+id/chipSupplies"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.06"
+            android:textColor="@color/category_resource"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="3dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="◆ SUPPLY" />
+    </LinearLayout>
+
+    <!-- ── RAISE SIGNAL button ──────────────────────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/btnRaiseSignal"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bg_btn_critical"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="16dp">
+
+        <!-- Left priority accent -->
+        <View
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:background="@color/priority_critical"
+            android:layout_marginEnd="14dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textColor="@color/priority_critical"
+                android:letterSpacing="0.14"
+                android:text="TAP TO COMPOSE" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/priority_critical"
+                android:fontFamily="monospace"
+                android:layout_marginTop="2dp"
+                android:text="RAISE SIGNAL" />
+        </LinearLayout>
+
+        <!-- Right icon box -->
+        <LinearLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:background="@color/ink_800">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/priority_critical"
+                android:text="!" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- AI indicator chip -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/bg_btn_neutral"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="10dp">
+
+        <View
+            android:layout_width="5dp"
+            android:layout_height="5dp"
+            android:background="@color/ai_absent"
+            android:layout_marginEnd="5dp" />
+
+        <TextView
+            android:id="@+id/tvAiIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/ai_absent"
+            android:letterSpacing="0.10"
+            android:text="AI · NOT LOADED" />
+    </LinearLayout>
+
+    <!-- ── Offline warning banner ─────────────────────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/tvOfflineWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_btn_neutral"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="10dp"
+        android:visibility="gone">
+        <View
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:background="@color/mesh_offline"
+            android:layout_marginEnd="8dp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:textColor="@color/text_muted"
+            android:text="NO MESH PEERS — signal queued, will send when connected" />
+    </LinearLayout>
+
+    <!-- ── Queued (offline) signals ──────────────────────────────────────── -->
+    <TextView
+        android:id="@+id/tvQueuedSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="QUEUED — OFFLINE"
+        android:fontFamily="monospace"
+        android:textSize="9sp"
+        android:letterSpacing="0.10"
+        android:textColor="@color/text_muted"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvQueuedSignals"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
+
+    <!-- ── My Active Signals ─────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="8dp">
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="10dp"
+            android:background="@color/civilian"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/section_my_signals"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textColor="@color/text_muted" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <TextView
+        android:id="@+id/tvNoSignals"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_no_signals"
+        android:fontFamily="monospace"
+        android:textSize="10sp"
+        android:textColor="@color/text_dim"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="visible" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvMySignals"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
+
+</LinearLayout>
