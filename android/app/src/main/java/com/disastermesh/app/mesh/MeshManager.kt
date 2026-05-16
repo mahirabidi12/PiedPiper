@@ -22,7 +22,9 @@ import com.google.android.gms.nearby.connection.*
  */
 class MeshManager(
     private val context: Context,
+    private val localNodeId: String,
     private val localName: String,
+    private val localRole: String,
     private val callbacks: MeshCallbacks
 ) {
     interface MeshCallbacks {
@@ -104,10 +106,10 @@ class MeshManager(
         val options = AdvertisingOptions.Builder()
             .setStrategy(Strategy.P2P_CLUSTER)
             .build()
-        client.startAdvertising(localName, SERVICE_ID, connectionLifecycleCallback, options)
+        client.startAdvertising("$localNodeId|$localRole", SERVICE_ID, connectionLifecycleCallback, options)
             .addOnSuccessListener {
                 advertisingRetryDelay = RETRY_INITIAL_MS   // reset backoff on success
-                Log.d(TAG, "Advertising as: $localName")
+                Log.d(TAG, "Advertising as: $localName ($localNodeId) [$localRole]")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "Advertising failed: ${e.message} — retry in ${advertisingRetryDelay}ms")
@@ -143,15 +145,29 @@ class MeshManager(
 
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.d(TAG, "Endpoint found: $endpointId (${info.endpointName})")
-            // Pre-store the name so onConnectionInitiated has it even if discovery fires first
+            // info.endpointName is "$remoteNodeId|$remoteRole"
+            val parts          = info.endpointName.split("|")
+            val remoteNodeId   = parts.getOrElse(0) { info.endpointName }
+            val remoteRole     = parts.getOrElse(1) { "" }
+            Log.d(TAG, "Endpoint found: $endpointId ($remoteNodeId) [$remoteRole]")
+
             if (!connected.containsKey(endpointId)) {
-                pendingNames[endpointId] = info.endpointName
+                pendingNames[endpointId] = remoteNodeId
             }
-            client.requestConnection(localName, endpointId, connectionLifecycleCallback)
+
+            // Tiebreaker: only apply when the remote is ALSO discovering (non-Authority).
+            // Authority never calls requestConnection(), so if we skip here against an Authority
+            // with a lower nodeId, nobody would ever initiate — they'd never connect.
+            // Against another discoverer (Civilian/Volunteer), the lower nodeId always initiates
+            // so exactly one requestConnection() is in flight — no STATUS_ENDPOINT_IO_ERROR.
+            if (remoteRole != "AUTHORITY" && localNodeId > remoteNodeId) {
+                Log.d(TAG, "Tiebreaker: waiting for $remoteNodeId to initiate")
+                return
+            }
+
+            client.requestConnection("$localNodeId|$localRole", endpointId, connectionLifecycleCallback)
                 .addOnFailureListener { e ->
-                    // Common when the remote device already initiated a request — harmless
-                    Log.d(TAG, "requestConnection note (likely duplicate): ${e.message}")
+                    Log.d(TAG, "requestConnection note: ${e.message}")
                 }
         }
 

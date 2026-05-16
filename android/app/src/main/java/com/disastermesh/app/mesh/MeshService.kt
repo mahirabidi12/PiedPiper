@@ -122,9 +122,11 @@ class MeshService : Service() {
         val nodeId = NodeIdentity.get(applicationContext)
 
         meshManager = MeshManager(
-            context    = applicationContext,
-            localName  = session.name,
-            callbacks  = buildCallbacks()
+            context      = applicationContext,
+            localNodeId  = nodeId,
+            localName    = session.name,
+            localRole    = session.role.name,
+            callbacks    = buildCallbacks()
         )
 
         gossipRouter = GossipRouter(
