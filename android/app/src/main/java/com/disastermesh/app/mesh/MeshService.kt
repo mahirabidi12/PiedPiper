@@ -184,6 +184,13 @@ class MeshService : Service() {
             },
             onChatReceived   = { msg ->
                 serviceScope.launch { _incomingChat.emit(msg) }
+                if (msg.text.startsWith("[BROADCAST")) {
+                    SignalNotificationManager.notifyBroadcast(
+                        applicationContext,
+                        msg.senderName,
+                        msg.text
+                    )
+                }
             },
             onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ }
         )
