@@ -24,6 +24,10 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class AiChatViewModel : ViewModel() {
 
+    /** Active thread shown by the AI tab. Survives tab switches via activity scope. */
+    private val _activeSessionId = MutableStateFlow(DEFAULT_ACTIVE_SESSION_ID)
+    val activeSessionId: StateFlow<String> = _activeSessionId.asStateFlow()
+
     /** `null` ⇒ no AI is currently streaming. Non-null ⇒ render this bubble. */
     private val _streaming = MutableStateFlow<Draft?>(null)
     val streaming: StateFlow<Draft?> = _streaming.asStateFlow()
@@ -35,9 +39,14 @@ class AiChatViewModel : ViewModel() {
         val startedAt: Long
     )
 
+    /** Switches the currently active AI thread. */
+    fun setActiveSessionId(sessionId: String) {
+        _activeSessionId.value = sessionId
+    }
+
     /** Open a new streaming bubble against [sessionId]. */
-    fun startStream(sessionId: String) {
-        _streaming.value = Draft(sessionId, "", System.currentTimeMillis())
+    fun startStream(sessionId: String, initialText: String = THINKING_PLACEHOLDER_TEXT) {
+        _streaming.value = Draft(sessionId, initialText, System.currentTimeMillis())
     }
 
     /**
@@ -53,5 +62,10 @@ class AiChatViewModel : ViewModel() {
     /** Stream finished (success OR error). Clears the volatile bubble. */
     fun finishStream() {
         _streaming.value = null
+    }
+
+    companion object {
+        const val DEFAULT_ACTIVE_SESSION_ID = "ai-default"
+        const val THINKING_PLACEHOLDER_TEXT = "Gemma is thinking..."
     }
 }

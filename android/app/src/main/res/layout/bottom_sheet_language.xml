@@ -38,7 +38,7 @@
             android:textSize="10sp"
             android:letterSpacing="0.14"
             android:textColor="@color/text_muted"
-            android:text="SELECT LANGUAGE · NATIVE TO GEMMA" />
+            android:text="SELECT LANGUAGE · 140+ NATIVE TO GEMMA" />
 
         <TextView
             android:id="@+id/btnLangClose"
@@ -66,7 +66,7 @@
         android:textSize="13sp"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_dim"
-        android:hint="Search 70+ languages…"
+        android:hint="Search 140+ languages…"
         android:inputType="text"
         android:imeOptions="actionSearch"
         android:singleLine="true"
@@ -77,8 +77,8 @@
         android:layout_height="1dp"
         android:background="@color/border_default" />
 
-    <!-- Language list — fixed height so the bottom sheet doesn't try to lay out
-         all 70+ rows at once, and the RecyclerView handles internal scrolling. -->
+        <!-- Language list — fixed height so the bottom sheet doesn't try to lay out
+            all 140+ rows at once, and the RecyclerView handles internal scrolling. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLanguages"
         android:layout_width="match_parent"

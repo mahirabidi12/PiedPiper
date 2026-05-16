@@ -85,4 +85,7 @@
     <string name="btn_review_each">REVIEW EACH</string>
     <string name="btn_open_zone">OPEN ZONE →</string>
     <string name="btn_resolve_gemma">RESOLVE VIA GEMMA</string>
+
+    <!-- AI chat -->
+    <string name="ai_thinking_label">Gemma is thinking...</string>
 </resources>
