@@ -148,7 +148,7 @@ class MeshService : Service() {
             onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ }
         )
 
-        meshManager.start()
+        meshManager.start(initiateConnections = session.role != Role.AUTHORITY)
         _meshStatus.value = MeshStatus.SEARCHING
         Log.d(TAG, "Mesh started as ${session.name} [${session.role}]")
         return START_STICKY
