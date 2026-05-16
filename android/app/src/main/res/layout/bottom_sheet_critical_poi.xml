@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/ink_900">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="12dp"
+        android:background="@color/border_strong" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="10dp">
+
+        <TextView
+            android:id="@+id/tvPoiSymbol"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_neutral"
+            android:fontFamily="monospace"
+            android:textSize="16sp"
+            android:textColor="@color/civilian"
+            android:text="✚"
+            android:layout_marginEnd="10dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPoiName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:text="Unnamed Hospital" />
+
+            <TextView
+                android:id="@+id/tvPoiAmenity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/text_muted"
+                android:text="HOSPITAL" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnPoiClose"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:text="✕"
+            android:textSize="14sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvPoiStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.08"
+            android:textColor="@color/text_secondary"
+            android:background="@drawable/bg_btn_neutral"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="OPERATIONAL" />
+
+        <TextView
+            android:id="@+id/tvPoiDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="Distance: Unknown" />
+
+        <TextView
+            android:id="@+id/tvPoiVerifyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.08"
+            android:textColor="@color/text_muted"
+            android:text="UNVERIFIED" />
+
+        <Button
+            android:id="@+id/btnUpdatePoiStatus"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:layout_marginTop="14dp"
+            android:text="UPDATE STATUS ACROSS MESH"
+            style="@style/Widget.DisasterMesh.Button.Primary" />
+
+        <TextView
+            android:id="@+id/tvPoiAuthorityHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.08"
+            android:textColor="@color/text_dim"
+            android:text="Only authorities can broadcast infrastructure state changes." />
+    </LinearLayout>
+
+</LinearLayout>

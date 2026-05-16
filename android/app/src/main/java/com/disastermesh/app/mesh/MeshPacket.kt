@@ -8,7 +8,7 @@ import org.json.JSONObject
  * JSON layout:
  * {
  *   "id":           "<UUID>",
- *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|CHAT|DM|INVENTORY_UPDATE|INVENTORY_SYNC",
+ *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|CHAT|DM|INVENTORY_UPDATE|INVENTORY_SYNC|CRITICAL_POI_UPDATE|SAFE_ZONE_UPDATE",
  *   "ttl":          8,
  *   "hopCount":     0,
  *   "originNodeId": "<UUID>",
@@ -32,7 +32,17 @@ data class MeshPacket(
     val payload: String          // JSON string; structure determined by type
 ) {
 
-    enum class PacketType { HELLO, SIGNAL, SIGNAL_UPDATE, CHAT, DM, INVENTORY_UPDATE, INVENTORY_SYNC }
+    enum class PacketType {
+        HELLO,
+        SIGNAL,
+        SIGNAL_UPDATE,
+        CHAT,
+        DM,
+        INVENTORY_UPDATE,
+        INVENTORY_SYNC,
+        CRITICAL_POI_UPDATE,
+        SAFE_ZONE_UPDATE
+    }
 
     /** Lightweight snapshot of an inventory item for sync payloads. */
     data class InventorySnapshot(
@@ -138,5 +148,41 @@ data class MeshPacket(
             }
             return JSONObject().apply { put("items", arr) }.toString()
         }
+
+        fun criticalPoiUpdatePayload(
+            poiId: String,
+            name: String,
+            amenityType: String,
+            latitude: Double,
+            longitude: Double,
+            status: String,
+            isVerified: Boolean,
+            updatedAt: Long
+        ): String = JSONObject().apply {
+            put("poiId", poiId)
+            put("name", name)
+            put("amenityType", amenityType)
+            put("latitude", latitude)
+            put("longitude", longitude)
+            put("status", status)
+            put("isVerified", isVerified)
+            put("updatedAt", updatedAt)
+        }.toString()
+
+        fun safeZoneUpdatePayload(
+            zoneId: String,
+            name: String,
+            latitude: Double,
+            longitude: Double,
+            radiusMeters: Int,
+            createdAt: Long
+        ): String = JSONObject().apply {
+            put("zoneId", zoneId)
+            put("name", name)
+            put("latitude", latitude)
+            put("longitude", longitude)
+            put("radiusMeters", radiusMeters)
+            put("createdAt", createdAt)
+        }.toString()
     }
 }

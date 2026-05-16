@@ -7,12 +7,11 @@ import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.db.entities.AuditLogEntity
 import com.disastermesh.app.db.entities.DirectMessageEntity
 import com.disastermesh.app.db.entities.InventoryEntity
+import com.disastermesh.app.db.entities.SafeZoneEntity
 import com.disastermesh.app.db.entities.SignalEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-
-data class SafeZone(val lat: Double, val lon: Double, val type: String)
 
 /**
  * Activity-scoped ViewModel.  Fragments use `by activityViewModels()` so
@@ -32,6 +31,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val dmInbox: StateFlow<List<DirectMessageEntity>> = db.directMessageDao().observeLatestPerThread()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val criticalPoiTick: StateFlow<Long> = db.criticalPoiDao().observeLatestUpdateTick()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
+
+    val safeZones: StateFlow<List<SafeZoneEntity>> = db.safeZoneDao().observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun dmThread(peerId: String, localNodeId: String): Flow<List<DirectMessageEntity>> {
@@ -57,11 +62,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private val _safeZones = MutableStateFlow<List<SafeZone>>(emptyList())
-    val safeZones: StateFlow<List<SafeZone>> = _safeZones.asStateFlow()
-
-    fun addSafeZone(lat: Double, lon: Double, type: String) {
-        _safeZones.value = _safeZones.value + SafeZone(lat, lon, type)
+    fun upsertSafeZone(zone: SafeZoneEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            db.safeZoneDao().upsertIfNewer(zone)
+        }
     }
 
     private fun dmThreadId(a: String, b: String) =

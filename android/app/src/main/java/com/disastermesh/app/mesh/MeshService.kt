@@ -17,6 +17,7 @@ import com.disastermesh.app.R
 import com.disastermesh.app.core.NodeIdentity
 import com.disastermesh.app.core.UserSession
 import com.disastermesh.app.db.AppDatabase
+import com.disastermesh.app.db.entities.CriticalPoiEntity
 import com.disastermesh.app.model.*
 import com.disastermesh.app.notification.SignalNotificationManager
 import com.disastermesh.app.ui.MainActivity
@@ -69,6 +70,9 @@ class MeshService : Service() {
     /** Emits each new ChatMessage as it arrives over the mesh. */
     private val _incomingChat = MutableSharedFlow<ChatMessage>(replay = 0)
     val incomingChat: SharedFlow<ChatMessage> = _incomingChat.asSharedFlow()
+
+    private val _criticalPoiUpdates = MutableSharedFlow<CriticalPoiEntity>(replay = 0)
+    val criticalPoiUpdates: SharedFlow<CriticalPoiEntity> = _criticalPoiUpdates.asSharedFlow()
 
     /** Room-aware: observe all messages for a room from DB (includes history). */
     fun observeRoom(roomId: String) = db.chatMessageDao().observeRoom(roomId)
@@ -192,7 +196,10 @@ class MeshService : Service() {
                     )
                 }
             },
-            onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ }
+            onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ },
+            onCriticalPoiUpdated = { poi ->
+                serviceScope.launch { _criticalPoiUpdates.emit(poi) }
+            }
         )
 
         meshManager.start()
@@ -226,6 +233,48 @@ class MeshService : Service() {
 
     fun sendBroadcast(message: String) {
         sendChat("all", "[BROADCAST] $message")
+    }
+
+    fun sendCriticalPoiUpdate(
+        poiId: String,
+        name: String,
+        amenityType: String,
+        latitude: Double,
+        longitude: Double,
+        status: String,
+        isVerified: Boolean
+    ) {
+        if (::gossipRouter.isInitialized) {
+            gossipRouter.sendCriticalPoiUpdate(
+                poiId = poiId,
+                name = name,
+                amenityType = amenityType,
+                latitude = latitude,
+                longitude = longitude,
+                status = status,
+                isVerified = isVerified
+            )
+        }
+    }
+
+    fun sendSafeZoneUpdate(
+        zoneId: String,
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        radiusMeters: Int,
+        createdAt: Long = System.currentTimeMillis()
+    ) {
+        if (::gossipRouter.isInitialized) {
+            gossipRouter.sendSafeZoneUpdate(
+                zoneId = zoneId,
+                name = name,
+                latitude = latitude,
+                longitude = longitude,
+                radiusMeters = radiusMeters,
+                createdAt = createdAt
+            )
+        }
     }
 
     fun sendDm(recipientNodeId: String, text: String) {

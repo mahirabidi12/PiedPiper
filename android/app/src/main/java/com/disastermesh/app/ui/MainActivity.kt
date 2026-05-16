@@ -181,7 +181,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun replaceFragment(fragment: Fragment, addToBackStack: Boolean = true) {
+        if (supportFragmentManager.isStateSaved) {
+            Log.w("MainActivity", "Skipping fragment transaction: state already saved")
+            return
+        }
+
+        val current = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+        if (current?.javaClass == fragment.javaClass) {
+            return
+        }
+
         supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
             .replace(R.id.fragmentContainer, fragment)
             .apply { if (addToBackStack) addToBackStack(null) }
             .commit()

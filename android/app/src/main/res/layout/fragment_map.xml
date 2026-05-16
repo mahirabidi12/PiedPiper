@@ -111,6 +111,43 @@
             android:text="0 SIGNALS ON MAP" />
     </LinearLayout>
 
+    <!-- Authority-only action: enter safe-zone drop mode -->
+    <LinearLayout
+        android:id="@+id/btnDeploySafeZone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_btn_authority"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="10sp"
+            android:textColor="@color/authority"
+            android:text="◉"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:letterSpacing="0.08"
+            android:textColor="@color/authority"
+            android:text="DEPLOY SAFE ZONE" />
+    </LinearLayout>
+
     <!-- Drop-mode banner (authority only, visible when dropMode = true) -->
     <LinearLayout
         android:id="@+id/bannerDropMode"

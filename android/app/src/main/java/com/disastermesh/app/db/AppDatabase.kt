@@ -23,9 +23,11 @@ import kotlinx.coroutines.launch
         DirectMessageEntity::class,
         AiSessionEntity::class,
         AiMessageEntity::class,
-        AuditLogEntity::class
+        AuditLogEntity::class,
+        CriticalPoiEntity::class,
+        SafeZoneEntity::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +42,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun aiSessionDao(): AiSessionDao
     abstract fun aiMessageDao(): AiMessageDao
     abstract fun auditLogDao(): AuditLogDao
+    abstract fun criticalPoiDao(): CriticalPoiDao
+    abstract fun safeZoneDao(): SafeZoneDao
 
     companion object {
         private const val DB_NAME = "disaster_mesh.db"
@@ -146,6 +150,51 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // v5 → v6: Added offline critical infrastructure POIs table for map overlay.
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `critical_pois` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `amenity_type` TEXT NOT NULL,
+                        `latitude` REAL NOT NULL,
+                        `longitude` REAL NOT NULL,
+                        `is_verified` INTEGER NOT NULL DEFAULT 0,
+                        `operational_status` TEXT NOT NULL DEFAULT 'OPERATIONAL',
+                        `updated_at` INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_critical_pois_amenity_type` ON `critical_pois` (`amenity_type`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_critical_pois_latitude_longitude` ON `critical_pois` (`latitude`, `longitude`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_critical_pois_updated_at` ON `critical_pois` (`updated_at`)")
+            }
+        }
+
+        // v6 → v7: Added persisted safe zones for role-based map overlays and mesh sync.
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `safe_zones` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `latitude` REAL NOT NULL,
+                        `longitude` REAL NOT NULL,
+                        `radius_meters` INTEGER NOT NULL,
+                        `created_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_safe_zones_created_at` ON `safe_zones` (`created_at`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_safe_zones_latitude_longitude` ON `safe_zones` (`latitude`, `longitude`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -153,7 +202,14 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DB_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(
+                        MIGRATION_1_2,
+                        MIGRATION_2_3,
+                        MIGRATION_3_4,
+                        MIGRATION_4_5,
+                        MIGRATION_5_6,
+                        MIGRATION_6_7
+                    )
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
