@@ -25,8 +25,15 @@
     <!-- ── Signal status ───────────────────────────────────────────────── -->
     <color name="status_new">#58A6FF</color>
     <color name="status_acknowledged">#FFA033</color>
+    <color name="status_assigned">#58A6FF</color>
+    <color name="status_accepted">#FFA033</color>
     <color name="status_in_progress">#3FB950</color>
+    <color name="status_waiting">#FFD43B</color>
+    <color name="status_on_hold">#6A737D</color>
     <color name="status_resolved">#71717A</color>
+    <color name="status_rejected">#FF4D4D</color>
+    <color name="status_cancelled">#6A737D</color>
+    <color name="status_failed">#FFA033</color>
 
     <!-- ── Task status ─────────────────────────────────────────────────── -->
     <color name="task_assigned">#58A6FF</color>

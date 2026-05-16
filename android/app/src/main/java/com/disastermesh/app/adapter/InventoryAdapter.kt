@@ -3,7 +3,9 @@ package com.disastermesh.app.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
+import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -27,7 +29,7 @@ class InventoryAdapter(
     }
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvCount      = view.findViewById<TextView>(R.id.tvCount)
+        val etCount      = view.findViewById<EditText>(R.id.tvCount)
         val tvLabel      = view.findViewById<TextView>(R.id.tvLabel)
         val tvUnit       = view.findViewById<TextView>(R.id.tvUnit)
         val tvStockBadge = view.findViewById<TextView>(R.id.tvStockBadge)
@@ -36,6 +38,8 @@ class InventoryAdapter(
         val btnMinus     = view.findViewById<TextView>(R.id.btnMinus)
         val btnPlus      = view.findViewById<TextView>(R.id.btnPlus)
         val btnDelete    = view.findViewById<TextView>(R.id.btnDelete)
+        var boundCount   = 0   // last count written by bind; used to compute delta on commit
+        var ignoreTextChange = false
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -43,9 +47,16 @@ class InventoryAdapter(
 
     override fun onBindViewHolder(vh: VH, position: Int) {
         val item = getItem(position)
-        vh.tvCount.text = item.count.toString()
+        vh.boundCount = item.count
         vh.tvLabel.text = item.label
         vh.tvUnit.text  = item.unit
+
+        // Only update text if not currently focused (don't interrupt typing)
+        if (!vh.etCount.isFocused) {
+            vh.ignoreTextChange = true
+            vh.etCount.setText(item.count.toString())
+            vh.ignoreTextChange = false
+        }
 
         if (item.count <= LOW_STOCK_THRESHOLD && item.count >= 0) {
             vh.tvStockBadge.visibility = View.VISIBLE
@@ -62,21 +73,52 @@ class InventoryAdapter(
             vh.tvStockBadge.visibility = View.GONE
         }
 
-        if (item.updatedByName.isNotBlank()) {
-            vh.tvUpdatedBy.text = "by ${item.updatedByName}"
-        } else {
-            vh.tvUpdatedBy.text = ""
-        }
+        vh.tvUpdatedBy.text = if (item.updatedByName.isNotBlank()) "by ${item.updatedByName}" else ""
         vh.tvUpdatedAt.text = if (item.updatedAt > 0) ageText(item.updatedAt) else ""
 
         if (canEdit) {
             vh.btnMinus.visibility = View.VISIBLE
             vh.btnPlus.visibility  = View.VISIBLE
-            vh.btnMinus.setOnClickListener { onAdjust(item.key, -1) }
-            vh.btnPlus.setOnClickListener  { onAdjust(item.key, +1) }
+            vh.etCount.isFocusableInTouchMode = true
+            vh.etCount.isFocusable = true
+
+            vh.btnMinus.setOnClickListener {
+                val shown = vh.etCount.text.toString().toIntOrNull() ?: vh.boundCount
+                if (shown > 0) {
+                    val delta = (shown - 1) - vh.boundCount
+                    vh.ignoreTextChange = true
+                    vh.etCount.setText((shown - 1).toString())
+                    vh.ignoreTextChange = false
+                    onAdjust(item.key, delta)
+                    vh.boundCount = shown - 1
+                }
+            }
+            vh.btnPlus.setOnClickListener {
+                val shown = vh.etCount.text.toString().toIntOrNull() ?: vh.boundCount
+                val delta = (shown + 1) - vh.boundCount
+                vh.ignoreTextChange = true
+                vh.etCount.setText((shown + 1).toString())
+                vh.ignoreTextChange = false
+                onAdjust(item.key, delta)
+                vh.boundCount = shown + 1
+            }
+
+            // Commit typed value on focus loss
+            vh.etCount.setOnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    val newVal = vh.etCount.text.toString().toIntOrNull() ?: vh.boundCount
+                    val delta = newVal - vh.boundCount
+                    if (delta != 0) {
+                        onAdjust(item.key, delta)
+                        vh.boundCount = newVal
+                    }
+                }
+            }
         } else {
             vh.btnMinus.visibility = View.GONE
             vh.btnPlus.visibility  = View.GONE
+            vh.etCount.isFocusableInTouchMode = false
+            vh.etCount.isFocusable = false
         }
 
         if (canDelete) {
