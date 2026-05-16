@@ -22,7 +22,13 @@
         android:gravity="center_vertical"
         android:paddingStart="20dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="12dp">
+        android:paddingBottom="10dp">
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="12dp"
+            android:background="@color/civilian"
+            android:layout_marginEnd="8dp" />
 
         <TextView
             android:layout_width="0dp"
@@ -32,7 +38,7 @@
             android:textSize="10sp"
             android:letterSpacing="0.14"
             android:textColor="@color/text_muted"
-            android:text="SELECT LANGUAGE" />
+            android:text="SELECT LANGUAGE · NATIVE TO GEMMA" />
 
         <TextView
             android:id="@+id/btnLangClose"
@@ -46,18 +52,40 @@
             android:text="×" />
     </LinearLayout>
 
+    <!-- Search box -->
+    <EditText
+        android:id="@+id/etLanguageSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_input_dark"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="10dp"
+        android:padding="12dp"
+        android:fontFamily="monospace"
+        android:textSize="13sp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_dim"
+        android:hint="Search 70+ languages…"
+        android:inputType="text"
+        android:imeOptions="actionSearch"
+        android:singleLine="true"
+        android:maxLines="1" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/border_default" />
 
-    <!-- Language list -->
+    <!-- Language list — fixed height so the bottom sheet doesn't try to lay out
+         all 70+ rows at once, and the RecyclerView handles internal scrolling. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLanguages"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="460dp"
         android:paddingTop="4dp"
         android:paddingBottom="16dp"
-        android:overScrollMode="never" />
+        android:overScrollMode="ifContentScrolls"
+        android:clipToPadding="false" />
 
 </LinearLayout>

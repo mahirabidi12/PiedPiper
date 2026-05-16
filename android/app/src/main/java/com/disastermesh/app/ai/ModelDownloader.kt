@@ -84,6 +84,14 @@ object ModelDownloader {
                 connection = (URL(MODEL_URL).openConnection() as HttpURLConnection).apply {
                     connectTimeout = 30_000
                     readTimeout    = 30_000
+                    // CACHE LEAK FIX — explicitly disable response caching.
+                    // Without this, a system-installed HttpResponseCache (or any
+                    // transitive lib that installs one) will copy the entire 2.6 GB
+                    // stream into context.cacheDir as a side effect, producing the
+                    // ~750 MB ghost cache users were seeing. Bytes flow straight
+                    // from the socket into the .part file in filesDir — no detour.
+                    useCaches        = false
+                    defaultUseCaches = false
                     if (existing > 0L) setRequestProperty("Range", "bytes=$existing-")
                 }
                 connection.connect()
@@ -162,6 +170,68 @@ object ModelDownloader {
             File(finalFile.parentFile, finalFile.name + ".part").delete()
             finalFile.delete()
             update(Progress(State.IDLE))
+        }
+    }
+
+    /**
+     * Sweep orphaned download artefacts on app start.
+     *
+     * Scans `cacheDir` and the model directory for `.part`, `.tmp`, `.download`
+     * files left behind by a previous interrupted download or by a transient
+     * HttpResponseCache copy. Pure reclaim — never touches a download that is
+     * currently in flight (guarded by [isBusy]) and never touches the finalised
+     * model binary.
+     *
+     * Run from [MeshService.onCreate] (or any single-shot init point) so the
+     * user reclaims storage every time the app launches.
+     */
+    fun clearTempDownloads(context: Context) {
+        if (isBusy()) return                                // never sweep a live download
+        val appContext = context.applicationContext
+        worker.execute {
+            // Belt-and-braces: if anything ever called HttpResponseCache.install(),
+            // flush + delete it. We never install one ourselves; this catches
+            // transitively-installed caches that might be hoarding the model stream.
+            try {
+                val installed = android.net.http.HttpResponseCache.getInstalled()
+                if (installed != null) {
+                    installed.flush()
+                    installed.delete()
+                }
+            } catch (_: Throwable) { /* no cache installed — fine */ }
+
+            val orphanSuffixes = listOf(".part", ".tmp", ".download")
+            val finalModel     = GemmaClient.modelFile(appContext)
+            val activePart     = File(finalModel.parentFile, finalModel.name + ".part")
+
+            var freed = 0L
+            var swept = 0
+
+            // 1. cacheDir — model bits must NEVER live here. Sweep aggressively.
+            appContext.cacheDir.walkTopDown()
+                .filter { it.isFile }
+                .filter { f -> orphanSuffixes.any { f.name.endsWith(it) } || f.name.endsWith(".litertlm") }
+                .forEach { f ->
+                    val size = f.length()
+                    if (f.delete()) { freed += size; swept++ }
+                }
+
+            // 2. Model directory in filesDir / externalFilesDir — keep the
+            //    finalised model only; sweep stale .part / .tmp / .download.
+            //    Skip the active .part if a download is somehow racing us.
+            finalModel.parentFile?.listFiles()?.forEach { f ->
+                if (!f.isFile) return@forEach
+                if (f.absolutePath == finalModel.absolutePath) return@forEach   // keep model
+                if (f.absolutePath == activePart.absolutePath && isBusy()) return@forEach
+                if (orphanSuffixes.any { f.name.endsWith(it) }) {
+                    val size = f.length()
+                    if (f.delete()) { freed += size; swept++ }
+                }
+            }
+
+            if (swept > 0) {
+                Log.i(TAG, "clearTempDownloads — swept $swept orphan(s), freed ${freed / 1024 / 1024} MB")
+            }
         }
     }
 
