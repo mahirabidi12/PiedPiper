@@ -63,6 +63,10 @@ class ZoneDetailFragment : Fragment() {
             runZoneAnalysis(areaLabel)
         }
 
+        binding.btnResolveZone.setOnClickListener {
+            // TODO: resolve all open signals in this zone
+        }
+
         observeZoneSignals(signalIds)
     }
 

@@ -119,34 +119,65 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- ── Gemma zone analysis button ──────────────────────────────────────── -->
+    <!-- ── Action buttons row ─────────────────────────────────────────────── -->
     <LinearLayout
-        android:id="@+id/btnGemmaZone"
         android:layout_width="match_parent"
         android:layout_height="36dp"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:background="@color/ink_800"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
-        android:layout_marginBottom="8dp"
-        android:clickable="true"
-        android:focusable="true">
-        <View
-            android:id="@+id/aiDotZone"
-            android:layout_width="6dp"
-            android:layout_height="6dp"
-            android:background="@color/ai_ready"
-            android:layout_marginEnd="8dp" />
-        <TextView
-            android:id="@+id/tvGemmaZoneBtnLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:textSize="9sp"
-            android:letterSpacing="0.10"
-            android:textColor="@color/ai_ready"
-            android:text="GEMMA ZONE ANALYSIS" />
+        android:layout_marginBottom="8dp">
+
+        <!-- Gemma Zone Analysis -->
+        <LinearLayout
+            android:id="@+id/btnGemmaZone"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@color/ink_800"
+            android:layout_marginEnd="6dp"
+            android:clickable="true"
+            android:focusable="true">
+            <View
+                android:id="@+id/aiDotZone"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@color/ai_ready"
+                android:layout_marginEnd="8dp" />
+            <TextView
+                android:id="@+id/tvGemmaZoneBtnLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/ai_ready"
+                android:text="GEMMA ZONE ANALYSIS" />
+        </LinearLayout>
+
+        <!-- Resolve All -->
+        <LinearLayout
+            android:id="@+id/btnResolveZone"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_authority"
+            android:clickable="true"
+            android:focusable="true">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/authority"
+                android:text="RESOLVE ALL ZONE" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <View android:layout_width="match_parent" android:layout_height="1dp"
