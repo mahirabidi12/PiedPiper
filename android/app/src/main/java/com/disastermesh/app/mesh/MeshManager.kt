@@ -57,10 +57,10 @@ class MeshManager(
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    fun start() {
+    fun start(initiateConnections: Boolean = true) {
         stopped = false
         startAdvertising()
-        startDiscovery()
+        if (initiateConnections) startDiscovery()
     }
 
     fun stop() {
