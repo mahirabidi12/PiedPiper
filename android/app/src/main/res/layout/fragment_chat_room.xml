@@ -68,6 +68,62 @@
     <View android:layout_width="match_parent" android:layout_height="1dp"
         android:background="@color/border_default" />
 
+    <!-- Pinned broadcast banner — visible only when a broadcast exists -->
+    <LinearLayout
+        android:id="@+id/pinnedBroadcastBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/authority_tint"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡"
+            android:textSize="12sp"
+            android:textColor="@color/authority"
+            android:layout_marginEnd="7dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPinnedSender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="7sp"
+                android:textStyle="bold"
+                android:textColor="@color/authority" />
+
+            <TextView
+                android:id="@+id/tvPinnedText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/text_primary"
+                android:maxLines="2"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📌"
+            android:textSize="10sp"
+            android:layout_marginStart="6dp" />
+    </LinearLayout>
+
     <!-- Message list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMessages"

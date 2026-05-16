@@ -73,6 +73,15 @@ class ChatRoomFragment : Fragment() {
                         b.rvMessages.scrollToPosition(messages.size - 1)
                     }
                 }
+
+                val latestBroadcast = messages.lastOrNull { it.text.startsWith("[BROADCAST") }
+                if (latestBroadcast != null) {
+                    binding.pinnedBroadcastBanner.visibility = View.VISIBLE
+                    binding.tvPinnedSender.text = "${latestBroadcast.senderRole.badge} ${latestBroadcast.senderName}"
+                    binding.tvPinnedText.text   = latestBroadcast.text
+                } else {
+                    binding.pinnedBroadcastBanner.visibility = View.GONE
+                }
             }
         }
     }
