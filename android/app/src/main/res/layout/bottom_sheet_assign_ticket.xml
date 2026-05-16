@@ -83,59 +83,65 @@
                     android:lineSpacingMultiplier="1.4" />
             </LinearLayout>
 
-            <!-- Volunteer picker -->
+            <!-- Volunteer multi-select section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ASSIGN TO"
+                android:text="ASSIGN VOLUNTEERS"
                 android:fontFamily="monospace"
                 android:textSize="8sp"
                 android:letterSpacing="0.14"
                 android:textColor="@color/text_dim"
                 android:layout_marginBottom="8dp" />
 
+            <!-- Dynamic volunteer checkboxes inserted here -->
             <LinearLayout
+                android:id="@+id/containerVolunteers"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_btn_neutral"
+                android:orientation="vertical"
+                android:background="@drawable/bg_terminal_block"
+                android:padding="8dp"
+                android:layout_marginBottom="14dp" />
+
+            <TextView
+                android:id="@+id/tvNoVolunteers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No volunteers online"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/text_dim"
+                android:gravity="center"
+                android:padding="12dp"
+                android:visibility="gone" />
+
+            <!-- Instructions -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TASK INSTRUCTIONS"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:letterSpacing="0.14"
+                android:textColor="@color/text_dim"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etInstructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="72dp"
+                android:gravity="top"
+                android:hint="E.g. Bring 2 medkits, report to sector 4, contact via radio ch. 3"
+                android:inputType="textMultiLine|textCapSentences"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_dim"
+                android:background="@drawable/bg_terminal_block"
                 android:padding="10dp"
-                android:layout_marginBottom="14dp">
-
-                <TextView
-                    android:id="@+id/btnVolPrev"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:gravity="center"
-                    android:text="◀"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_muted"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <TextView
-                    android:id="@+id/tvSelectedVolunteer"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:fontFamily="monospace"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/volunteer" />
-
-                <TextView
-                    android:id="@+id/btnVolNext"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:gravity="center"
-                    android:text="▶"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_muted"
-                    android:clickable="true"
-                    android:focusable="true" />
-            </LinearLayout>
+                android:fontFamily="monospace"
+                android:layout_marginBottom="14dp" />
 
             <!-- Inventory allocation -->
             <TextView
@@ -146,6 +152,17 @@
                 android:textSize="8sp"
                 android:letterSpacing="0.14"
                 android:textColor="@color/text_dim"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvNoInventory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No inventory items available"
+                android:fontFamily="monospace"
+                android:textSize="11sp"
+                android:textColor="@color/text_muted"
+                android:visibility="gone"
                 android:layout_marginBottom="8dp" />
 
             <LinearLayout

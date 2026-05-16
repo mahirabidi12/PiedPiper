@@ -27,7 +27,11 @@ import kotlinx.coroutines.launch
         CriticalPoiEntity::class,
         SafeZoneEntity::class
     ],
+<<<<<<< HEAD
     version = 7,
+=======
+    version = 6,
+>>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -120,6 +124,18 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // v5 → v6: Added multi-volunteer + instructions fields to signals table.
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                listOf(
+                    "ALTER TABLE signals ADD COLUMN instructions TEXT",
+                    "ALTER TABLE signals ADD COLUMN volunteer_ids TEXT",
+                    "ALTER TABLE signals ADD COLUMN volunteer_names TEXT"
+                ).forEach { sql -> try { db.execSQL(sql) } catch (_: Exception) {} }
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_signals_volunteer_ids` ON `signals` (`volunteer_ids`)")
+            }
+        }
+
         // v4 → v5: Added timestamp/tracking columns to inventory and created audit_log table.
         // The ALTER TABLEs are guarded — devices that ran the pre-release v4 build already
         // have these columns and would crash with "duplicate column name" otherwise.
@@ -202,6 +218,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DB_NAME
                 )
+<<<<<<< HEAD
                     .addMigrations(
                         MIGRATION_1_2,
                         MIGRATION_2_3,
@@ -210,6 +227,9 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7
                     )
+=======
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+>>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

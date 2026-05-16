@@ -1,11 +1,13 @@
 package com.disastermesh.app.ui.zone
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.disastermesh.app.R
@@ -17,7 +19,9 @@ import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.model.Signal
 import com.disastermesh.app.model.SignalPriority
 import com.disastermesh.app.model.SignalStatus
+import com.disastermesh.app.ui.AppViewModel
 import com.disastermesh.app.ui.MainActivity
+import com.disastermesh.app.ui.sheet.AssignTicketBottomSheet
 import com.disastermesh.app.ui.sheet.SignalDetailBottomSheet
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
@@ -25,16 +29,57 @@ import kotlinx.coroutines.launch
 
 class ZoneDetailFragment : Fragment() {
 
+    private enum class ZoneFilter { ALL, OPEN, AFFECTED, CRITICAL, FAILED }
+
     private var _binding: FragmentZoneDetailBinding? = null
     private val binding get() = _binding!!
 
-    private var currentSignals: List<Signal> = emptyList()
+    private val appViewModel: AppViewModel by activityViewModels()
+
+    private var allZoneSignals: List<Signal> = emptyList()
+    private var currentFilter = ZoneFilter.ALL
     private var analysing = false
 
     private val signalAdapter = SignalAdapter { signal ->
-        SignalDetailBottomSheet.newInstance(signal) { s, newStatus ->
-            (requireActivity() as MainActivity).meshService?.updateSignalStatus(s.id, newStatus)
-        }.show(childFragmentManager, "signal_detail")
+        val svc = (requireActivity() as MainActivity).meshService ?: return@SignalAdapter
+
+        when (signal.status) {
+            SignalStatus.NEW, SignalStatus.ACKNOWLEDGED, SignalStatus.QUEUED -> {
+                AssignTicketBottomSheet.newInstance(signal) { volunteerIds, volunteerNames, inventoryJson, instructions ->
+                    svc.assignSignalToVolunteers(
+                        signalId       = signal.id,
+                        volunteerIds   = volunteerIds,
+                        volunteerNames = volunteerNames,
+                        inventoryJson  = inventoryJson,
+                        instructions   = instructions
+                    )
+                }.show(childFragmentManager, "assign_ticket")
+            }
+            SignalStatus.ASSIGNED, SignalStatus.ACCEPTED,
+            SignalStatus.WAITING_FOR_INVENTORY, SignalStatus.ON_HOLD,
+            SignalStatus.IN_PROGRESS -> {
+                SignalDetailBottomSheet.newInstance(
+                    signal = signal,
+                    onAction = { s: Signal, action: SignalDetailBottomSheet.TicketAction ->
+                        when (action) {
+                            SignalDetailBottomSheet.TicketAction.RESOLVE     -> svc.resolveTicket(s.id)
+                            SignalDetailBottomSheet.TicketAction.CANCEL      -> svc.cancelTicket(s.id)
+                            SignalDetailBottomSheet.TicketAction.FAIL        -> svc.failTicket(s.id)
+                            SignalDetailBottomSheet.TicketAction.ACKNOWLEDGE -> svc.updateSignalStatus(s.id, SignalStatus.ACKNOWLEDGED)
+                            SignalDetailBottomSheet.TicketAction.IN_ROUTE    -> svc.updateSignalStatus(s.id, SignalStatus.IN_PROGRESS)
+                            else -> {}
+                        }
+                    }
+                ).show(childFragmentManager, "signal_detail")
+            }
+            SignalStatus.RESOLVED, SignalStatus.EXPIRED,
+            SignalStatus.REJECTED, SignalStatus.CANCELLED, SignalStatus.FAILED -> {
+                SignalDetailBottomSheet.newInstance(
+                    signal = signal,
+                    onAction = { _: Signal, _: SignalDetailBottomSheet.TicketAction -> }
+                ).show(childFragmentManager, "signal_detail_terminal")
+            }
+        }
     }
 
     override fun onCreateView(
@@ -63,7 +108,57 @@ class ZoneDetailFragment : Fragment() {
             runZoneAnalysis(areaLabel)
         }
 
+        binding.btnResolveZone.setOnClickListener {
+            // TODO: resolve all open signals in this zone
+        }
+
+        // Stat tile click → filter
+        binding.statTotal.setOnClickListener    { setFilter(ZoneFilter.ALL) }
+        binding.statOpen.setOnClickListener     { setFilter(ZoneFilter.OPEN) }
+        binding.statAffected.setOnClickListener { setFilter(ZoneFilter.AFFECTED) }
+        binding.statCritical.setOnClickListener { setFilter(ZoneFilter.CRITICAL) }
+        binding.statFailed.setOnClickListener   { setFilter(ZoneFilter.FAILED) }
+
         observeZoneSignals(signalIds)
+    }
+
+    private fun setFilter(filter: ZoneFilter) {
+        currentFilter = filter
+        applyFilter()
+        updateFilterHighlight()
+    }
+
+    private fun applyFilter() {
+        val filtered = when (currentFilter) {
+            ZoneFilter.ALL      -> allZoneSignals
+            ZoneFilter.OPEN     -> allZoneSignals.filter { !it.status.isTerminal }
+            ZoneFilter.AFFECTED -> allZoneSignals.filter { (it.peopleCount ?: 0) > 0 }
+            ZoneFilter.CRITICAL -> allZoneSignals.filter { it.priority == SignalPriority.CRITICAL }
+            ZoneFilter.FAILED   -> allZoneSignals.filter {
+                it.status == SignalStatus.FAILED ||
+                it.status == SignalStatus.REJECTED ||
+                it.status == SignalStatus.CANCELLED
+            }
+        }
+        signalAdapter.submitList(filtered)
+        val label = when (currentFilter) {
+            ZoneFilter.ALL      -> "${filtered.size} SIGNAL${if (filtered.size != 1) "S" else ""} IN THIS AREA"
+            ZoneFilter.OPEN     -> "${filtered.size} OPEN SIGNAL${if (filtered.size != 1) "S" else ""}"
+            ZoneFilter.AFFECTED -> "${filtered.size} SIGNAL${if (filtered.size != 1) "S" else ""} WITH AFFECTED PEOPLE"
+            ZoneFilter.CRITICAL -> "${filtered.size} CRITICAL SIGNAL${if (filtered.size != 1) "S" else ""}"
+            ZoneFilter.FAILED   -> "${filtered.size} FAILED/CANCELLED SIGNAL${if (filtered.size != 1) "S" else ""}"
+        }
+        binding.tvZoneSignalCount.text = label
+    }
+
+    private fun updateFilterHighlight() {
+        val activeColor   = requireContext().getColor(R.color.authority_tint)
+        val inactiveColor = Color.TRANSPARENT
+        binding.statTotal.setBackgroundColor(    if (currentFilter == ZoneFilter.ALL)      activeColor else inactiveColor)
+        binding.statOpen.setBackgroundColor(     if (currentFilter == ZoneFilter.OPEN)     activeColor else inactiveColor)
+        binding.statAffected.setBackgroundColor( if (currentFilter == ZoneFilter.AFFECTED) activeColor else inactiveColor)
+        binding.statCritical.setBackgroundColor( if (currentFilter == ZoneFilter.CRITICAL) activeColor else inactiveColor)
+        binding.statFailed.setBackgroundColor(   if (currentFilter == ZoneFilter.FAILED)   activeColor else inactiveColor)
     }
 
     private fun runZoneAnalysis(areaLabel: String) {
@@ -76,9 +171,7 @@ class ZoneDetailFragment : Fragment() {
             return
         }
 
-        val active = currentSignals.filter {
-            it.status != SignalStatus.RESOLVED && it.status != SignalStatus.EXPIRED
-        }
+        val active = allZoneSignals.filter { !it.status.isTerminal }
         if (active.isEmpty()) {
             Toast.makeText(requireContext(), "No active signals to analyse.", Toast.LENGTH_SHORT).show()
             return
@@ -87,7 +180,7 @@ class ZoneDetailFragment : Fragment() {
         setBtnState(loading = true)
 
         GemmaClient.generate(
-            prompt            = PromptTemplates.zoneAnalysis(areaLabel, currentSignals),
+            prompt            = PromptTemplates.zoneAnalysis(areaLabel, allZoneSignals),
             systemInstruction = PromptTemplates.ZONE_ANALYSIS_SYSTEM_INSTRUCTION,
             onResult          = { result ->
                 if (!isAdded || _binding == null) return@generate
@@ -130,19 +223,24 @@ class ZoneDetailFragment : Fragment() {
                         }
                     })
             }.collectLatest { signals ->
-                currentSignals = signals
-                signalAdapter.submitList(signals)
+                allZoneSignals = signals
 
-                val open     = signals.count { it.status != SignalStatus.RESOLVED && it.status != SignalStatus.EXPIRED }
+                val open     = signals.count { !it.status.isTerminal }
                 val affected = signals.mapNotNull { it.peopleCount }.sum()
                 val critical = signals.count { it.priority == SignalPriority.CRITICAL }
+                val failed   = signals.count {
+                    it.status == SignalStatus.FAILED ||
+                    it.status == SignalStatus.REJECTED ||
+                    it.status == SignalStatus.CANCELLED
+                }
 
                 binding.tvZoneStatTotal.text    = signals.size.toString()
                 binding.tvZoneStatOpen.text     = open.toString()
                 binding.tvZoneStatAffected.text = if (affected > 0) affected.toString() else "—"
                 binding.tvZoneStatCritical.text = critical.toString()
-                binding.tvZoneSignalCount.text  =
-                    "${signals.size} SIGNAL${if (signals.size != 1) "S" else ""} IN THIS AREA"
+                binding.tvZoneStatFailed.text   = failed.toString()
+
+                applyFilter()
             }
         }
     }

@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.notification.SignalNotificationManager
+import com.disastermesh.app.notification.TicketNotificationManager
 
 class DisasterMeshApp : Application() {
 
@@ -12,6 +13,7 @@ class DisasterMeshApp : Application() {
     override fun onCreate() {
         super.onCreate()
         SignalNotificationManager.createChannel(this)
+        TicketNotificationManager.createChannel(this)
         Log.d("DisasterMeshApp", "App started")
     }
 }

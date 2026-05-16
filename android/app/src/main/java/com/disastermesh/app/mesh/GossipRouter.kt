@@ -35,17 +35,17 @@ class GossipRouter(
     private val onSignalReceived: (Signal) -> Unit,
     private val onChatReceived: (ChatMessage) -> Unit,
     private val onPeerUpdated: (Peer) -> Unit,
+<<<<<<< HEAD
     private val onCriticalPoiUpdated: (CriticalPoiEntity) -> Unit
+=======
+    private val onTicketAssigned: ((Signal) -> Unit)? = null
+>>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
 ) : MeshManager.MeshCallbacks {
 
     companion object {
         private const val TAG = "GossipRouter"
         private const val DEFAULT_TTL = 8
-        // Prune seen_packets older than 24 h to prevent unbounded growth
         private const val SEEN_PRUNE_MS = 24 * 60 * 60 * 1000L
-        // Store-and-forward window: only replay recent messages to reconnecting
-        // peers. Stops a backlog of stale rows from flooding the mesh on every
-        // reconnect cycle.
         private const val SYNC_WINDOW_MS = 6 * 60 * 60 * 1000L
     }
 
@@ -67,9 +67,9 @@ class GossipRouter(
         scope.launch(Dispatchers.IO) {
             Log.d(TAG, "Peer connected: $endpointId ($endpointName)")
             sendHello(endpointId)
-            sendInventorySync(endpointId)   // inventory first — immediately visible on reconnect
+            sendInventorySync(endpointId)
             sendStoreAndForward(endpointId)
-            flushQueuedSignals()   // promote any QUEUED → NEW and re-broadcast
+            flushQueuedSignals()
         }
     }
 
@@ -87,36 +87,31 @@ class GossipRouter(
     // ── Core routing ──────────────────────────────────────────────────────────
 
     private suspend fun routeIncoming(packet: MeshPacket, fromEndpointId: String) {
-        // 1. Dedup
         if (db.seenPacketDao().isSeen(packet.id)) {
             Log.d(TAG, "Duplicate dropped: ${packet.id}")
             return
         }
-        // 2. TTL check
         if (packet.hopCount >= packet.ttl) {
             Log.d(TAG, "TTL expired: ${packet.id} hop=${packet.hopCount} ttl=${packet.ttl}")
             return
         }
 
-        // 3. Mark seen
         db.seenPacketDao().markSeen(
             SeenPacketEntity(packet.id, packet.type.name, packet.originNodeId, System.currentTimeMillis())
         )
 
-        // 4. Persist + notify UI
         persistAndNotify(packet, fromEndpointId)
 
-        // 5. Relay (hop + 1)
         val relay = packet.copy(hopCount = packet.hopCount + 1)
         val bytes = relay.toJson().toByteArray(Charsets.UTF_8)
         meshManager.broadcast(bytes, excludeEndpointId = fromEndpointId)
 
-        // Prune seen table occasionally
         db.seenPacketDao().pruneOlderThan(System.currentTimeMillis() - SEEN_PRUNE_MS)
     }
 
     private suspend fun persistAndNotify(packet: MeshPacket, fromEndpointId: String) {
         when (packet.type) {
+<<<<<<< HEAD
             MeshPacket.PacketType.HELLO            -> handleHello(packet, fromEndpointId)
             MeshPacket.PacketType.SIGNAL           -> handleSignal(packet)
             MeshPacket.PacketType.SIGNAL_UPDATE    -> handleSignalUpdate(packet)
@@ -126,6 +121,16 @@ class GossipRouter(
             MeshPacket.PacketType.INVENTORY_SYNC   -> handleInventorySync(packet)
             MeshPacket.PacketType.CRITICAL_POI_UPDATE -> handleCriticalPoiUpdate(packet)
             MeshPacket.PacketType.SAFE_ZONE_UPDATE -> handleSafeZoneUpdate(packet)
+=======
+            MeshPacket.PacketType.HELLO             -> handleHello(packet, fromEndpointId)
+            MeshPacket.PacketType.SIGNAL            -> handleSignal(packet)
+            MeshPacket.PacketType.SIGNAL_UPDATE     -> handleSignalUpdate(packet)
+            MeshPacket.PacketType.TICKET_ASSIGNMENT -> handleTicketAssignment(packet)
+            MeshPacket.PacketType.CHAT              -> handleChat(packet)
+            MeshPacket.PacketType.DM                -> handleDm(packet)
+            MeshPacket.PacketType.INVENTORY_UPDATE  -> handleInventoryUpdate(packet)
+            MeshPacket.PacketType.INVENTORY_SYNC    -> handleInventorySync(packet)
+>>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
         }
     }
 
@@ -157,22 +162,26 @@ class GossipRouter(
         val p = JSONObject(packet.payload)
         val now = System.currentTimeMillis()
         val entity = SignalEntity(
-            id             = p.getString("signalId"),
-            senderNodeId   = packet.originNodeId,
-            senderName     = packet.originName,
-            senderRole     = packet.originRole,
-            category       = p.optString("category", "INFO"),
-            priority       = p.optString("priority", "NORMAL"),
-            message        = p.getString("message"),
-            peopleCount    = if (p.has("peopleCount")) p.getInt("peopleCount") else null,
-            latitude       = if (p.has("latitude")) p.getDouble("latitude") else null,
-            longitude      = if (p.has("longitude")) p.getDouble("longitude") else null,
-            manualLocation = null,
-            status         = p.optString("status", "NEW"),
-            ttl            = packet.ttl,
-            hopCount       = packet.hopCount,
-            createdAt      = packet.sentAt,
-            updatedAt      = now
+            id               = p.getString("signalId"),
+            senderNodeId     = packet.originNodeId,
+            senderName       = packet.originName,
+            senderRole       = packet.originRole,
+            category         = p.optString("category", "INFO"),
+            priority         = p.optString("priority", "NORMAL"),
+            message          = p.getString("message"),
+            peopleCount      = if (p.has("peopleCount")) p.getInt("peopleCount") else null,
+            latitude         = if (p.has("latitude")) p.getDouble("latitude") else null,
+            longitude        = if (p.has("longitude")) p.getDouble("longitude") else null,
+            manualLocation   = null,
+            status           = p.optString("status", "NEW"),
+            ttl              = packet.ttl,
+            hopCount         = packet.hopCount,
+            createdAt        = packet.sentAt,
+            updatedAt        = now,
+            instructions     = p.optString("instructions", null),
+            volunteerIds     = p.optString("volunteerIds", null),
+            volunteerNames   = p.optString("volunteerNames", null),
+            inventoryAllocated = p.optString("inventoryAllocated", null)
         )
         db.signalDao().upsert(entity)
         withContext(Dispatchers.Main) {
@@ -182,19 +191,99 @@ class GossipRouter(
             message   = "Signal [${entity.category}] from ${packet.originName}",
             createdAt = now
         ))
-        // Enqueue for Gemma classification (no-op if model not ready yet)
         SignalProcessor.enqueue(application, entity.id)
     }
 
     private suspend fun handleSignalUpdate(packet: MeshPacket) {
-        val p        = JSONObject(packet.payload)
-        val signalId = p.getString("signalId")
-        val status   = p.getString("status")
-        db.signalDao().updateStatus(signalId, status, System.currentTimeMillis())
+        val p         = JSONObject(packet.payload)
+        val signalId  = p.getString("signalId")
+        val status    = p.getString("status")
+        val updatedAt = p.optLong("updatedAt", System.currentTimeMillis())
+
+        val existing = db.signalDao().getById(signalId)
+        if (existing != null && updatedAt < existing.updatedAt) {
+            Log.d(TAG, "SIGNAL_UPDATE stale — dropping (incoming=$updatedAt existing=${existing.updatedAt})")
+            return
+        }
+
+        db.signalDao().updateStatus(signalId, status, updatedAt)
+
+        val actorNodeId = p.optString("actorNodeId", packet.originNodeId)
+        db.auditLogDao().insert(
+            AuditLogEntity(
+                id          = packet.id,
+                entityType  = "TICKET",
+                entityId    = signalId,
+                entityLabel = "Signal $signalId",
+                action      = "STATUS_CHANGE",
+                actorNodeId = actorNodeId,
+                actorName   = packet.originName,
+                detail      = "Status → $status",
+                createdAt   = updatedAt
+            )
+        )
         db.syncLogDao().insert(SyncLogEntity(
-            message   = "Signal [$status] updated by ${packet.originName}",
-            createdAt = System.currentTimeMillis()
+            message   = "Ticket [$status] by ${packet.originName}",
+            createdAt = updatedAt
         ))
+    }
+
+    private suspend fun handleTicketAssignment(packet: MeshPacket) {
+        val p          = JSONObject(packet.payload)
+        val signalId   = p.getString("signalId")
+        val updatedAt  = p.optLong("updatedAt", System.currentTimeMillis())
+
+        val existing = db.signalDao().getById(signalId)
+        if (existing != null && updatedAt < existing.updatedAt) {
+            Log.d(TAG, "TICKET_ASSIGNMENT stale — dropping")
+            return
+        }
+
+        val volunteerIdsJson    = p.optString("volunteerIds", "[]")
+        val volunteerNamesJson  = p.optString("volunteerNames", "[]")
+        val primaryVolunteerId  = p.optString("primaryVolunteerId", "")
+        val primaryVolunteerName = p.optString("primaryVolunteerName", "")
+        val inventoryJson       = p.optString("inventoryJson", "{}")
+        val instructions        = p.optString("instructions", "")
+        val status              = p.optString("status", "ASSIGNED")
+
+        db.signalDao().updateAssignment(
+            id                   = signalId,
+            primaryVolunteerId   = primaryVolunteerId,
+            primaryVolunteerName = primaryVolunteerName,
+            volunteerIdsJson     = volunteerIdsJson,
+            volunteerNamesJson   = volunteerNamesJson,
+            inventoryJson        = inventoryJson,
+            instructions         = instructions,
+            status               = status,
+            now                  = updatedAt
+        )
+
+        db.auditLogDao().insert(
+            AuditLogEntity(
+                id          = packet.id,
+                entityType  = "TICKET",
+                entityId    = signalId,
+                entityLabel = "Signal $signalId",
+                action      = "ASSIGNED",
+                actorNodeId = packet.originNodeId,
+                actorName   = packet.originName,
+                detail      = "Assigned to $volunteerNamesJson with inventory $inventoryJson",
+                createdAt   = updatedAt
+            )
+        )
+        db.syncLogDao().insert(SyncLogEntity(
+            message   = "Ticket assigned by ${packet.originName}",
+            createdAt = updatedAt
+        ))
+
+        // Notify this volunteer if they're one of the assignees
+        val updated = db.signalDao().getById(signalId)
+        if (updated != null && volunteerIdsJson.contains("\"$localNodeId\"")) {
+            withContext(Dispatchers.Main) {
+                onTicketAssigned?.invoke(updated.toDomain())
+            }
+        }
     }
 
     private suspend fun handleChat(packet: MeshPacket) {
@@ -203,12 +292,6 @@ class GossipRouter(
         val text   = p.getString("text")
         val sender = packet.originNodeId
 
-        // Safety net: drop content duplicates even when the packet id is new.
-        // The primary dedup is packet.id at routeIncoming / DAO PrimaryKey, but
-        // any path that ever issues a fresh id for an existing logical message
-        // (as the old buggy store-and-forward did) would slip past id-based
-        // dedup. This second check guarantees the UI never sees the same
-        // (sender, room, text) tuple twice.
         if (db.chatMessageDao().existsByContent(sender, roomId, text)) {
             Log.d(TAG, "Content duplicate dropped: from=$sender room=$roomId")
             return
@@ -236,7 +319,6 @@ class GossipRouter(
     private suspend fun handleDm(packet: MeshPacket) {
         val p = JSONObject(packet.payload)
         val recipientNodeId = p.getString("recipientNodeId")
-        // Only store if this device is the sender or the recipient
         if (recipientNodeId != localNodeId && packet.originNodeId != localNodeId) return
         val threadId = dmThreadId(packet.originNodeId, recipientNodeId)
         val entity = DirectMessageEntity(
@@ -308,6 +390,7 @@ class GossipRouter(
         payload      = payload
     )
 
+<<<<<<< HEAD
     private fun buildCriticalPoiPacket(
         poiId: String,
         name: String,
@@ -339,13 +422,11 @@ class GossipRouter(
     )
 
     /** Broadcast a CHAT message and also persist locally. */
+=======
+>>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     fun sendChat(roomId: String, text: String) {
-        val packet = buildPacket(
-            MeshPacket.PacketType.CHAT,
-            MeshPacket.chatPayload(roomId, text)
-        )
+        val packet = buildPacket(MeshPacket.PacketType.CHAT, MeshPacket.chatPayload(roomId, text))
         scope.launch(Dispatchers.IO) {
-            // Persist our own message
             val entity = ChatMessageEntity(
                 id           = packet.id,
                 roomId       = roomId,
@@ -361,27 +442,27 @@ class GossipRouter(
             db.seenPacketDao().markSeen(
                 SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
             )
-            // Broadcast AFTER markSeen — otherwise a peer can echo this packet
-            // back via gossip relay before our seen_packets row exists, and we
-            // would re-process and re-relay our own message.
             meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
             Log.d(TAG, "Sent CHAT → $roomId")
         }
     }
 
-    /** Broadcast a SIGNAL and also persist locally. */
     fun sendSignal(signal: Signal) {
         val packet = buildPacket(
             MeshPacket.PacketType.SIGNAL,
             MeshPacket.signalPayload(
-                signalId    = signal.id,
-                category    = signal.category.name,
-                priority    = signal.priority.name,
-                message     = signal.message,
-                peopleCount = signal.peopleCount,
-                latitude    = signal.latitude,
-                longitude   = signal.longitude,
-                status      = signal.status.name
+                signalId           = signal.id,
+                category           = signal.category.name,
+                priority           = signal.priority.name,
+                message            = signal.message,
+                peopleCount        = signal.peopleCount,
+                latitude           = signal.latitude,
+                longitude          = signal.longitude,
+                status             = signal.status.name,
+                instructions       = signal.instructions,
+                volunteerIds       = signal.volunteerIds,
+                volunteerNames     = signal.volunteerNames,
+                inventoryAllocated = signal.inventoryAllocated
             )
         )
         scope.launch(Dispatchers.IO) {
@@ -399,26 +480,41 @@ class GossipRouter(
         }
     }
 
-    /** Update a signal's status locally and broadcast a SIGNAL_UPDATE to all peers. */
+    /** Simple status update (accept / reject / in-progress / resolve / cancel). */
     fun sendSignalUpdate(signalId: String, newStatus: String) {
+        val now    = System.currentTimeMillis()
         val packet = buildPacket(
             MeshPacket.PacketType.SIGNAL_UPDATE,
-            MeshPacket.signalUpdatePayload(signalId, newStatus)
+            MeshPacket.signalUpdatePayload(signalId, newStatus, now, localNodeId)
         )
         scope.launch(Dispatchers.IO) {
-            db.signalDao().updateStatus(signalId, newStatus, System.currentTimeMillis())
+            db.signalDao().updateStatus(signalId, newStatus, now)
             db.seenPacketDao().markSeen(
                 SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
             )
+            db.auditLogDao().insert(
+                AuditLogEntity(
+                    id          = packet.id,
+                    entityType  = "TICKET",
+                    entityId    = signalId,
+                    entityLabel = "Signal $signalId",
+                    action      = "STATUS_CHANGE",
+                    actorNodeId = localNodeId,
+                    actorName   = localName,
+                    detail      = "Status → $newStatus",
+                    createdAt   = now
+                )
+            )
             db.syncLogDao().insert(SyncLogEntity(
-                message   = "Signal update [$newStatus] sent",
-                createdAt = packet.sentAt
+                message   = "Ticket [$newStatus] sent",
+                createdAt = now
             ))
             meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
             Log.d(TAG, "Sent SIGNAL_UPDATE: $signalId → $newStatus")
         }
     }
 
+<<<<<<< HEAD
     fun sendCriticalPoiUpdate(
         poiId: String,
         name: String,
@@ -518,6 +614,72 @@ class GossipRouter(
             meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
             Log.d(TAG, "Sent SAFE_ZONE_UPDATE: $zoneId")
         }
+=======
+    /**
+     * Full ticket assignment — broadcast by authority when assigning volunteers.
+     * Receivers update the complete assignment state (volunteers, inventory, instructions).
+     */
+    fun sendTicketAssignment(
+        signalId: String,
+        volunteerIdsJson: String,
+        volunteerNamesJson: String,
+        primaryVolunteerId: String,
+        primaryVolunteerName: String,
+        inventoryJson: String,
+        instructions: String,
+        status: String
+    ) {
+        val now    = System.currentTimeMillis()
+        val packet = buildPacket(
+            MeshPacket.PacketType.TICKET_ASSIGNMENT,
+            MeshPacket.ticketAssignmentPayload(
+                signalId             = signalId,
+                volunteerIdsJson     = volunteerIdsJson,
+                volunteerNamesJson   = volunteerNamesJson,
+                primaryVolunteerId   = primaryVolunteerId,
+                primaryVolunteerName = primaryVolunteerName,
+                inventoryJson        = inventoryJson,
+                instructions         = instructions,
+                status               = status,
+                updatedAt            = now
+            )
+        )
+        scope.launch(Dispatchers.IO) {
+            db.signalDao().updateAssignment(
+                id                   = signalId,
+                primaryVolunteerId   = primaryVolunteerId,
+                primaryVolunteerName = primaryVolunteerName,
+                volunteerIdsJson     = volunteerIdsJson,
+                volunteerNamesJson   = volunteerNamesJson,
+                inventoryJson        = inventoryJson,
+                instructions         = instructions,
+                status               = status,
+                now                  = now
+            )
+            db.seenPacketDao().markSeen(
+                SeenPacketEntity(packet.id, packet.type.name, localNodeId, now)
+            )
+            db.auditLogDao().insert(
+                AuditLogEntity(
+                    id          = packet.id,
+                    entityType  = "TICKET",
+                    entityId    = signalId,
+                    entityLabel = "Signal $signalId",
+                    action      = "ASSIGNED",
+                    actorNodeId = localNodeId,
+                    actorName   = localName,
+                    detail      = "Assigned to $volunteerNamesJson with inventory $inventoryJson",
+                    createdAt   = now
+                )
+            )
+            db.syncLogDao().insert(SyncLogEntity(
+                message   = "Ticket assigned to $volunteerNamesJson",
+                createdAt = now
+            ))
+        }
+        meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+        Log.d(TAG, "Sent TICKET_ASSIGNMENT: $signalId → volunteers=$volunteerIdsJson")
+>>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     }
 
     // ── Store-and-forward ─────────────────────────────────────────────────────
@@ -552,10 +714,6 @@ class GossipRouter(
 
     private suspend fun sendStoreAndForward(toEndpointId: String) {
         val signals  = db.signalDao().getAllForSync()
-        // Bounded window: replay only recent chat history. Sending the entire
-        // un-expired backlog on every reconnect was the second source of the
-        // flood — once a peer accumulates thousands of rows, every reconnect
-        // re-sends all of them.
         val sinceMs  = System.currentTimeMillis() - SYNC_WINDOW_MS
         val messages = db.chatMessageDao().getRecentForSync(sinceMs)
         val poiUpdates = db.criticalPoiDao().getUpdatedSince(sinceMs)
@@ -563,17 +721,9 @@ class GossipRouter(
         val total    = signals.size + messages.size + poiUpdates.size + safeZones.size
         if (total == 0) return
 
-        Log.d(TAG, "Store-and-forward: $total records (chat window=${SYNC_WINDOW_MS / 3_600_000}h) → $toEndpointId")
+        Log.d(TAG, "Store-and-forward: $total records → $toEndpointId")
 
-        // CRITICAL: forwarded packets MUST reuse the original id / sender / sentAt.
-        // buildPacket() mints a new UUID and overwrites the origin fields with the
-        // local node — using it here makes every reconnection look like a brand-new
-        // message to receiving peers, defeating dedup at the seen-packet table and
-        // the chat-message DAO (both keyed on packet.id == message id). The result
-        // was an unbounded multiplication of chat rows on every reconnect.
         signals.forEach { s ->
-            // Never forward a QUEUED signal to peers — it hasn't been confirmed live yet.
-            // flushQueuedSignals() handles promoting and broadcasting those separately.
             if (s.status == "QUEUED") return@forEach
             val packet = MeshPacket(
                 id           = s.id,
@@ -585,14 +735,18 @@ class GossipRouter(
                 originName   = s.senderName,
                 sentAt       = s.createdAt,
                 payload      = MeshPacket.signalPayload(
-                    signalId    = s.id,
-                    category    = s.category,
-                    priority    = s.priority,
-                    message     = s.message,
-                    peopleCount = s.peopleCount,
-                    latitude    = s.latitude,
-                    longitude   = s.longitude,
-                    status      = s.status
+                    signalId           = s.id,
+                    category           = s.category,
+                    priority           = s.priority,
+                    message            = s.message,
+                    peopleCount        = s.peopleCount,
+                    latitude           = s.latitude,
+                    longitude          = s.longitude,
+                    status             = s.status,
+                    instructions       = s.instructions,
+                    volunteerIds       = s.volunteerIds,
+                    volunteerNames     = s.volunteerNames,
+                    inventoryAllocated = s.inventoryAllocated
                 )
             )
             meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
@@ -669,18 +823,12 @@ class GossipRouter(
     }
 
     fun sendDm(recipientNodeId: String, text: String) {
-        val packet = buildPacket(
-            MeshPacket.PacketType.DM,
-            MeshPacket.dmPayload(recipientNodeId, text)
-        )
+        val packet = buildPacket(MeshPacket.PacketType.DM, MeshPacket.dmPayload(recipientNodeId, text))
         scope.launch(Dispatchers.IO) {
-            // Resolve a direct, 1-hop endpoint for the recipient.
-            // Multi-hop DMs are not supported: broadcasting plaintext DM content
-            // to every mesh peer violates message confidentiality.
             val peer = db.peerDao().getByNodeId(recipientNodeId)
             val endpointId = peer?.endpointId
             if (peer == null || peer.connectionState != "CONNECTED" || endpointId == null) {
-                Log.w(TAG, "DM dropped — $recipientNodeId has no direct endpoint. Multi-hop DMs are not supported.")
+                Log.w(TAG, "DM dropped — $recipientNodeId has no direct endpoint.")
                 return@launch
             }
 
@@ -731,7 +879,7 @@ class GossipRouter(
             else     -> "Updated"
         }
         db.auditLogDao().insert(
-            com.disastermesh.app.db.entities.AuditLogEntity(
+            AuditLogEntity(
                 id          = packet.id,
                 entityType  = "INVENTORY",
                 entityId    = key,
@@ -744,7 +892,7 @@ class GossipRouter(
             )
         )
         db.syncLogDao().insert(
-            com.disastermesh.app.db.entities.SyncLogEntity(
+            SyncLogEntity(
                 message   = "Inventory [$action] ${entity.label} by ${packet.originName}",
                 createdAt = now
             )
@@ -771,15 +919,13 @@ class GossipRouter(
         }
         if (arr.length() > 0) {
             db.syncLogDao().insert(
-                com.disastermesh.app.db.entities.SyncLogEntity(
+                SyncLogEntity(
                     message   = "Inventory sync from ${packet.originName}: ${arr.length()} items",
                     createdAt = now
                 )
             )
         }
     }
-
-    // ── Inventory outgoing ────────────────────────────────────────────────────
 
     fun sendInventoryUpdate(
         key: String, label: String, unit: String, count: Int,
@@ -803,10 +949,10 @@ class GossipRouter(
         )
         scope.launch(Dispatchers.IO) {
             db.seenPacketDao().markSeen(
-                com.disastermesh.app.db.entities.SeenPacketEntity(packet.id, packet.type.name, localNodeId, now)
+                SeenPacketEntity(packet.id, packet.type.name, localNodeId, now)
             )
             db.auditLogDao().insert(
-                com.disastermesh.app.db.entities.AuditLogEntity(
+                AuditLogEntity(
                     id          = packet.id,
                     entityType  = "INVENTORY",
                     entityId    = key,
@@ -848,7 +994,7 @@ class GossipRouter(
             MeshPacket.inventorySyncPayload(snapshots)
         )
         db.seenPacketDao().markSeen(
-            com.disastermesh.app.db.entities.SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
+            SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
         )
         meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
         Log.d(TAG, "Sent INVENTORY_SYNC to $toEndpointId: ${snapshots.size} items")
