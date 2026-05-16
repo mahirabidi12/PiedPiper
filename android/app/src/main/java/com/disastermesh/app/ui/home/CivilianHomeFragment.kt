@@ -54,17 +54,9 @@ class CivilianHomeFragment : Fragment() {
         binding.rvMySignals.layoutManager = LinearLayoutManager(requireContext())
         binding.rvMySignals.adapter = signalAdapter
 
-        setupQuickChips()
         binding.btnRaiseSignal.setOnClickListener { openCompose(null) }
         observeAiStatus()
         observeSignals()
-    }
-
-    private fun setupQuickChips() {
-        binding.chipSos.setOnClickListener      { openCompose("SOS — I need immediate rescue") }
-        binding.chipMedical.setOnClickListener  { openCompose("Medical emergency — ") }
-        binding.chipRescue.setOnClickListener   { openCompose("Rescue needed — ") }
-        binding.chipSupplies.setOnClickListener { openCompose("Need supplies — ") }
     }
 
     private fun openCompose(prefill: String?) {
