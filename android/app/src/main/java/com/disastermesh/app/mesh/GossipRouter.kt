@@ -34,7 +34,8 @@ class GossipRouter(
     private val application: Application,
     private val onSignalReceived: (Signal) -> Unit,
     private val onChatReceived: (ChatMessage) -> Unit,
-    private val onPeerUpdated: (Peer) -> Unit
+    private val onPeerUpdated: (Peer) -> Unit,
+    private val onCriticalPoiUpdated: (CriticalPoiEntity) -> Unit
 ) : MeshManager.MeshCallbacks {
 
     companion object {
@@ -123,6 +124,8 @@ class GossipRouter(
             MeshPacket.PacketType.DM               -> handleDm(packet)
             MeshPacket.PacketType.INVENTORY_UPDATE -> handleInventoryUpdate(packet)
             MeshPacket.PacketType.INVENTORY_SYNC   -> handleInventorySync(packet)
+            MeshPacket.PacketType.CRITICAL_POI_UPDATE -> handleCriticalPoiUpdate(packet)
+            MeshPacket.PacketType.SAFE_ZONE_UPDATE -> handleSafeZoneUpdate(packet)
         }
     }
 
@@ -248,6 +251,49 @@ class GossipRouter(
         db.directMessageDao().insertIfNew(entity)
     }
 
+    private suspend fun handleCriticalPoiUpdate(packet: MeshPacket) {
+        val p = JSONObject(packet.payload)
+        val entity = CriticalPoiEntity(
+            id = p.getString("poiId"),
+            name = p.optString("name", "Unnamed"),
+            amenityType = p.getString("amenityType"),
+            latitude = p.getDouble("latitude"),
+            longitude = p.getDouble("longitude"),
+            isVerified = p.optBoolean("isVerified", false),
+            operationalStatus = p.optString("status", "OPERATIONAL"),
+            updatedAt = p.optLong("updatedAt", packet.sentAt)
+        )
+        db.criticalPoiDao().upsertIfNewer(entity)
+        db.syncLogDao().insert(
+            SyncLogEntity(
+                message = "Critical POI [${entity.operationalStatus}] ${entity.name} by ${packet.originName}",
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        withContext(Dispatchers.Main) {
+            onCriticalPoiUpdated(entity)
+        }
+    }
+
+    private suspend fun handleSafeZoneUpdate(packet: MeshPacket) {
+        val p = JSONObject(packet.payload)
+        val entity = SafeZoneEntity(
+            id = p.getString("zoneId"),
+            name = p.optString("name", "Safe Zone"),
+            latitude = p.getDouble("latitude"),
+            longitude = p.getDouble("longitude"),
+            radiusMeters = p.optInt("radiusMeters", 150),
+            createdAt = p.optLong("createdAt", packet.sentAt)
+        )
+        db.safeZoneDao().upsertIfNewer(entity)
+        db.syncLogDao().insert(
+            SyncLogEntity(
+                message = "Safe Zone synced: ${entity.name} (${entity.radiusMeters}m)",
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     // ── Outgoing helpers ──────────────────────────────────────────────────────
 
     private fun buildPacket(type: MeshPacket.PacketType, payload: String) = MeshPacket(
@@ -260,6 +306,36 @@ class GossipRouter(
         originName   = localName,
         sentAt       = System.currentTimeMillis(),
         payload      = payload
+    )
+
+    private fun buildCriticalPoiPacket(
+        poiId: String,
+        name: String,
+        amenityType: String,
+        latitude: Double,
+        longitude: Double,
+        status: String,
+        isVerified: Boolean,
+        updatedAt: Long
+    ) = MeshPacket(
+        id = "poi-$poiId-$updatedAt",
+        type = MeshPacket.PacketType.CRITICAL_POI_UPDATE,
+        ttl = DEFAULT_TTL,
+        hopCount = 0,
+        originNodeId = localNodeId,
+        originRole = localRole,
+        originName = localName,
+        sentAt = updatedAt,
+        payload = MeshPacket.criticalPoiUpdatePayload(
+            poiId = poiId,
+            name = name,
+            amenityType = amenityType,
+            latitude = latitude,
+            longitude = longitude,
+            status = status,
+            isVerified = isVerified,
+            updatedAt = updatedAt
+        )
     )
 
     /** Broadcast a CHAT message and also persist locally. */
@@ -343,6 +419,107 @@ class GossipRouter(
         }
     }
 
+    fun sendCriticalPoiUpdate(
+        poiId: String,
+        name: String,
+        amenityType: String,
+        latitude: Double,
+        longitude: Double,
+        status: String,
+        isVerified: Boolean
+    ) {
+        val now = System.currentTimeMillis()
+        val packet = buildCriticalPoiPacket(
+            poiId = poiId,
+            name = name,
+            amenityType = amenityType,
+            latitude = latitude,
+            longitude = longitude,
+            status = status,
+            isVerified = isVerified,
+            updatedAt = now
+        )
+        val entity = CriticalPoiEntity(
+            id = poiId,
+            name = name,
+            amenityType = amenityType,
+            latitude = latitude,
+            longitude = longitude,
+            isVerified = isVerified,
+            operationalStatus = status,
+            updatedAt = now
+        )
+
+        scope.launch(Dispatchers.IO) {
+            db.criticalPoiDao().upsertIfNewer(entity)
+            db.seenPacketDao().markSeen(
+                SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
+            )
+            db.syncLogDao().insert(
+                SyncLogEntity(
+                    message = "Critical POI update sent: ${entity.name} -> ${entity.operationalStatus}",
+                    createdAt = now
+                )
+            )
+            withContext(Dispatchers.Main) {
+                onCriticalPoiUpdated(entity)
+            }
+            meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+            Log.d(TAG, "Sent CRITICAL_POI_UPDATE: $poiId -> $status")
+        }
+    }
+
+    fun sendSafeZoneUpdate(
+        zoneId: String,
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        radiusMeters: Int,
+        createdAt: Long = System.currentTimeMillis()
+    ) {
+        val packet = MeshPacket(
+            id = "safezone-$zoneId-$createdAt",
+            type = MeshPacket.PacketType.SAFE_ZONE_UPDATE,
+            ttl = DEFAULT_TTL,
+            hopCount = 0,
+            originNodeId = localNodeId,
+            originRole = localRole,
+            originName = localName,
+            sentAt = createdAt,
+            payload = MeshPacket.safeZoneUpdatePayload(
+                zoneId = zoneId,
+                name = name,
+                latitude = latitude,
+                longitude = longitude,
+                radiusMeters = radiusMeters,
+                createdAt = createdAt
+            )
+        )
+        val zone = SafeZoneEntity(
+            id = zoneId,
+            name = name,
+            latitude = latitude,
+            longitude = longitude,
+            radiusMeters = radiusMeters,
+            createdAt = createdAt
+        )
+
+        scope.launch(Dispatchers.IO) {
+            db.safeZoneDao().upsertIfNewer(zone)
+            db.seenPacketDao().markSeen(
+                SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
+            )
+            db.syncLogDao().insert(
+                SyncLogEntity(
+                    message = "Safe Zone update sent: $name (${radiusMeters}m)",
+                    createdAt = createdAt
+                )
+            )
+            meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+            Log.d(TAG, "Sent SAFE_ZONE_UPDATE: $zoneId")
+        }
+    }
+
     // ── Store-and-forward ─────────────────────────────────────────────────────
 
     private suspend fun flushQueuedSignals() {
@@ -381,7 +558,9 @@ class GossipRouter(
         // re-sends all of them.
         val sinceMs  = System.currentTimeMillis() - SYNC_WINDOW_MS
         val messages = db.chatMessageDao().getRecentForSync(sinceMs)
-        val total    = signals.size + messages.size
+        val poiUpdates = db.criticalPoiDao().getUpdatedSince(sinceMs)
+        val safeZones = db.safeZoneDao().getAllForSync()
+        val total    = signals.size + messages.size + poiUpdates.size + safeZones.size
         if (total == 0) return
 
         Log.d(TAG, "Store-and-forward: $total records (chat window=${SYNC_WINDOW_MS / 3_600_000}h) → $toEndpointId")
@@ -430,6 +609,52 @@ class GossipRouter(
                 originName   = m.senderName,
                 sentAt       = m.createdAt,
                 payload      = MeshPacket.chatPayload(m.roomId, m.text)
+            )
+            meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
+        }
+
+        poiUpdates.forEach { poi ->
+            val packet = MeshPacket(
+                id = "poi-${poi.id}-${poi.updatedAt}",
+                type = MeshPacket.PacketType.CRITICAL_POI_UPDATE,
+                ttl = DEFAULT_TTL,
+                hopCount = 0,
+                originNodeId = localNodeId,
+                originRole = localRole,
+                originName = localName,
+                sentAt = poi.updatedAt,
+                payload = MeshPacket.criticalPoiUpdatePayload(
+                    poiId = poi.id,
+                    name = poi.name,
+                    amenityType = poi.amenityType,
+                    latitude = poi.latitude,
+                    longitude = poi.longitude,
+                    status = poi.operationalStatus,
+                    isVerified = poi.isVerified,
+                    updatedAt = poi.updatedAt
+                )
+            )
+            meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
+        }
+
+        safeZones.forEach { zone ->
+            val packet = MeshPacket(
+                id = "safezone-${zone.id}-${zone.createdAt}",
+                type = MeshPacket.PacketType.SAFE_ZONE_UPDATE,
+                ttl = DEFAULT_TTL,
+                hopCount = 0,
+                originNodeId = localNodeId,
+                originRole = localRole,
+                originName = localName,
+                sentAt = zone.createdAt,
+                payload = MeshPacket.safeZoneUpdatePayload(
+                    zoneId = zone.id,
+                    name = zone.name,
+                    latitude = zone.latitude,
+                    longitude = zone.longitude,
+                    radiusMeters = zone.radiusMeters,
+                    createdAt = zone.createdAt
+                )
             )
             meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
         }
