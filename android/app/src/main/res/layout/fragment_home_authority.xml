@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ink_950">
+
+    <!-- ── Stats strip ─────────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_terminal_block"
+        android:padding="12dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="12dp">
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvStatTotal"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/text_primary" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="TOTAL" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="match_parent"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvStatCritical"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/priority_critical" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="CRITICAL" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="match_parent"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvStatInProgress"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/volunteer" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="ACTIVE" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="match_parent"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvStatResolvedAuth"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/text_muted" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="RESOLVED" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ── Quick Actions row ───────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="4dp">
+
+        <!-- BROADCAST -->
+        <LinearLayout
+            android:id="@+id/btnBroadcast"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_btn_authority"
+            android:layout_marginEnd="4dp"
+            android:clickable="true"
+            android:focusable="true">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:textColor="@color/authority"
+                android:letterSpacing="0.10"
+                android:text="◈ BROADCAST" />
+        </LinearLayout>
+
+        <!-- SAFE ZONE -->
+        <LinearLayout
+            android:id="@+id/btnSafeZone"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_volunteer"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:clickable="true"
+            android:focusable="true">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:textColor="@color/volunteer"
+                android:letterSpacing="0.10"
+                android:text="▲ SAFE ZONE" />
+        </LinearLayout>
+
+        <!-- RESOURCE PLAN -->
+        <LinearLayout
+            android:id="@+id/btnResourcePlan"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_civilian"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:textColor="@color/civilian"
+                android:letterSpacing="0.10"
+                android:text="◆ RESOURCE" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ── View mode tab row ────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="0dp">
+
+        <TextView
+            android:id="@+id/tabZones"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textStyle="bold"
+            android:textColor="@color/authority"
+            android:background="@drawable/bg_btn_authority"
+            android:layout_marginEnd="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="ZONES" />
+
+        <TextView
+            android:id="@+id/tabAllSignals"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textColor="@color/text_muted"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="ALL SIGNALS" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default"
+        android:layout_marginTop="10dp" />
+
+    <!-- Empty state for zones -->
+    <TextView
+        android:id="@+id/tvNoZones"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No signals in mesh yet"
+        android:fontFamily="monospace"
+        android:textSize="10sp"
+        android:textColor="@color/text_dim"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSignals"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:clipToPadding="false" />
+
+</LinearLayout>

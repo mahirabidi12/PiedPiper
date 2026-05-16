@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Role-aware: CIVILIAN skips room list and goes directly into room-all.
+     VOL/AUTH see the room list; tapping a room loads the ChatRoomFragment inline. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ink_950">
+
+    <!-- ── COMMS header ────────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="12dp"
+            android:background="@color/volunteer"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_comms"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textColor="@color/text_muted" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <!-- ── CHANNELS | DIRECT tab strip (shown for VOL / AUTH only) ─────────── -->
+    <LinearLayout
+        android:id="@+id/tabStrip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="0dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tabChannels"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textStyle="bold"
+            android:textColor="@color/volunteer"
+            android:background="@drawable/bg_btn_volunteer"
+            android:layout_marginEnd="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="CHANNELS" />
+
+        <TextView
+            android:id="@+id/tabDirect"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textColor="@color/text_muted"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="DIRECT" />
+    </LinearLayout>
+
+    <!-- Room list (shown on CHANNELS tab for VOL / AUTH) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRooms"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false" />
+
+    <!-- DM peer list (shown on DIRECT tab for VOL / AUTH) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPeers"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
+
+    <!-- ChatRoom / DM conversation container -->
+    <FrameLayout
+        android:id="@+id/chatRoomContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+</LinearLayout>

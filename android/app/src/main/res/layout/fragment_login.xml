@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ink_950"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- ── Terminal boot block ───────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_terminal_block"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:layout_marginTop="28dp"
+            android:layout_marginBottom="28dp">
+
+            <!-- Header row: status dot + sys label + version -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:background="@color/mesh_online"
+                    android:layout_marginEnd="6dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="SECURE_BOOT"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/mesh_online" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="v1.0"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+
+            <!-- 1dp separator -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_default"
+                android:layout_marginBottom="16dp" />
+
+            <!-- App title -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="DISASTERMESH"
+                android:fontFamily="monospace"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:gravity="center"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Thin underline accent -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginBottom="10dp">
+                <View
+                    android:layout_width="64dp"
+                    android:layout_height="1dp"
+                    android:background="@color/civilian" />
+            </LinearLayout>
+
+            <!-- Subtitle -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Offline P2P disaster relief network"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/text_muted"
+                android:gravity="center"
+                android:layout_marginBottom="14dp" />
+
+            <!-- 1dp separator -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_default"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Node info row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NODE_ID"
+                    android:fontFamily="monospace"
+                    android:textSize="7sp"
+                    android:letterSpacing="0.10"
+                    android:textColor="@color/text_dim"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="INITIALIZING............"
+                    android:fontFamily="monospace"
+                    android:textSize="7sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Display name input ────────────────────────────────────── -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilDisplayName"
+            style="@style/Widget.DisasterMesh.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_display_name"
+            android:layout_marginBottom="24dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDisplayName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLength="32"
+                android:textColor="@color/text_primary"
+                android:fontFamily="monospace"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- ── Role selection ────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <View
+                android:layout_width="2dp"
+                android:layout_height="10dp"
+                android:background="@color/text_dim"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_choose_role"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <!-- CIVILIAN role card -->
+        <LinearLayout
+            android:id="@+id/cardCivilian"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_role_card_default"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:id="@+id/civilianIconBox"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:background="@color/civilian_tint"
+                android:layout_marginEnd="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CIV"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/civilian" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/role_civilian"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/civilian"
+                    android:layout_marginBottom="2dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/role_civilian_blurb"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/civilianSelectedIndicator"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@color/civilian"
+                android:visibility="invisible"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- VOLUNTEER role card -->
+        <LinearLayout
+            android:id="@+id/cardVolunteer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_role_card_default"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:id="@+id/volunteerIconBox"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:background="@color/volunteer_tint"
+                android:layout_marginEnd="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="VOL"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/volunteer" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/role_volunteer"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/volunteer"
+                    android:layout_marginBottom="2dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/role_volunteer_blurb"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/volunteerSelectedIndicator"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@color/volunteer"
+                android:visibility="invisible"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- AUTHORITY role card -->
+        <LinearLayout
+            android:id="@+id/cardAuthority"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_role_card_default"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="28dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:id="@+id/authorityIconBox"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:background="@color/authority_tint"
+                android:layout_marginEnd="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AUTH"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/authority" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/role_authority"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/authority"
+                    android:layout_marginBottom="2dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/role_authority_blurb"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/authoritySelectedIndicator"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@color/authority"
+                android:visibility="invisible"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- ── Join button ───────────────────────────────────────────── -->
+        <Button
+            android:id="@+id/btnJoinMesh"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:text="@string/btn_join_mesh"
+            android:enabled="false"
+            style="@style/Widget.DisasterMesh.Button.Primary"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Peer discovery status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <View
+                android:id="@+id/discoveryDot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@color/mesh_searching"
+                android:layout_marginEnd="6dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Searching for peers…"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

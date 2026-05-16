@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Outgoing (self) message bubble — right aligned. Accent color set in adapter. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="end|top"
+    android:paddingBottom="10dp">
+
+    <!-- Bubble column -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <!-- Message bubble -->
+        <TextView
+            android:id="@+id/tvOutMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_elevated"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textSize="12sp"
+            android:lineSpacingMultiplier="1.4"
+            android:textColor="@color/text_primary"
+            android:maxWidth="250dp"
+            android:layout_marginBottom="3dp" />
+
+        <!-- Timestamp -->
+        <TextView
+            android:id="@+id/tvOutTimestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="7sp"
+            android:textColor="@color/text_dim"
+            android:layout_gravity="end" />
+    </LinearLayout>
+
+</LinearLayout>

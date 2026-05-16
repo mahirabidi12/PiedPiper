@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ink_950">
+
+    <!-- ── Top bar (hidden during login) ────────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/top_bar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:background="@color/ink_900"
+        android:visibility="gone">
+
+        <!-- Mesh status dot -->
+        <View
+            android:id="@+id/meshDot"
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:background="@color/mesh_offline"
+            android:layout_marginEnd="8dp" />
+
+        <!-- App title -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_app_title"
+            android:fontFamily="monospace"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12"
+            android:textColor="@color/text_primary" />
+
+        <!-- Peer count pill -->
+        <TextView
+            android:id="@+id/tvPeerCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 PEERS"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/mesh_offline"
+            android:background="@drawable/bg_btn_neutral"
+            android:paddingStart="7dp"
+            android:paddingEnd="7dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Role badge -->
+        <TextView
+            android:id="@+id/tvRoleBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:textColor="@color/civilian"
+            android:background="@drawable/bg_btn_neutral"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
+    </LinearLayout>
+
+    <!-- 1dp border under top bar -->
+    <View
+        android:id="@+id/topBarBorder"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default"
+        android:visibility="gone" />
+
+    <!-- ── Fragment container ────────────────────────────────────────── -->
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- 1dp border above bottom nav -->
+    <View
+        android:id="@+id/bottomNavBorder"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default"
+        android:visibility="gone" />
+
+    <!-- ── Bottom Navigation (hidden during login) ───────────────────── -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_nav_height"
+        android:background="@color/ink_900"
+        app:menu="@menu/menu_bottom_nav"
+        app:itemIconTint="@color/text_dim"
+        app:itemTextColor="@color/text_dim"
+        app:labelVisibilityMode="labeled"
+        android:visibility="gone" />
+
+</LinearLayout>

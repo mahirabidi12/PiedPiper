@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Incoming message bubble — left aligned -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="top"
+    android:paddingBottom="10dp">
+
+    <!-- Role badge avatar -->
+    <LinearLayout
+        android:id="@+id/avatarBox"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:gravity="center"
+        android:background="@drawable/bg_card_elevated"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="14dp">
+        <TextView
+            android:id="@+id/tvRoleBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="7sp"
+            android:textStyle="bold"
+            android:textColor="@color/civilian" />
+    </LinearLayout>
+
+    <!-- Bubble column -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Sender name + time -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="3dp">
+            <TextView
+                android:id="@+id/tvSenderName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:textColor="@color/civilian"
+                android:layout_marginEnd="6dp" />
+            <TextView
+                android:id="@+id/tvTimestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="7sp"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <!-- Message bubble -->
+        <TextView
+            android:id="@+id/tvMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_elevated"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textSize="12sp"
+            android:lineSpacingMultiplier="1.4"
+            android:textColor="@color/text_secondary"
+            android:maxWidth="250dp" />
+    </LinearLayout>
+
+</LinearLayout>

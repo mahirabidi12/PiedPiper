@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ink_950">
+
+    <!-- ── Back header ──────────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:background="@color/ink_900">
+
+        <TextView
+            android:id="@+id/btnZoneBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="14sp"
+            android:textColor="@color/authority"
+            android:paddingEnd="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="← ZONES" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="16dp"
+            android:background="@color/border_strong"
+            android:layout_marginEnd="12dp" />
+
+        <TextView
+            android:id="@+id/tvZoneDetailLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="monospace"
+            android:textSize="11sp"
+            android:textColor="@color/text_primary"
+            android:text="Area" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <!-- ── Zone stats strip ─────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_card_default"
+        android:padding="12dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvZoneStatTotal"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="18sp"
+                android:textStyle="bold" android:textColor="@color/text_primary" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="TOTAL" android:fontFamily="monospace"
+                android:textSize="7sp" android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="match_parent"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvZoneStatOpen"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="18sp"
+                android:textStyle="bold" android:textColor="@color/priority_high" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="OPEN" android:fontFamily="monospace"
+                android:textSize="7sp" android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="match_parent"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvZoneStatAffected"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="—" android:fontFamily="monospace" android:textSize="18sp"
+                android:textStyle="bold" android:textColor="@color/civilian" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="AFFECTED" android:fontFamily="monospace"
+                android:textSize="7sp" android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="match_parent"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/tvZoneStatCritical"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="18sp"
+                android:textStyle="bold" android:textColor="@color/priority_critical" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="CRITICAL" android:fontFamily="monospace"
+                android:textSize="7sp" android:textColor="@color/text_dim" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ── Gemma zone analysis button ──────────────────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/btnGemmaZone"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/ink_800"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="8dp"
+        android:clickable="true"
+        android:focusable="true">
+        <View
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:background="@color/ai_ready"
+            android:layout_marginEnd="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textColor="@color/ai_ready"
+            android:text="GEMMA ZONE ANALYSIS" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <!-- ── Signal section header ────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp">
+        <TextView
+            android:id="@+id/tvZoneSignalCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
+            android:textColor="@color/text_muted"
+            android:text="SIGNALS IN THIS AREA" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvZoneSignals"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:clipToPadding="false" />
+
+</LinearLayout>

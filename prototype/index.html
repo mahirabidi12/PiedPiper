@@ -178,11 +178,12 @@
         };
 
         const CATEGORY_META = {
-          MEDICAL: { label: 'Medical', icon: HeartPulse, color: '#FF4D4D' },
-          RESCUE: { label: 'Rescue', icon: LifeBuoy, color: '#FFA033' },
-          RESOURCE: { label: 'Resource', icon: Package, color: '#FFD43B' },
-          SAFETY: { label: 'Safety', icon: ShieldAlert, color: '#58A6FF' },
-          INFO: { label: 'Info', icon: Info, color: '#a1a1aa' },
+          MEDICAL:      { label: 'Medical',      icon: HeartPulse,  color: '#FF4D4D' },
+          RESCUE:       { label: 'Rescue',       icon: LifeBuoy,    color: '#FFA033' },
+          RESOURCE:     { label: 'Resource',     icon: Package,     color: '#FFD43B' },
+          SAFETY:       { label: 'Safety',       icon: ShieldAlert, color: '#58A6FF' },
+          INFO:         { label: 'Info',         icon: Info,        color: '#a1a1aa' },
+          UNCLASSIFIED: { label: 'Classifying…', icon: Sparkles,    color: '#71717a' },
         };
 
         const PRIORITY_META = {
@@ -193,11 +194,12 @@
         };
 
         const STATUS_META = {
-          NEW: { label: 'NEW', color: '#FF4D4D' },
-          ACKNOWLEDGED: { label: 'ACK', color: '#FFA033' },
-          IN_PROGRESS: { label: 'IN PROGRESS', color: '#58A6FF' },
-          RESOLVED: { label: 'RESOLVED', color: '#3FB950' },
-          EXPIRED: { label: 'EXPIRED', color: '#71717a' },
+          NEW:          { label: 'NEW',        color: '#FF4D4D' },
+          ACKNOWLEDGED: { label: 'ACK',        color: '#FFA033' },
+          IN_PROGRESS:  { label: 'IN PROGRESS',color: '#58A6FF' },
+          RESOLVED:     { label: 'RESOLVED',   color: '#3FB950' },
+          EXPIRED:      { label: 'EXPIRED',    color: '#71717a' },
+          QUEUED:       { label: 'QUEUED',     color: '#FFA033' },
         };
 
         // ───────────────────────────────────────────────────────────────
@@ -499,6 +501,178 @@
         ];
 
         // ───────────────────────────────────────────────────────────────
+        // MOCK DB — INVENTORY & DIRECT MESSAGES (new schema additions)
+        // ───────────────────────────────────────────────────────────────
+        const MOCK_INVENTORY = {
+          water:   { label: 'Water Bottles', unit: 'bottles', count: 120 },
+          medkit:  { label: 'Medkits',       unit: 'kits',    count: 34  },
+          food:    { label: 'Food Packs',    unit: 'packs',   count: 56  },
+          rope:    { label: 'Rope Rolls',    unit: 'rolls',   count: 8   },
+          blanket: { label: 'Blankets',      unit: 'pcs',     count: 45  },
+        };
+
+        // Volunteer roster — used by authority when assigning tickets
+        const MOCK_VOLUNTEERS = [
+          { id: 'node-vol-1', name: 'Asha V.',    status: 'AVAILABLE' },
+          { id: 'node-vol-2', name: 'Ravi M.',    status: 'AVAILABLE' },
+          { id: 'node-vol-3', name: 'Preethi J.', status: 'EN_ROUTE'  },
+        ];
+
+        // All peers visible in the mesh (for DM list)
+        const MOCK_MESH_PEERS = [
+          { id: 'node-civ-1', name: 'Sunita K.',  role: 'CIVILIAN',  status: 'online',  last_seen: Date.now() - 1000 * 60 * 2  },
+          { id: 'node-civ-2', name: 'Arjun D.',   role: 'CIVILIAN',  status: 'online',  last_seen: Date.now() - 1000 * 60 * 8  },
+          { id: 'node-civ-3', name: 'Meera P.',   role: 'CIVILIAN',  status: 'offline', last_seen: Date.now() - 1000 * 60 * 34 },
+          { id: 'node-vol-1', name: 'Asha V.',    role: 'VOLUNTEER', status: 'online',  last_seen: Date.now() - 1000 * 60 * 1  },
+          { id: 'node-vol-2', name: 'Ravi M.',    role: 'VOLUNTEER', status: 'online',  last_seen: Date.now() - 1000 * 60 * 5  },
+          { id: 'node-aut-1', name: 'Cmdr Bose',  role: 'AUTHORITY', status: 'online',  last_seen: Date.now()                  },
+        ];
+
+        // DM threads keyed by peer node_id — pre-seeded with sample exchanges
+        const MOCK_DIRECT_MESSAGES = {
+          'node-civ-1': [
+            { id: 'dm-c1-1', sender_node_id: 'node-civ-1', sender_name: 'Sunita K.', text: 'Are you nearby? I need help getting to the relief camp.', ts: Date.now() - 1000 * 60 * 7 },
+            { id: 'dm-c1-2', sender_node_id: 'node-self',   sender_name: 'You',       text: "Yes, I'm 500m away on foot. Stay where you are, I'll come to you.", ts: Date.now() - 1000 * 60 * 5 },
+            { id: 'dm-c1-3', sender_node_id: 'node-civ-1', sender_name: 'Sunita K.', text: "Ok. I'm near the blue building on sector 4.", ts: Date.now() - 1000 * 60 * 3 },
+          ],
+          'node-civ-2': [
+            { id: 'dm-c2-1', sender_node_id: 'node-civ-2', sender_name: 'Arjun D.', text: 'My family needs water. We are 4 people, 2 elderly.', ts: Date.now() - 1000 * 60 * 14 },
+          ],
+        };
+
+        // ───────────────────────────────────────────────────────────────
+        // GLOBAL APP CONTEXT — lifts mesh + DB state above the router so
+        // navigating between tabs never kills the connection or wipes state.
+        // ───────────────────────────────────────────────────────────────
+        const AppContext = React.createContext(null);
+        const useApp = () => React.useContext(AppContext);
+
+        function AppProvider({ children }) {
+          const [session,  setSession]  = useState(null);
+          const [signals,  setSignals]  = useState(MOCK_SIGNALS);
+          const [tasks]                 = useState(MOCK_TASKS);
+          const [peerCount]             = useState(MOCK_PEERS_COUNT);
+          const [battery]               = useState(78);
+          const [meshConnected, setMeshConnected] = useState(true);
+          const [aiState, setAiState]   = useState({
+            status: 'absent', progress: 0, sizeMb: 2940, downloadedMb: 0,
+          });
+          const [chatMessages, setChatMessages] = useState(MOCK_CHAT_MESSAGES);
+          const [inventory,  setInventory]  = useState(MOCK_INVENTORY);
+          const [directMessages, setDirectMessages] = useState(MOCK_DIRECT_MESSAGES);
+          const downloadTimer = useRef(null);
+
+          const addSignal    = useCallback((s) => setSignals((p) => [s, ...p]), []);
+          const updateSignal = useCallback((id, upd) =>
+            setSignals((p) => p.map((s) =>
+              s.id === id ? { ...s, ...upd, updated_at: Date.now() } : s)), []);
+
+          const sendChatMessage = useCallback((roomId, msg) =>
+            setChatMessages((p) => ({ ...p, [roomId]: [...(p[roomId] || []), msg] })), []);
+
+          const sendDM = useCallback((peerId, msg) =>
+            setDirectMessages((p) => ({ ...p, [peerId]: [...(p[peerId] || []), msg] })), []);
+
+          const adjustInventory = useCallback((item, delta) =>
+            setInventory((p) => ({
+              ...p,
+              [item]: { ...p[item], count: Math.max(0, (p[item]?.count ?? 0) + delta) },
+            })), []);
+
+          const [inventoryLog, setInventoryLog] = useState([]);
+
+          // Authority approves an assignment → deducts inventory, updates signal
+          const allocateInventory = useCallback((signalId, allocations, volunteerName, volunteerNodeId) => {
+            setInventory((p) => {
+              const next = { ...p };
+              Object.entries(allocations).forEach(([k, qty]) => {
+                if (next[k]) next[k] = { ...next[k], count: Math.max(0, next[k].count - qty) };
+              });
+              return next;
+            });
+            setInventoryLog((p) => [...p, {
+              id:     'ilog-' + Math.random().toString(36).slice(2, 8),
+              action: 'ALLOCATE',
+              signalId, items: allocations,
+              by:     volunteerName,
+              lat:    28.6121, lng: 77.2103,
+              ts:     Date.now(),
+            }]);
+            updateSignal(signalId, {
+              status:              'IN_PROGRESS',
+              assigned_to_name:    volunteerName,
+              assigned_to_node_id: volunteerNodeId,
+              inventory_allocated: allocations,
+            });
+          }, [updateSignal]);
+
+          // Ticket marked Unresolvable → refund inventory back to pool
+          const refundInventory = useCallback((signalId, allocations) => {
+            const alloc = allocations || {};
+            setInventory((p) => {
+              const next = { ...p };
+              Object.entries(alloc).forEach(([k, qty]) => {
+                if (next[k]) next[k] = { ...next[k], count: next[k].count + qty };
+              });
+              return next;
+            });
+            if (Object.keys(alloc).length > 0) {
+              setInventoryLog((p) => [...p, {
+                id:     'ilog-' + Math.random().toString(36).slice(2, 8),
+                action: 'REFUND',
+                signalId, items: alloc,
+                lat: 28.6121, lng: 77.2103,
+                ts:  Date.now(),
+              }]);
+            }
+            updateSignal(signalId, { status: 'EXPIRED' });
+          }, [updateSignal]);
+
+          const startDownload = useCallback(() => {
+            setAiState((s) => ({ ...s, status: 'downloading', progress: 0, downloadedMb: 0 }));
+            clearInterval(downloadTimer.current);
+            downloadTimer.current = setInterval(() => {
+              setAiState((s) => {
+                if (s.status !== 'downloading') return s;
+                const next = Math.min(100, s.progress + Math.random() * 6 + 2);
+                const dmb  = Math.round((next / 100) * s.sizeMb);
+                if (next >= 100) {
+                  clearInterval(downloadTimer.current);
+                  setTimeout(() => setAiState((x) => ({ ...x, status: 'verifying' })), 200);
+                  setTimeout(() => setAiState((x) => ({ ...x, status: 'ready'      })), 2000);
+                }
+                return { ...s, progress: next, downloadedMb: dmb };
+              });
+            }, 320);
+          }, []);
+
+          const cancelDownload = useCallback(() => {
+            clearInterval(downloadTimer.current);
+            setAiState((s) => ({ ...s, status: 'absent', progress: 0, downloadedMb: 0 }));
+          }, []);
+
+          useEffect(() => () => clearInterval(downloadTimer.current), []);
+
+          return (
+            <AppContext.Provider value={{
+              session,  setSession,
+              signals,  addSignal, updateSignal,
+              tasks,
+              peerCount,
+              battery,
+              meshConnected, setMeshConnected,
+              aiState,  startDownload, cancelDownload,
+              chatMessages, sendChatMessage,
+              inventory, adjustInventory,
+              inventoryLog, allocateInventory, refundInventory,
+              directMessages, sendDM,
+            }}>
+              {children}
+            </AppContext.Provider>
+          );
+        }
+
+        // ───────────────────────────────────────────────────────────────
         // SMALL UI ATOMS
         // ───────────────────────────────────────────────────────────────
         function cx(...parts) { return parts.filter(Boolean).join(' '); }
@@ -541,7 +715,7 @@
         }
 
         function CategoryChip({ category }) {
-          const meta = CATEGORY_META[category];
+          const meta = CATEGORY_META[category] || CATEGORY_META.INFO;
           const Icon = meta.icon;
           return (
             <span
@@ -978,64 +1152,132 @@
         }
 
         // ───────────────────────────────────────────────────────────────
-        // CIVILIAN DASHBOARD
+        // CIVILIAN DASHBOARD — Smart SOS, offline queue, broadcasts feed
         // ───────────────────────────────────────────────────────────────
-        function CivilianDashboard({ session, signals, aiState, onRaise, onOpenAssistant, onOpenSignal }) {
-          const mySignals = signals.filter((s) => s.sender_name === session.name);
-          const showcaseSignals = mySignals.length ? mySignals : signals.slice(0, 2);
+        function CivilianDashboard({ onOpenSOS, onOpenAssistant, onOpenSignal, onGoComms }) {
+          const { session, signals, aiState, meshConnected, chatMessages } = useApp();
+
+          // Only the user's own signals
+          const mySignals = signals.filter((s) => s.sender_node_id === 'node-self');
+          const queued    = mySignals.filter((s) => s.status === 'QUEUED');
+          const active    = mySignals.filter((s) => s.status !== 'QUEUED' && s.status !== 'RESOLVED');
+
+          // Pull authority messages from the global broadcast room as a feed
+          const broadcasts = (chatMessages['room-all'] || [])
+            .filter((m) => m.sender_role === 'AUTHORITY')
+            .slice(-3)
+            .reverse();
 
           return (
             <div className="px-3 pt-3 pb-28 space-y-5">
               {/* Greeting */}
               <div className="px-1">
-                <p className="font-mono text-[10px] tracking-widest text-zinc-500 mb-1">
-                  CIVILIAN · OFFLINE OK
+                <p className="font-mono text-[10px] tracking-widest mb-1"
+                  style={{ color: meshConnected ? '#3FB950' : '#FFA033' }}>
+                  CIVILIAN · {meshConnected ? 'MESH CONNECTED' : 'OFFLINE — QUEUING'}
                 </p>
                 <h1 className="text-xl font-bold text-zinc-100">
                   Stay safe, {session.name.split(' ')[0]}.
                 </h1>
                 <p className="text-[13px] text-zinc-500 mt-1">
-                  Tap a category to raise a signal. Your phone keeps a copy until the mesh confirms delivery.
+                  {meshConnected
+                    ? 'Describe your emergency and our AI will classify it. Your phone keeps a copy.'
+                    : 'No peers found. Signals are queued locally and will broadcast on reconnect.'}
                 </p>
               </div>
 
-              {/* Raise Signal */}
-              <section>
-                <SectionHeader icon={Siren} label="Raise Signal" />
-                <div className="grid grid-cols-3 gap-2">
-                  {['MEDICAL', 'RESCUE', 'RESOURCE'].map((cat) => {
-                    const m = CATEGORY_META[cat];
-                    const Icon = m.icon;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => onRaise(cat)}
-                        className="flex flex-col items-center gap-2 p-3 border bg-ink-900/60 active:scale-[0.97] transition"
-                        style={{ borderColor: m.color + '55' }}
+              {/* ── OFFLINE QUEUE — only rendered when there are queued items ── */}
+              {queued.length > 0 && (
+                <section>
+                  <SectionHeader
+                    icon={WifiOff}
+                    label="Queued — Waiting for Peers"
+                    count={queued.length}
+                    suffix={
+                      <span className="font-mono text-[10px] tracking-widest text-high animate-blink">
+                        PENDING
+                      </span>
+                    }
+                  />
+                  <div className="space-y-2">
+                    {queued.map((s) => (
+                      <div
+                        key={s.id}
+                        className="bg-ink-900/70 border border-high/30 p-3 relative"
                       >
-                        <div
-                          className="w-11 h-11 flex items-center justify-center rounded-sm"
-                          style={{ background: m.color + '18', border: `1px solid ${m.color}55`, color: m.color }}
-                        >
-                          <Icon size={20} strokeWidth={2.2} />
+                        <span
+                          className="absolute left-0 top-0 bottom-0 w-0.5"
+                          style={{ background: '#FFA033' }}
+                        />
+                        <div className="pl-1.5">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono text-[10px] tracking-widest text-high border border-high/40 px-1.5 py-0.5">
+                              QUEUED
+                            </span>
+                            <WifiOff size={10} className="text-high" />
+                            <span className="ml-auto font-mono text-[10px] text-zinc-500">
+                              {timeAgo(s.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-[13px] text-zinc-300 leading-snug line-clamp-2">
+                            {s.message}
+                          </p>
+                          <p className="mt-1.5 font-mono text-[10px] tracking-widest text-zinc-600">
+                            Will broadcast when mesh reconnects
+                          </p>
                         </div>
-                        <span className="font-mono text-[10px] tracking-widest" style={{ color: m.color }}>
-                          {m.label.toUpperCase()}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* ── BIG SOS BUTTON ── */}
+              <section>
+                <SectionHeader icon={Siren} label="Emergency Signal" />
+                <button
+                  onClick={onOpenSOS}
+                  className="relative w-full py-7 flex flex-col items-center justify-center gap-3 overflow-hidden border-2 active:scale-[0.98] transition"
+                  style={{
+                    borderColor: '#FF4D4D',
+                    background: 'linear-gradient(135deg, #FF4D4D15 0%, #FF4D4D06 100%)',
+                    boxShadow: '0 0 40px rgba(255,77,77,0.12)',
+                  }}
+                >
+                  <span className="absolute inset-0 bg-critical/5 animate-pulse-slow" />
+                  <div
+                    className="relative w-16 h-16 flex items-center justify-center rounded-full border-2"
+                    style={{
+                      borderColor: '#FF4D4D',
+                      background: '#FF4D4D1A',
+                      boxShadow: '0 0 32px rgba(255,77,77,0.35)',
+                    }}
+                  >
+                    <Siren size={28} className="text-critical" strokeWidth={2.2} />
+                  </div>
+                  <div className="relative text-center px-4">
+                    <div className="text-xl font-bold tracking-tight text-critical">SEND SOS</div>
+                    <p className="font-mono text-[10px] tracking-widest text-zinc-500 mt-1">
+                      DESCRIBE IN YOUR OWN WORDS · GEMMA CLASSIFIES AUTOMATICALLY
+                    </p>
+                  </div>
+                </button>
               </section>
 
-              {/* AI Help Assistant — prominent for civilians */}
+              {/* ── AI Help Assistant ── */}
               <section>
-                <SectionHeader icon={Sparkles} label="Survival Assistant" suffix={
-                  <span className="font-mono text-[10px] tracking-widest"
-                    style={{ color: aiState.status === 'ready' ? '#3FB950' : '#71717a' }}>
-                    {aiState.status === 'ready' ? 'ONLINE' : aiState.status === 'downloading' ? 'DOWNLOADING' : 'OFFLINE'}
-                  </span>
-                } />
+                <SectionHeader
+                  icon={Sparkles}
+                  label="Survival Assistant"
+                  suffix={
+                    <span
+                      className="font-mono text-[10px] tracking-widest"
+                      style={{ color: aiState.status === 'ready' ? '#3FB950' : '#71717a' }}
+                    >
+                      {aiState.status === 'ready' ? 'ONLINE' : aiState.status === 'downloading' ? 'DL…' : 'OFFLINE'}
+                    </span>
+                  }
+                />
                 <button
                   onClick={onOpenAssistant}
                   className="w-full text-left p-3.5 border border-civilian/40 bg-civilian/[0.06] hover:bg-civilian/[0.1] transition relative overflow-hidden"
@@ -1049,11 +1291,9 @@
                       <Bot size={18} strokeWidth={2.2} />
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm text-zinc-100 font-medium">
-                        Ask Gemma anything — offline.
-                      </div>
+                      <div className="text-sm text-zinc-100 font-medium">Ask Gemma anything — offline.</div>
                       <p className="text-[12px] text-zinc-400 mt-0.5">
-                        "How do I treat a deep cut?" · "What to do during an aftershock?"
+                        "How do I treat a deep cut?" · "What during aftershock?"
                       </p>
                     </div>
                     <ChevronRight size={16} className="text-zinc-500 shrink-0 mt-1" />
@@ -1061,7 +1301,7 @@
                   {aiState.status !== 'ready' && (
                     <div className="relative mt-3 flex items-center gap-2 font-mono text-[10px] tracking-widest text-civilian/80">
                       <Download size={11} strokeWidth={2.4} />
-                      {aiState.status === 'absent' && 'Tap to download model (3 GB · one-time)'}
+                      {aiState.status === 'absent' && 'Download model once (3 GB) to unlock offline AI'}
                       {aiState.status === 'downloading' && `Downloading ${aiState.progress.toFixed(0)}% · keep app open`}
                       {aiState.status === 'verifying' && 'Verifying integrity…'}
                     </div>
@@ -1069,30 +1309,61 @@
                 </button>
               </section>
 
-              {/* Active signals */}
-              <section>
-                <SectionHeader
-                  icon={Activity}
-                  label="My Active Signals"
-                  count={showcaseSignals.length}
-                />
-                {showcaseSignals.length === 0 ? (
-                  <div className="border border-dashed border-zinc-800 p-6 text-center">
-                    <p className="font-mono text-[11px] tracking-widest text-zinc-500">
-                      NO ACTIVE SIGNALS
-                    </p>
-                    <p className="text-[12px] text-zinc-600 mt-1">
-                      You haven't raised any signals yet.
-                    </p>
-                  </div>
-                ) : (
+              {/* ── My active signals ── */}
+              {active.length > 0 && (
+                <section>
+                  <SectionHeader icon={Activity} label="My Active Signals" count={active.length} />
                   <div className="space-y-2">
-                    {showcaseSignals.map((s) => (
+                    {active.map((s) => (
                       <SignalCard key={s.id} signal={s} onClick={() => onOpenSignal(s.id)} />
                     ))}
                   </div>
-                )}
-              </section>
+                </section>
+              )}
+
+              {/* ── Authority broadcasts from the global feed ── */}
+              {broadcasts.length > 0 && (
+                <section>
+                  <SectionHeader
+                    icon={Radio}
+                    label="Authority Broadcasts"
+                    count={broadcasts.length}
+                    suffix={
+                      <button
+                        onClick={onGoComms}
+                        className="font-mono text-[10px] tracking-widest text-civilian hover:underline flex items-center gap-1"
+                      >
+                        ALL <ChevronRight size={11} />
+                      </button>
+                    }
+                  />
+                  <div className="space-y-2">
+                    {broadcasts.map((m) => (
+                      <div key={m.id} className="border border-authority/25 bg-authority/[0.04] p-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Shield size={11} className="text-authority" strokeWidth={2.4} />
+                          <span className="font-mono text-[10px] tracking-widest text-authority">
+                            {m.sender_name}
+                          </span>
+                          <span className="ml-auto font-mono text-[10px] text-zinc-500">
+                            {timeAgo(m.ts)}
+                          </span>
+                        </div>
+                        <p className="text-[13px] text-zinc-300 leading-snug">{m.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* ── Empty state ── */}
+              {active.length === 0 && broadcasts.length === 0 && queued.length === 0 && (
+                <div className="border border-dashed border-zinc-800 p-8 text-center mt-2">
+                  <Siren size={24} className="mx-auto text-zinc-700 mb-3" strokeWidth={1.5} />
+                  <p className="font-mono text-[11px] tracking-widest text-zinc-500">NO ACTIVE SIGNALS</p>
+                  <p className="text-[12px] text-zinc-600 mt-1">Tap SOS above if you need help.</p>
+                </div>
+              )}
             </div>
           );
         }
@@ -1101,8 +1372,8 @@
         // SIGNAL CARD (shared)
         // ───────────────────────────────────────────────────────────────
         function SignalCard({ signal, onClick, compact }) {
-          const cat = CATEGORY_META[signal.category];
-          const pri = PRIORITY_META[signal.priority];
+          const cat = CATEGORY_META[signal.category] || CATEGORY_META.INFO;
+          const pri = PRIORITY_META[signal.priority] || PRIORITY_META.NORMAL;
           const Icon = cat.icon;
           return (
             <button
@@ -1220,6 +1491,12 @@
                     ))}
                   </div>
                 </div>
+              </section>
+
+              {/* Field Inventory */}
+              <section>
+                <SectionHeader icon={Box} label="Field Inventory" />
+                <InventoryPanel canEdit />
               </section>
             </div>
           );
@@ -1347,6 +1624,7 @@
         // AUTHORITY DASHBOARD — location-clustered zone cards
         // ───────────────────────────────────────────────────────────────
         function AuthorityDashboard({ session, signals, onOpenCluster }) {
+          const [inventoryOpen, setInventoryOpen] = useState(false);
           const counts = useMemo(() => ({
             total: signals.length,
             critical: signals.filter((s) => s.priority === 'CRITICAL' && s.status !== 'RESOLVED').length,
@@ -1394,6 +1672,23 @@
                   <QuickActionTile icon={ClipboardList} label="Resource Plan"  sub="Generate"   accent="#FFD43B" />
                   <QuickActionTile icon={Send}          label="Broadcast"      sub="All Roles"  accent="#58A6FF" />
                 </div>
+              </section>
+
+              {/* Inventory */}
+              <section>
+                <SectionHeader
+                  icon={Box}
+                  label="Inventory"
+                  suffix={
+                    <button
+                      onClick={() => setInventoryOpen((p) => !p)}
+                      className="font-mono text-[10px] tracking-widest text-zinc-400 border border-zinc-700 px-2 py-0.5 hover:border-zinc-500"
+                    >
+                      {inventoryOpen ? 'HIDE' : 'MANAGE'}
+                    </button>
+                  }
+                />
+                {inventoryOpen && <InventoryPanel canEdit />}
               </section>
 
               {/* Location zone clusters */}
@@ -1712,68 +2007,56 @@
           );
         }
 
-        function ZoneTicketCard({ signal, onOpen }) {
-          const cat = CATEGORY_META[signal.category];
-          const pri = PRIORITY_META[signal.priority];
-          const Icon = cat.icon;
-          const [localStatus, setLocalStatus] = useState(signal.status);
-
+        // ───────────────────────────────────────────────────────────────
+        // INVENTORY PANEL — shared read/write view for Auth + Vol
+        // ───────────────────────────────────────────────────────────────
+        function InventoryPanel({ canEdit }) {
+          const { inventory, adjustInventory } = useApp();
           return (
-            <div
-              className="bg-ink-900/70 border border-zinc-800 overflow-hidden"
-              style={{ borderLeftColor: pri.color, borderLeftWidth: 3 }}
-            >
-              <button
-                onClick={onOpen}
-                className="w-full text-left flex items-start gap-3 p-3 hover:bg-ink-800/50 transition"
-              >
-                <div
-                  className="w-9 h-9 shrink-0 flex items-center justify-center rounded-sm"
-                  style={{ background: cat.color + '14', border: `1px solid ${cat.color}44`, color: cat.color }}
-                >
-                  <Icon size={15} strokeWidth={2.2} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <CategoryChip category={signal.category} />
-                    <StatusPill status={localStatus} />
-                    <span className="ml-auto font-mono text-[10px] text-zinc-500">{timeAgo(signal.created_at)}</span>
+            <div className="border border-zinc-800 bg-ink-900/60 divide-y divide-zinc-800">
+              {Object.entries(inventory).map(([key, item]) => (
+                <div key={key} className="flex items-center gap-3 px-3 py-2.5">
+                  <Package size={13} className="text-zinc-500 shrink-0" strokeWidth={2.2} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] text-zinc-200">{item.label}</div>
+                    <div className="font-mono text-[9px] tracking-widest text-zinc-500">
+                      {item.unit}
+                    </div>
                   </div>
-                  <p className="text-[13px] text-zinc-200 leading-snug line-clamp-2">
-                    {signal.summary || signal.message}
-                  </p>
-                  {signal.people_count > 0 && (
-                    <span className="font-mono text-[10px] text-zinc-500 mt-1 flex items-center gap-1">
-                      <Users size={10} /> {signal.people_count} ppl · {signal.manual_location || '—'}
+                  {item.count <= 5 && (
+                    <span className="font-mono text-[9px] tracking-widest text-critical border border-critical/40 px-1.5 py-0.5">
+                      LOW
+                    </span>
+                  )}
+                  {canEdit ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => adjustInventory(key, -1)}
+                        disabled={item.count === 0}
+                        className="w-7 h-7 flex items-center justify-center border border-zinc-700 text-zinc-400 hover:border-critical/60 hover:text-critical disabled:opacity-25 transition"
+                      >
+                        <MinusCircle size={13} strokeWidth={2.2} />
+                      </button>
+                      <span className="font-mono text-sm font-bold text-zinc-100 w-8 text-center">
+                        {item.count}
+                      </span>
+                      <button
+                        onClick={() => adjustInventory(key, +1)}
+                        className="w-7 h-7 flex items-center justify-center border border-zinc-700 text-zinc-400 hover:border-volunteer/60 hover:text-volunteer transition"
+                      >
+                        <Plus size={13} strokeWidth={2.2} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="font-mono text-lg font-bold text-zinc-100 shrink-0">
+                      {item.count}
                     </span>
                   )}
                 </div>
-              </button>
-              {/* Per-ticket actions: Acknowledge + Resolve only */}
-              {localStatus !== 'RESOLVED' && (
-                <div className="grid grid-cols-2 border-t border-zinc-800 divide-x divide-zinc-800">
-                  <button
-                    onClick={() => setLocalStatus('ACKNOWLEDGED')}
-                    className={cx(
-                      'flex items-center justify-center gap-1.5 py-2 font-mono text-[10px] tracking-widest transition',
-                      localStatus === 'ACKNOWLEDGED'
-                        ? 'text-high bg-high/10'
-                        : 'text-zinc-400 hover:text-high hover:bg-high/10'
-                    )}
-                  >
-                    <CheckCircle2 size={11} strokeWidth={2.4} /> ACK
-                  </button>
-                  <button
-                    onClick={() => setLocalStatus('RESOLVED')}
-                    className="flex items-center justify-center gap-1.5 py-2 font-mono text-[10px] tracking-widest text-zinc-400 hover:text-volunteer hover:bg-volunteer/10 transition"
-                  >
-                    <Flag size={11} strokeWidth={2.4} /> RESOLVE
-                  </button>
-                </div>
-              )}
-              {localStatus === 'RESOLVED' && (
-                <div className="flex items-center justify-center gap-2 py-2 font-mono text-[10px] tracking-widest text-volunteer/70 border-t border-zinc-800">
-                  <CheckCircle2 size={11} strokeWidth={2.4} /> RESOLVED
+              ))}
+              {canEdit && (
+                <div className="px-3 py-2 flex items-center gap-1.5 font-mono text-[9px] tracking-widest text-zinc-600">
+                  <MapPin size={9} /> ADJUSTMENTS TAGGED · 28.6121° N · 77.2103° E
                 </div>
               )}
             </div>
@@ -1781,34 +2064,481 @@
         }
 
         // ───────────────────────────────────────────────────────────────
+        // ASSIGN TICKET MODAL — authority picks volunteer + allocates stock
+        // ───────────────────────────────────────────────────────────────
+        function AssignTicketModal({ signal, onClose, onAssign }) {
+          const { inventory } = useApp();
+          const [selectedVol, setSelectedVol] = useState(null);
+          const [allocations, setAllocations] = useState({});
+
+          const setAlloc = (key, val) => {
+            const n = parseInt(val, 10) || 0;
+            if (n <= 0) {
+              setAllocations((p) => { const { [key]: _, ...rest } = p; return rest; });
+            } else {
+              setAllocations((p) => ({ ...p, [key]: Math.min(n, inventory[key]?.count ?? 0) }));
+            }
+          };
+
+          const overAllocated = Object.entries(allocations).some(
+            ([k, v]) => inventory[k] && v > inventory[k].count
+          );
+
+          return (
+            <div className="fixed inset-0 z-50 bg-black/75 flex items-end sm:items-center justify-center p-0 sm:p-4"
+              onClick={onClose}>
+              <div className="w-full sm:max-w-md bg-ink-900 border-t sm:border border-zinc-800 max-h-[92vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}>
+
+                <div className="sticky top-0 bg-ink-900/95 backdrop-blur border-b border-zinc-800 px-4 py-3 flex items-center gap-2">
+                  <button onClick={onClose} className="-m-1 p-1 text-zinc-400 hover:text-zinc-100">
+                    <X size={16} />
+                  </button>
+                  <span className="font-mono text-[10px] tracking-widest text-zinc-500">
+                    ASSIGN TICKET · {signal.id.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="p-4 space-y-5">
+                  {/* Signal summary */}
+                  <div className="border border-zinc-800 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <CategoryChip category={signal.category} />
+                      <StatusPill status={signal.status} />
+                    </div>
+                    <p className="text-[13px] text-zinc-200 leading-snug">{signal.summary || signal.message}</p>
+                    {signal.manual_location && (
+                      <div className="mt-1 font-mono text-[10px] text-zinc-500 flex items-center gap-1">
+                        <MapPin size={10} /> {signal.manual_location}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Select volunteer */}
+                  <div>
+                    <div className="font-mono text-[10px] tracking-widest text-zinc-500 mb-2">
+                      SELECT VOLUNTEER
+                    </div>
+                    <div className="space-y-1.5">
+                      {MOCK_VOLUNTEERS.map((v) => {
+                        const selected = selectedVol?.id === v.id;
+                        return (
+                          <button
+                            key={v.id}
+                            onClick={() => setSelectedVol(v)}
+                            className="w-full text-left flex items-center gap-3 p-2.5 border transition"
+                            style={selected
+                              ? { borderColor: '#3FB950', background: '#3FB95012' }
+                              : { borderColor: '#27272a' }}
+                          >
+                            <div
+                              className="w-8 h-8 flex items-center justify-center shrink-0"
+                              style={{ background: '#3FB95015', border: '1px solid #3FB95044', color: '#3FB950' }}
+                            >
+                              <LifeBuoy size={14} strokeWidth={2.2} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-[13px] text-zinc-100 font-medium">{v.name}</div>
+                              <div className="font-mono text-[10px] tracking-widest"
+                                style={{ color: v.status === 'AVAILABLE' ? '#3FB950' : '#FFA033' }}>
+                                {v.status}
+                              </div>
+                            </div>
+                            {selected && <CheckCircle2 size={14} className="text-volunteer shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Inventory allocation */}
+                  <div>
+                    <div className="font-mono text-[10px] tracking-widest text-zinc-500 mb-2">
+                      ALLOCATE INVENTORY <span className="text-zinc-600 normal-case">(optional)</span>
+                    </div>
+                    <div className="border border-zinc-800 divide-y divide-zinc-800">
+                      {Object.entries(inventory).map(([key, item]) => (
+                        <div key={key} className="flex items-center gap-3 px-3 py-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[12px] text-zinc-200">{item.label}</div>
+                            <div className="font-mono text-[9px] tracking-widest text-zinc-500">
+                              {item.count} {item.unit} available
+                            </div>
+                          </div>
+                          <input
+                            type="number"
+                            min={0}
+                            max={item.count}
+                            value={allocations[key] ?? ''}
+                            onChange={(e) => setAlloc(key, e.target.value)}
+                            placeholder="0"
+                            className="w-16 bg-ink-950 border border-zinc-700 focus:border-civilian/60 outline-none px-2 py-1.5 text-sm text-zinc-100 text-center font-mono"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {overAllocated && (
+                      <p className="mt-1.5 font-mono text-[10px] tracking-widest text-critical">
+                        QUANTITY EXCEEDS AVAILABLE STOCK
+                      </p>
+                    )}
+                  </div>
+
+                  {/* GPS tag */}
+                  <div className="flex items-center gap-1.5 font-mono text-[9px] tracking-widest text-zinc-600">
+                    <MapPin size={9} />
+                    ALLOCATION TAGGED · 28.6121° N · 77.2103° E · {new Date().toLocaleTimeString()}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={onClose}
+                      className="flex-1 py-3 border border-zinc-800 text-zinc-300 font-mono text-[11px] tracking-widest hover:bg-ink-800 transition"
+                    >
+                      CANCEL
+                    </button>
+                    <button
+                      onClick={() => selectedVol && !overAllocated && onAssign(selectedVol, allocations)}
+                      disabled={!selectedVol || overAllocated}
+                      className="flex-[2] py-3 font-mono text-[11px] tracking-widest border transition disabled:opacity-40 flex items-center justify-center gap-2"
+                      style={{ borderColor: '#3FB950', background: '#3FB95015', color: '#3FB950' }}
+                    >
+                      <CheckCircle2 size={13} strokeWidth={2.4} />
+                      APPROVE ASSIGNMENT
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ───────────────────────────────────────────────────────────────
+        // RESOLVE TICKET MODAL — summary before confirming; allows refund
+        // ───────────────────────────────────────────────────────────────
+        function ResolveTicketModal({ signal, onClose, onResolve, onUnresolvable }) {
+          const { inventory } = useApp();
+          const alloc        = signal.inventory_allocated || {};
+          const hasAlloc     = Object.keys(alloc).length > 0;
+
+          return (
+            <div className="fixed inset-0 z-50 bg-black/75 flex items-end sm:items-center justify-center p-0 sm:p-4"
+              onClick={onClose}>
+              <div className="w-full sm:max-w-md bg-ink-900 border-t sm:border border-zinc-800 max-h-[92vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}>
+
+                <div className="sticky top-0 bg-ink-900/95 backdrop-blur border-b border-zinc-800 px-4 py-3 flex items-center gap-2">
+                  <button onClick={onClose} className="-m-1 p-1 text-zinc-400 hover:text-zinc-100">
+                    <X size={16} />
+                  </button>
+                  <span className="font-mono text-[10px] tracking-widest text-zinc-500">
+                    RESOLVE SUMMARY
+                  </span>
+                </div>
+
+                <div className="p-4 space-y-4">
+                  {/* Signal being resolved */}
+                  <div>
+                    <div className="font-mono text-[10px] tracking-widest text-zinc-600 mb-1.5">SIGNAL</div>
+                    <div className="border border-zinc-800 p-3">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <CategoryChip category={signal.category} />
+                        <PriorityDot priority={signal.priority} />
+                        <span className="font-mono text-[10px] tracking-widest"
+                          style={{ color: (PRIORITY_META[signal.priority] || PRIORITY_META.NORMAL).color }}>
+                          {signal.priority}
+                        </span>
+                      </div>
+                      <p className="text-[13px] text-zinc-200 leading-snug">{signal.summary || signal.message}</p>
+                      {signal.manual_location && (
+                        <div className="mt-1 font-mono text-[10px] text-zinc-500 flex items-center gap-1">
+                          <MapPin size={10} /> {signal.manual_location}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Assigned volunteer */}
+                  {signal.assigned_to_name && (
+                    <div className="border border-volunteer/30 bg-volunteer/[0.05] p-3 flex items-center gap-3">
+                      <div className="w-9 h-9 flex items-center justify-center shrink-0"
+                        style={{ background: '#3FB95015', border: '1px solid #3FB95044', color: '#3FB950' }}>
+                        <LifeBuoy size={16} strokeWidth={2.2} />
+                      </div>
+                      <div>
+                        <div className="font-mono text-[9px] tracking-widest text-zinc-500">ASSIGNED VOLUNTEER</div>
+                        <div className="text-[13px] text-zinc-100 font-medium mt-0.5">{signal.assigned_to_name}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inventory consumed */}
+                  {hasAlloc ? (
+                    <div>
+                      <div className="font-mono text-[10px] tracking-widest text-zinc-600 mb-1.5">INVENTORY CONSUMED</div>
+                      <div className="border border-zinc-800 divide-y divide-zinc-800">
+                        {Object.entries(alloc).map(([key, qty]) => {
+                          const item = inventory[key];
+                          if (!item || qty === 0) return null;
+                          return (
+                            <div key={key} className="flex items-center justify-between px-3 py-2.5">
+                              <div className="text-[13px] text-zinc-200">{item.label}</div>
+                              <div className="font-mono text-sm font-bold text-critical">
+                                −{qty} <span className="font-normal text-zinc-500 text-[10px]">{item.unit}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border border-dashed border-zinc-800 p-3 text-center font-mono text-[10px] tracking-widest text-zinc-600">
+                      NO INVENTORY ALLOCATED
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="space-y-2 pt-1">
+                    <button
+                      onClick={onResolve}
+                      className="w-full py-3 font-mono text-[11px] tracking-widest border flex items-center justify-center gap-2 hover:bg-volunteer/15 transition"
+                      style={{ borderColor: '#3FB950', color: '#3FB950' }}
+                    >
+                      <Flag size={13} strokeWidth={2.4} />
+                      CONFIRM RESOLVED
+                    </button>
+                    <button
+                      onClick={onUnresolvable}
+                      className="w-full py-2.5 font-mono text-[11px] tracking-widest border border-zinc-700 text-zinc-400 flex items-center justify-center gap-2 hover:bg-critical/10 hover:border-critical/50 hover:text-critical transition"
+                    >
+                      <X size={13} strokeWidth={2.4} />
+                      MARK UNRESOLVABLE{hasAlloc ? ' · REFUND INVENTORY' : ''}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ───────────────────────────────────────────────────────────────
+        // ZONE TICKET CARD — context-driven; opens assign/resolve modals
+        // ───────────────────────────────────────────────────────────────
+        function ZoneTicketCard({ signal, onOpen }) {
+          const { updateSignal, allocateInventory, refundInventory } = useApp();
+          const cat  = CATEGORY_META[signal.category] || CATEGORY_META.INFO;
+          const pri  = PRIORITY_META[signal.priority] || PRIORITY_META.NORMAL;
+          const Icon = cat.icon;
+          const [showAssign,  setShowAssign]  = useState(false);
+          const [showResolve, setShowResolve] = useState(false);
+
+          const handleAssign = (volunteer, allocations) => {
+            allocateInventory(signal.id, allocations, volunteer.name, volunteer.id);
+            setShowAssign(false);
+          };
+          const handleResolve = () => {
+            updateSignal(signal.id, { status: 'RESOLVED' });
+            setShowResolve(false);
+          };
+          const handleUnresolvable = () => {
+            refundInventory(signal.id, signal.inventory_allocated);
+            setShowResolve(false);
+          };
+
+          const isAssignable = signal.status === 'NEW' || signal.status === 'ACKNOWLEDGED';
+          const isResolvable = signal.status === 'IN_PROGRESS';
+          const isDone       = signal.status === 'RESOLVED' || signal.status === 'EXPIRED';
+
+          return (
+            <>
+              <div
+                className="bg-ink-900/70 border border-zinc-800 overflow-hidden"
+                style={{ borderLeftColor: pri.color, borderLeftWidth: 3 }}
+              >
+                {/* Ticket header — tap to open detail */}
+                <button
+                  onClick={onOpen}
+                  className="w-full text-left flex items-start gap-3 p-3 hover:bg-ink-800/50 transition"
+                >
+                  <div
+                    className="w-9 h-9 shrink-0 flex items-center justify-center rounded-sm"
+                    style={{ background: cat.color + '14', border: `1px solid ${cat.color}44`, color: cat.color }}
+                  >
+                    <Icon size={15} strokeWidth={2.2} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <CategoryChip category={signal.category} />
+                      <StatusPill status={signal.status} />
+                      {signal.assigned_to_name && (
+                        <span
+                          className="font-mono text-[9px] tracking-widest px-1.5 py-0.5 border"
+                          style={{ color: '#3FB950', borderColor: '#3FB95044', background: '#3FB95010' }}
+                        >
+                          {signal.assigned_to_name}
+                        </span>
+                      )}
+                      <span className="ml-auto font-mono text-[10px] text-zinc-500">
+                        {timeAgo(signal.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-zinc-200 leading-snug line-clamp-2">
+                      {signal.summary || signal.message}
+                    </p>
+                    {signal.people_count > 0 && (
+                      <span className="font-mono text-[10px] text-zinc-500 mt-1 flex items-center gap-1">
+                        <Users size={10} /> {signal.people_count} ppl · {signal.manual_location || '—'}
+                      </span>
+                    )}
+                    {/* Show allocated inventory inline */}
+                    {signal.inventory_allocated && Object.keys(signal.inventory_allocated).length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {Object.entries(signal.inventory_allocated).map(([k, v]) => (
+                          <span key={k} className="font-mono text-[9px] tracking-widest text-zinc-400 border border-zinc-700 px-1.5 py-0.5">
+                            {k} ×{v}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </button>
+
+                {/* Action row — changes based on ticket status */}
+                {isAssignable && (
+                  <div className="grid grid-cols-2 border-t border-zinc-800 divide-x divide-zinc-800">
+                    <button
+                      onClick={() => updateSignal(signal.id, { status: 'ACKNOWLEDGED' })}
+                      disabled={signal.status === 'ACKNOWLEDGED'}
+                      className="flex items-center justify-center gap-1.5 py-2 font-mono text-[10px] tracking-widest transition text-zinc-400 hover:text-high hover:bg-high/10 disabled:text-high disabled:bg-high/[0.07]"
+                    >
+                      <CheckCircle2 size={11} strokeWidth={2.4} /> ACK
+                    </button>
+                    <button
+                      onClick={() => setShowAssign(true)}
+                      className="flex items-center justify-center gap-1.5 py-2 font-mono text-[10px] tracking-widest text-zinc-400 hover:text-volunteer hover:bg-volunteer/10 transition"
+                    >
+                      <Users size={11} strokeWidth={2.4} /> ASSIGN
+                    </button>
+                  </div>
+                )}
+                {isResolvable && (
+                  <div className="grid grid-cols-2 border-t border-zinc-800 divide-x divide-zinc-800">
+                    <button
+                      onClick={() => setShowResolve(true)}
+                      className="flex items-center justify-center gap-1.5 py-2 font-mono text-[10px] tracking-widest text-zinc-400 hover:text-volunteer hover:bg-volunteer/10 transition"
+                    >
+                      <Flag size={11} strokeWidth={2.4} /> RESOLVE…
+                    </button>
+                    <button
+                      onClick={handleUnresolvable}
+                      className="flex items-center justify-center gap-1.5 py-2 font-mono text-[10px] tracking-widest text-zinc-400 hover:text-critical hover:bg-critical/10 transition"
+                    >
+                      <X size={11} strokeWidth={2.4} /> UNRESOLVABLE
+                    </button>
+                  </div>
+                )}
+                {isDone && (
+                  <div
+                    className="flex items-center justify-center gap-2 py-2 font-mono text-[10px] tracking-widest border-t border-zinc-800"
+                    style={{ color: signal.status === 'RESOLVED' ? '#3FB950' : '#71717a' }}
+                  >
+                    {signal.status === 'RESOLVED'
+                      ? <><Flag size={11} strokeWidth={2.4} /> RESOLVED</>
+                      : <><X size={11} strokeWidth={2.4} /> UNRESOLVABLE</>}
+                  </div>
+                )}
+              </div>
+
+              {/* Portalled modals render as siblings to avoid stacking-context issues */}
+              {showAssign  && <AssignTicketModal  signal={signal} onClose={() => setShowAssign(false)}  onAssign={handleAssign} />}
+              {showResolve && <ResolveTicketModal signal={signal} onClose={() => setShowResolve(false)} onResolve={handleResolve} onUnresolvable={handleUnresolvable} />}
+            </>
+          );
+        }
+
+        // ───────────────────────────────────────────────────────────────
         // MAP SCREEN
         // ───────────────────────────────────────────────────────────────
         function MapScreen({ session, onOpenSignal }) {
+          const { signals } = useApp();
           const role = session.role;
-          const [selected, setSelected] = useState(null);
+          const [mapPins,     setMapPins]     = useState(MAP_PINS);
+          const [selected,    setSelected]    = useState(null);
+          const [dropMode,    setDropMode]    = useState(false);
+          const [pendingDrop, setPendingDrop] = useState(null); // { x, y } %
+          const mapRef = useRef(null);
+
+          // Pins for signals currently IN_PROGRESS (active operation overlay)
+          const activeOpsPins = useMemo(() =>
+            signals
+              .filter((s) => s.status === 'IN_PROGRESS')
+              .map((s) => mapPins.find((p) => p.id === s.id))
+              .filter(Boolean),
+          [signals, mapPins]);
 
           // Visibility rules per role
-          const visiblePins = useMemo(() => MAP_PINS.filter((p) => {
-            if (role === 'CIVILIAN') {
-              // sees safe zones + authority pins; NOT other civilians' signals
-              return p.kind === 'safezone' || p.kind === 'authority';
-            }
-            if (role === 'VOLUNTEER') {
-              return p.kind === 'signal' || p.kind === 'safezone' || p.kind === 'authority' || p.kind === 'volunteer';
-            }
-            // AUTHORITY: everything
+          const visiblePins = useMemo(() => mapPins.filter((p) => {
+            if (role === 'CIVILIAN') return p.kind === 'safezone' || p.kind === 'authority';
+            if (role === 'VOLUNTEER') return p.kind !== 'civilian';
             return true;
-          }), [role]);
+          }), [role, mapPins]);
+
+          const handleMapClick = (e) => {
+            if (!dropMode || role !== 'AUTHORITY') return;
+            if (e.target !== mapRef.current && !mapRef.current.contains(e.target)) return;
+            const rect = mapRef.current.getBoundingClientRect();
+            const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+            const y = Math.round(((e.clientY - rect.top)  / rect.height) * 100);
+            setPendingDrop({ x, y });
+          };
+
+          const confirmDrop = (zoneType) => {
+            const names = { SHELTER: 'Field Shelter', MEDICAL: 'Medical Post', SUPPLY: 'Supply Cache', EVAC_POINT: 'Evac Point' };
+            setMapPins((prev) => [
+              ...prev,
+              {
+                id:       'sz-' + Math.random().toString(36).slice(2, 6),
+                kind:     'safezone',
+                zoneType,
+                x:        pendingDrop.x,
+                y:        pendingDrop.y,
+                label:    names[zoneType] + ' (new)',
+                isNew:    true,
+              },
+            ]);
+            setPendingDrop(null);
+            setDropMode(false);
+          };
+
+          const pinColor = (p) => {
+            if (p.kind === 'signal')    return PRIORITY_META[p.priority]?.color || '#a1a1aa';
+            if (p.kind === 'safezone')  return '#3FB950';
+            if (p.kind === 'authority') return '#F78166';
+            if (p.kind === 'volunteer') return '#58A6FF';
+            return '#a1a1aa';
+          };
+          const pinIcon = (p) => {
+            if (p.kind === 'signal')    return CATEGORY_META[p.category]?.icon || MapPin;
+            if (p.kind === 'safezone')  return Tent;
+            if (p.kind === 'authority') return Shield;
+            if (p.kind === 'volunteer') return LifeBuoy;
+            return MapPin;
+          };
 
           return (
             <div className="relative h-[calc(100vh-3rem-3rem)] overflow-hidden bg-ink-950">
               {/* Map canvas */}
-              <div className="absolute inset-0 grid-bg">
-                {/* Crosshair grid overlays */}
-                <div className="absolute inset-0">
+              <div
+                ref={mapRef}
+                className="absolute inset-0 grid-bg"
+                onClick={handleMapClick}
+                style={dropMode ? { cursor: 'crosshair' } : {}}
+              >
+                {/* Grid lines */}
+                <div className="absolute inset-0 pointer-events-none">
                   <span className="absolute top-1/2 left-0 right-0 h-px bg-zinc-800/60" />
                   <span className="absolute top-0 bottom-0 left-1/2 w-px bg-zinc-800/60" />
-                  {/* concentric tactical rings around centre */}
                   {[1, 2, 3, 4].map((r) => (
                     <span
                       key={r}
@@ -1818,28 +2548,49 @@
                   ))}
                 </div>
 
+                {/* Active operation zone circles — rendered behind pins */}
+                {activeOpsPins.map((pin) => (
+                  <span
+                    key={'aop-' + pin.id}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+                    style={{
+                      left:       `${pin.x}%`,
+                      top:        `${pin.y}%`,
+                      width:      '90px',
+                      height:     '90px',
+                      background: 'rgba(88,166,255,0.07)',
+                      border:     '1.5px dashed rgba(88,166,255,0.38)',
+                      boxShadow:  '0 0 22px rgba(88,166,255,0.13)',
+                    }}
+                  />
+                ))}
+
+                {/* Pending drop preview */}
+                {pendingDrop && (
+                  <span
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ left: `${pendingDrop.x}%`, top: `${pendingDrop.y}%` }}
+                  >
+                    <span className="flex items-center justify-center w-7 h-7 rounded-sm border-2 border-dashed border-volunteer/80 bg-volunteer/10 animate-pulse">
+                      <Tent size={13} strokeWidth={2.4} className="text-volunteer" />
+                    </span>
+                  </span>
+                )}
+
                 {/* Pins */}
                 {visiblePins.map((p) => {
-                  let color = '#a1a1aa', PinIcon = MapPin;
-                  if (p.kind === 'signal') {
-                    color = PRIORITY_META[p.priority].color;
-                    PinIcon = CATEGORY_META[p.category].icon;
-                  } else if (p.kind === 'safezone') {
-                    color = '#3FB950'; PinIcon = Tent;
-                  } else if (p.kind === 'authority') {
-                    color = '#F78166'; PinIcon = Shield;
-                  } else if (p.kind === 'volunteer') {
-                    color = '#58A6FF'; PinIcon = LifeBuoy;
-                  }
+                  const color      = pinColor(p);
+                  const PinIcon    = pinIcon(p);
                   const isSelected = selected?.id === p.id;
+                  const isActiveOp = activeOpsPins.some((ap) => ap.id === p.id);
                   return (
                     <button
                       key={p.id}
-                      onClick={() => setSelected(p)}
+                      onClick={(e) => { e.stopPropagation(); if (!dropMode) setSelected(p); }}
                       className="absolute -translate-x-1/2 -translate-y-1/2 group"
                       style={{ left: `${p.x}%`, top: `${p.y}%` }}
                     >
-                      {(p.kind === 'signal' && (p.priority === 'CRITICAL' || p.priority === 'HIGH')) && (
+                      {p.kind === 'signal' && (p.priority === 'CRITICAL' || p.priority === 'HIGH') && (
                         <span
                           className="absolute inset-0 -m-2 rounded-full animate-ping"
                           style={{ background: color + '33' }}
@@ -1851,20 +2602,34 @@
                           isSelected ? 'scale-110' : ''
                         )}
                         style={{
-                          background: color + '22',
-                          borderColor: color,
+                          background:  color + '22',
+                          borderColor: isActiveOp ? '#58A6FF' : color,
                           color,
-                          boxShadow: isSelected ? `0 0 16px ${color}` : `0 0 8px ${color}55`,
+                          boxShadow:   isSelected ? `0 0 16px ${color}` : `0 0 8px ${color}55`,
                         }}
                       >
                         <PinIcon size={13} strokeWidth={2.4} />
                       </span>
+                      {/* blue IN_PROGRESS dot */}
+                      {isActiveOp && (
+                        <span
+                          className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-ink-950 animate-pulse"
+                          style={{ background: '#58A6FF' }}
+                        />
+                      )}
+                      {/* "new" indicator for dropped zones */}
+                      {p.isNew && (
+                        <span
+                          className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full border border-ink-950"
+                          style={{ background: '#3FB950' }}
+                        />
+                      )}
                     </button>
                   );
                 })}
 
-                {/* Self marker (centre-ish) */}
-                <div className="absolute left-[52%] top-[48%] -translate-x-1/2 -translate-y-1/2">
+                {/* Self marker */}
+                <div className="absolute left-[52%] top-[48%] -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                   <span className="absolute inset-0 -m-3 rounded-full bg-civilian/20 animate-ping" />
                   <span className="relative block w-3 h-3 rounded-full bg-civilian ring-2 ring-ink-950" />
                 </div>
@@ -1886,27 +2651,63 @@
                   <button className="w-9 h-9 flex items-center justify-center bg-ink-950/80 border border-zinc-800 text-zinc-300 hover:bg-ink-800">
                     <Navigation size={14} />
                   </button>
+                  {role === 'AUTHORITY' && (
+                    <button
+                      onClick={() => { setDropMode((p) => !p); setSelected(null); setPendingDrop(null); }}
+                      className="w-9 h-9 flex items-center justify-center border transition-colors"
+                      style={dropMode
+                        ? { background: '#3FB95022', borderColor: '#3FB950', color: '#3FB950' }
+                        : { background: 'rgba(13,15,26,0.8)', borderColor: '#3d4452', color: '#a1a1aa' }
+                      }
+                      title="Drop safe zone"
+                    >
+                      <Tent size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
 
+              {/* Drop mode hint */}
+              {dropMode && !pendingDrop && (
+                <div className="absolute left-3 right-3 pointer-events-none" style={{ top: '3.75rem' }}>
+                  <div className="bg-volunteer/12 border border-volunteer/40 px-3 py-2 font-mono text-[10px] tracking-widest text-volunteer flex items-center gap-2">
+                    <Tent size={11} strokeWidth={2.2} />
+                    TAP MAP TO PLACE SAFE ZONE — TAP BUTTON AGAIN TO CANCEL
+                  </div>
+                </div>
+              )}
+
+              {/* Active ops count badge */}
+              {activeOpsPins.length > 0 && !dropMode && (
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none">
+                  <div className="bg-civilian/12 border border-civilian/40 px-2 py-1 font-mono text-[9px] tracking-widest text-civilian flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-civilian animate-pulse" />
+                    {activeOpsPins.length} ACTIVE OP{activeOpsPins.length > 1 ? 'S' : ''}
+                  </div>
+                </div>
+              )}
+
               {/* Visibility legend */}
-              <div className="absolute top-20 left-3 bg-ink-950/85 border border-zinc-800 p-2 max-w-[180px] pointer-events-auto">
+              <div
+                className="absolute left-3 bg-ink-950/85 border border-zinc-800 p-2 max-w-[175px] pointer-events-auto transition-all"
+                style={{ top: dropMode ? '6rem' : '5rem' }}
+              >
                 <div className="font-mono text-[9px] tracking-widest text-zinc-500 mb-1.5 flex items-center gap-1">
                   <Lock size={9} /> VISIBILITY · {ROLES[role].badge}
                 </div>
                 <div className="space-y-1 font-mono text-[10px] text-zinc-300">
                   {role === 'CIVILIAN' && (
                     <>
-                      <LegendRow icon={Tent}   color="#3FB950" label="Safe zones" />
-                      <LegendRow icon={Shield} color="#F78166" label="Authority units" />
-                      <LegendRow icon={Siren}  color="#71717a" label="Signals hidden" muted />
+                      <LegendRow icon={Tent}    color="#3FB950" label="Safe zones" />
+                      <LegendRow icon={Shield}  color="#F78166" label="Authority units" />
+                      <LegendRow icon={Siren}   color="#71717a" label="Signals hidden" muted />
                     </>
                   )}
                   {role === 'VOLUNTEER' && (
                     <>
-                      <LegendRow icon={Siren}   color="#FF4D4D" label="Distress signals" />
-                      <LegendRow icon={Tent}    color="#3FB950" label="Safe zones" />
-                      <LegendRow icon={Shield}  color="#F78166" label="Authority" />
+                      <LegendRow icon={Siren}    color="#FF4D4D" label="Distress signals" />
+                      <LegendRow icon={Tent}     color="#3FB950" label="Safe zones" />
+                      <LegendRow icon={Shield}   color="#F78166" label="Authority" />
                       <LegendRow icon={LifeBuoy} color="#58A6FF" label="Other volunteers" />
                     </>
                   )}
@@ -1916,45 +2717,82 @@
                       <LegendRow icon={Tent}     color="#3FB950" label="Safe zones" />
                       <LegendRow icon={LifeBuoy} color="#58A6FF" label="Volunteers" />
                       <LegendRow icon={Users}    color="#a1a1aa" label="Civilians" />
+                      <LegendRow icon={Circle}   color="#58A6FF" label="Active ops zone" />
                     </>
                   )}
                 </div>
               </div>
 
+              {/* Zone type picker (shown after drop tap) */}
+              {pendingDrop && (
+                <div className="absolute inset-x-3 bottom-16 pointer-events-auto">
+                  <div className="bg-ink-900/98 border border-zinc-700 p-4">
+                    <div className="font-mono text-[10px] tracking-widest text-zinc-500 mb-3 flex items-center gap-1.5">
+                      <Tent size={10} /> SELECT ZONE TYPE
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { type: 'SHELTER',    icon: Tent,        label: 'Shelter',    color: '#3FB950' },
+                        { type: 'MEDICAL',    icon: HeartPulse,  label: 'Medical',    color: '#FF4D4D' },
+                        { type: 'SUPPLY',     icon: Package,     label: 'Supply',     color: '#FFD43B' },
+                        { type: 'EVAC_POINT', icon: Navigation,  label: 'Evac Point', color: '#58A6FF' },
+                      ].map(({ type, icon: ZIcon, label, color }) => (
+                        <button
+                          key={type}
+                          onClick={() => confirmDrop(type)}
+                          className="flex items-center gap-2 p-2.5 border hover:bg-zinc-800 transition-colors text-left"
+                          style={{ borderColor: color + '55' }}
+                        >
+                          <ZIcon size={14} style={{ color }} strokeWidth={2.2} />
+                          <span className="text-[12px] text-zinc-200 font-medium">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setPendingDrop(null)}
+                      className="mt-2 w-full text-center font-mono text-[10px] tracking-widest text-zinc-600 hover:text-zinc-400 py-1"
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Bottom selection sheet */}
-              {selected && (
+              {selected && !dropMode && (
                 <div className="absolute inset-x-0 bottom-0 bg-ink-900/95 backdrop-blur border-t border-zinc-800 p-3 pointer-events-auto">
                   <div className="flex items-start gap-3">
                     <div
-                      className="w-10 h-10 flex items-center justify-center"
+                      className="w-10 h-10 shrink-0 flex items-center justify-center"
                       style={{
-                        background: (selected.kind === 'signal' ? PRIORITY_META[selected.priority].color
-                          : selected.kind === 'safezone' ? '#3FB950'
-                            : selected.kind === 'authority' ? '#F78166' : '#58A6FF') + '18',
-                        border: `1px solid ${selected.kind === 'signal' ? PRIORITY_META[selected.priority].color
-                          : selected.kind === 'safezone' ? '#3FB950'
-                            : selected.kind === 'authority' ? '#F78166' : '#58A6FF'}55`,
+                        background: pinColor(selected) + '18',
+                        border: `1px solid ${pinColor(selected)}55`,
                       }}
                     >
-                      {selected.kind === 'signal' && (() => { const I = CATEGORY_META[selected.category].icon; return <I size={16} style={{ color: CATEGORY_META[selected.category].color }} />; })()}
-                      {selected.kind === 'safezone'  && <Tent size={16} className="text-volunteer" />}
-                      {selected.kind === 'authority' && <Shield size={16} className="text-authority" />}
-                      {selected.kind === 'volunteer' && <LifeBuoy size={16} className="text-civilian" />}
+                      {selected.kind === 'signal'    && (() => { const I = CATEGORY_META[selected.category]?.icon || MapPin; return <I size={16} style={{ color: CATEGORY_META[selected.category]?.color }} />; })()}
+                      {selected.kind === 'safezone'  && <Tent     size={16} className="text-volunteer" />}
+                      {selected.kind === 'authority' && <Shield   size={16} className="text-authority" />}
+                      {selected.kind === 'volunteer' && <LifeBuoy size={16} className="text-civilian"  />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-[10px] tracking-widest text-zinc-500 uppercase">
-                          {selected.kind === 'safezone' ? selected.zoneType : selected.kind}
+                          {selected.kind === 'safezone' ? selected.zoneType?.replace('_', ' ') : selected.kind}
                         </span>
                         {selected.kind === 'signal' && <CategoryChip category={selected.category} />}
                         {selected.kind === 'signal' && (
-                          <span className="font-mono text-[10px] tracking-widest" style={{ color: PRIORITY_META[selected.priority].color }}>
-                            {PRIORITY_META[selected.priority].label}
+                          <span className="font-mono text-[10px] tracking-widest" style={{ color: PRIORITY_META[selected.priority]?.color }}>
+                            {PRIORITY_META[selected.priority]?.label}
+                          </span>
+                        )}
+                        {activeOpsPins.some((ap) => ap.id === selected.id) && (
+                          <span className="font-mono text-[9px] tracking-widest text-civilian border border-civilian/40 px-1.5 py-0.5">
+                            IN PROGRESS
                           </span>
                         )}
                       </div>
                       <div className="text-sm text-zinc-100 mt-1 font-medium">{selected.label}</div>
-                      <div className="mt-1.5 flex gap-2">
+                      <div className="mt-1.5 flex gap-2 flex-wrap">
                         {selected.kind === 'signal' && (
                           <button
                             onClick={() => onOpenSignal(selected.id)}
@@ -1968,7 +2806,7 @@
                         </button>
                       </div>
                     </div>
-                    <button onClick={() => setSelected(null)} className="text-zinc-500 hover:text-zinc-200 -m-1 p-1">
+                    <button onClick={() => setSelected(null)} className="text-zinc-500 hover:text-zinc-200 -m-1 p-1 shrink-0">
                       <X size={16} />
                     </button>
                   </div>
@@ -2339,57 +3177,72 @@
         }
 
         // ───────────────────────────────────────────────────────────────
-        // RAISE SIGNAL COMPOSE
+        // SMART SOS COMPOSE — category-free; Gemma infers everything
         // ───────────────────────────────────────────────────────────────
-        function ComposeSheet({ category, onClose, onSubmit }) {
-          const meta = CATEGORY_META[category] || CATEGORY_META.MEDICAL;
+        function ComposeSheet({ onClose, onSubmit }) {
+          const { meshConnected } = useApp();
           const [message, setMessage] = useState('');
-          const [people, setPeople] = useState('');
-          const Icon = meta.icon;
+          const [people,  setPeople]  = useState('');
+          const canSubmit = message.trim().length >= 10;
 
           return (
             <div className="fixed inset-0 z-40 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div className="w-full sm:max-w-md bg-ink-900 border-t sm:border border-zinc-800 max-h-[92vh] overflow-y-auto">
+
+                {/* Header */}
                 <div className="sticky top-0 bg-ink-900/95 backdrop-blur border-b border-zinc-800 px-4 py-3 flex items-center gap-2">
                   <button onClick={onClose} className="-m-1 p-1 text-zinc-400 hover:text-zinc-100">
                     <X size={16} />
                   </button>
                   <span className="font-mono text-[10px] tracking-widest text-zinc-500">
-                    RAISE SIGNAL · NEW
+                    SOS SIGNAL · NEW
                   </span>
+                  <div className="ml-auto flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-civilian/80">
+                    <Sparkles size={11} strokeWidth={2.4} />
+                    AI TRIAGE
+                  </div>
                 </div>
 
                 <div className="p-4 space-y-4">
-                  <div className="flex items-center gap-3">
+
+                  {/* Hero prompt */}
+                  <div
+                    className="flex items-center gap-3 p-3.5 border-2"
+                    style={{ borderColor: '#FF4D4D44', background: '#FF4D4D08' }}
+                  >
                     <div
-                      className="w-12 h-12 flex items-center justify-center rounded-sm"
-                      style={{ background: meta.color + '18', border: `1px solid ${meta.color}55`, color: meta.color }}
+                      className="w-12 h-12 shrink-0 flex items-center justify-center rounded-full border-2"
+                      style={{ borderColor: '#FF4D4D', background: '#FF4D4D1A' }}
                     >
-                      <Icon size={22} strokeWidth={2.2} />
+                      <Siren size={22} className="text-critical" strokeWidth={2.2} />
                     </div>
                     <div>
-                      <div className="font-mono text-[10px] tracking-widest text-zinc-500">CATEGORY</div>
-                      <div className="text-zinc-100 font-medium" style={{ color: meta.color }}>{meta.label.toUpperCase()}</div>
+                      <div className="text-sm font-semibold text-zinc-100">What is your emergency?</div>
+                      <p className="text-[12px] text-zinc-500 mt-0.5 leading-relaxed">
+                        Describe freely. Gemma classifies category and priority automatically.
+                      </p>
                     </div>
                   </div>
 
+                  {/* Big free-text area — no category picker */}
                   <div>
-                    <label className="block font-mono text-[10px] tracking-widest text-zinc-500 uppercase mb-1.5">
-                      What's happening?
-                    </label>
                     <textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      rows={5}
+                      rows={7}
                       autoFocus
-                      placeholder="Describe in plain language. Gemma will triage and summarise this before broadcast."
-                      className="w-full bg-ink-950 border border-zinc-800 focus:border-civilian/60 outline-none p-3 text-sm text-zinc-100 placeholder:text-zinc-600 resize-none"
+                      placeholder={'e.g. "My neighbour collapsed and isn\'t breathing. We\'re on the 3rd floor of Green Tower near the old market. Two of us here. Please send help urgently."\n\nGemma will extract: category · priority · location cues.'}
+                      className="w-full bg-ink-950 border border-zinc-800 focus:border-critical/50 focus:ring-1 focus:ring-critical/20 outline-none p-3 text-sm text-zinc-100 placeholder:text-zinc-600 resize-none leading-relaxed"
                     />
-                    <p className="mt-1 font-mono text-[9px] tracking-widest text-zinc-600">
-                      AI INFERS URGENCY · YOU DON'T LABEL YOUR OWN EMERGENCY
-                    </p>
+                    <div className="mt-1 flex items-center justify-between font-mono text-[9px] tracking-widest text-zinc-600">
+                      <span>NO LABELS NEEDED · AI INFERS CATEGORY · PRIORITY · CUES</span>
+                      <span className={message.length < 10 ? 'text-zinc-700' : 'text-volunteer'}>
+                        {message.length}
+                      </span>
+                    </div>
                   </div>
 
+                  {/* People count */}
                   <div>
                     <label className="block font-mono text-[10px] tracking-widest text-zinc-500 uppercase mb-1.5">
                       People affected (optional)
@@ -2404,48 +3257,53 @@
                     />
                   </div>
 
-                  {/* Auto-fetched GPS chip */}
+                  {/* GPS chip */}
                   <div className="flex items-center gap-3 border border-volunteer/40 bg-volunteer/[0.06] p-2.5">
                     <div className="relative flex items-center justify-center w-9 h-9 shrink-0">
                       <span className="absolute inset-0 rounded-full bg-volunteer/15 animate-pulse-slow" />
                       <Crosshair size={16} className="relative text-volunteer" strokeWidth={2.4} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-mono text-[10px] tracking-widest text-volunteer">
-                        GPS LOCKED · AUTO-ATTACHED
-                      </div>
-                      <div className="font-mono text-[11px] text-zinc-300 truncate">
-                        28.6121° N · 77.2103° E · ±8 m
-                      </div>
+                      <div className="font-mono text-[10px] tracking-widest text-volunteer">GPS LOCKED · AUTO-ATTACHED</div>
+                      <div className="font-mono text-[11px] text-zinc-300 truncate">28.6121° N · 77.2103° E · ±8 m</div>
                     </div>
                     <span className="w-2 h-2 rounded-full bg-volunteer" style={{ boxShadow: '0 0 6px #3FB950' }} />
                   </div>
 
+                  {/* Mesh status note */}
+                  {!meshConnected && (
+                    <div className="border border-high/40 bg-high/[0.06] p-2.5 flex items-start gap-2">
+                      <WifiOff size={12} className="text-high mt-0.5 shrink-0" />
+                      <div className="font-mono text-[10px] tracking-widest text-high/80 leading-relaxed">
+                        MESH OFFLINE — SIGNAL WILL BE QUEUED LOCALLY AND SENT WHEN PEERS RECONNECT
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI disclaimer */}
                   <div className="border border-civilian/30 bg-civilian/[0.05] p-2.5 flex items-start gap-2">
                     <Sparkles size={12} className="text-civilian mt-0.5 shrink-0" />
                     <div className="font-mono text-[10px] tracking-widest text-civilian/80 leading-relaxed">
-                      AI WILL TRIAGE OFFLINE BEFORE BROADCAST · KEYWORD FALLBACK IF MODEL ABSENT
+                      GEMMA CLASSIFIES OFFLINE BEFORE BROADCAST · KEYWORD FALLBACK IF MODEL ABSENT
                     </div>
                   </div>
 
+                  {/* Actions */}
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={onClose}
-                      className="flex-1 py-3 border border-zinc-800 text-zinc-300 font-mono text-[11px] tracking-widest hover:bg-ink-800"
+                      className="flex-1 py-3 border border-zinc-800 text-zinc-300 font-mono text-[11px] tracking-widest hover:bg-ink-800 transition"
                     >
                       CANCEL
                     </button>
                     <button
-                      onClick={() => onSubmit({ category, message, people })}
-                      disabled={message.trim().length < 4}
-                      className="flex-1 py-3 font-mono text-[11px] tracking-widest border transition disabled:opacity-40"
-                      style={{
-                        borderColor: meta.color,
-                        background: meta.color + '15',
-                        color: meta.color,
-                      }}
+                      onClick={() => onSubmit({ message, people })}
+                      disabled={!canSubmit}
+                      className="flex-[2] py-3 font-mono text-[11px] tracking-widest border transition disabled:opacity-40 flex items-center justify-center gap-2"
+                      style={{ borderColor: '#FF4D4D', background: '#FF4D4D15', color: '#FF4D4D' }}
                     >
-                      RAISE SIGNAL
+                      <Siren size={13} strokeWidth={2.4} />
+                      BROADCAST SOS
                     </button>
                   </div>
                 </div>
@@ -2512,8 +3370,10 @@
           );
         }
 
-        function ChatRoom({ room, session, role, onBack }) {
-          const [messages, setMessages] = useState(MOCK_CHAT_MESSAGES[room.id] || []);
+        function ChatRoom({ room, onBack }) {
+          const { session, chatMessages, sendChatMessage } = useApp();
+          const role      = session.role;
+          const messages  = chatMessages[room.id] || [];
           const [draft, setDraft] = useState('');
           const listRef = useRef(null);
           const accentColor = room.id === 'room-all'
@@ -2528,16 +3388,13 @@
           const send = () => {
             const txt = draft.trim();
             if (!txt) return;
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: 'msg-' + Math.random().toString(36).slice(2, 8),
-                sender_name: session.name,
-                sender_role: role,
-                text: txt,
-                ts: Date.now(),
-              },
-            ]);
+            sendChatMessage(room.id, {
+              id: 'msg-' + Math.random().toString(36).slice(2, 8),
+              sender_name: session.name,
+              sender_role: role,
+              text: txt,
+              ts: Date.now(),
+            });
             setDraft('');
           };
 
@@ -2633,56 +3490,299 @@
           );
         }
 
-        function ChatScreen({ session, role }) {
+        // ───────────────────────────────────────────────────────────────
+        // DM CONVERSATION — 1-on-1 chat with a peer
+        // ───────────────────────────────────────────────────────────────
+        function DMConversation({ peer, onBack }) {
+          const { session, directMessages, sendDM } = useApp();
+          const messages   = directMessages[peer.id] || [];
+          const [draft, setDraft] = useState('');
+          const listRef    = useRef(null);
+          const peerAccent = ROLES[peer.role]?.accent || '#a1a1aa';
+          const selfAccent = ROLES[session.role]?.accent || '#a1a1aa';
+
+          useEffect(() => {
+            if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+          }, [messages]);
+
+          const send = () => {
+            const txt = draft.trim();
+            if (!txt) return;
+            sendDM(peer.id, {
+              id: 'dm-' + Math.random().toString(36).slice(2, 8),
+              sender_node_id: 'node-self',
+              sender_name: session.name,
+              text: txt,
+              ts: Date.now(),
+            });
+            setDraft('');
+          };
+
+          const fmtTime = (ts) =>
+            new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          return (
+            <div className="flex flex-col" style={{ height: 'calc(100vh - 3rem - 3.5rem)' }}>
+              {/* Header */}
+              <div className="flex items-center gap-3 px-3 py-2.5 border-b border-zinc-800 shrink-0">
+                <button onClick={onBack} className="text-zinc-400 hover:text-zinc-100 transition-colors">
+                  <ChevronLeft size={18} strokeWidth={2.5} />
+                </button>
+                <div
+                  className="shrink-0 w-9 h-9 flex items-center justify-center font-mono text-[9px] font-bold"
+                  style={{ background: peerAccent + '22', border: `1px solid ${peerAccent}44`, color: peerAccent }}
+                >
+                  {ROLES[peer.role]?.badge}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-semibold text-zinc-100 truncate">{peer.name}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: peer.status === 'online' ? '#3FB950' : '#52525b' }}
+                    />
+                    <span className="font-mono text-[9px] tracking-widest text-zinc-500">
+                      {peer.status === 'online' ? 'ONLINE' : 'LAST SEEN ' + timeAgo(peer.last_seen).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <span className="font-mono text-[9px] text-zinc-600 shrink-0">{messages.length} MSG</span>
+              </div>
+
+              {/* Message list */}
+              <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+                {messages.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-full gap-2 text-zinc-700">
+                    <MessageSquare size={28} strokeWidth={1.5} />
+                    <span className="font-mono text-[10px] tracking-widest">START THE CONVERSATION</span>
+                  </div>
+                )}
+                {messages.map((msg) => {
+                  const isSelf = msg.sender_node_id === 'node-self';
+                  return (
+                    <div key={msg.id} className={`flex gap-2 ${isSelf ? 'flex-row-reverse' : ''}`}>
+                      {!isSelf && (
+                        <div
+                          className="shrink-0 w-7 h-7 flex items-center justify-center font-mono text-[8px] font-bold mt-0.5"
+                          style={{ background: peerAccent + '22', border: `1px solid ${peerAccent}44`, color: peerAccent }}
+                        >
+                          {ROLES[peer.role]?.badge}
+                        </div>
+                      )}
+                      <div className={`max-w-[75%] flex flex-col gap-0.5 ${isSelf ? 'items-end' : 'items-start'}`}>
+                        {!isSelf && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[9px] font-semibold" style={{ color: peerAccent }}>
+                              {peer.name}
+                            </span>
+                            <span className="font-mono text-[8px] text-zinc-700">{fmtTime(msg.ts)}</span>
+                          </div>
+                        )}
+                        <div
+                          className="px-3 py-2 text-[11px] leading-relaxed"
+                          style={isSelf
+                            ? { background: selfAccent + '22', border: `1px solid ${selfAccent}44`, color: '#f4f4f5' }
+                            : { background: '#161922', border: '1px solid #1F2230', color: '#d4d4d8' }
+                          }
+                        >
+                          {msg.text}
+                        </div>
+                        {isSelf && (
+                          <span className="font-mono text-[8px] text-zinc-700">{fmtTime(msg.ts)}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Input bar */}
+              <div className="shrink-0 border-t border-zinc-800 px-3 py-2.5 flex items-center gap-2 bg-ink-950/90">
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+                  placeholder={`Message ${peer.name.split(' ')[0]}…`}
+                  className="flex-1 bg-ink-800 border border-zinc-700 focus:border-zinc-500 text-[11px] text-zinc-100 placeholder-zinc-600 px-3 py-2 outline-none font-mono"
+                />
+                <button
+                  onClick={send}
+                  disabled={!draft.trim()}
+                  className="w-9 h-9 flex items-center justify-center transition-colors disabled:opacity-30"
+                  style={{ background: selfAccent + '22', border: `1px solid ${selfAccent}55`, color: selfAccent }}
+                >
+                  <Send size={14} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        function ChatScreen() {
+          const { session, directMessages } = useApp();
+          const role  = session.role;
           const rooms = MOCK_CHAT_ROOMS.filter((r) => r.access.includes(role));
+
+          const [activeTab,    setActiveTab]    = useState('channels');
           const [activeRoomId, setActiveRoomId] = useState(
             role === 'CIVILIAN' ? 'room-all' : null
           );
+          const [activePeerId, setActivePeerId] = useState(null);
 
-          if (activeRoomId) {
-            const room = MOCK_CHAT_ROOMS.find((r) => r.id === activeRoomId);
-            return (
-              <ChatRoom
-                room={room}
-                session={session}
-                role={role}
-                onBack={role === 'CIVILIAN' ? null : () => setActiveRoomId(null)}
-              />
-            );
+          // Civilians always see room-all directly
+          if (role === 'CIVILIAN') {
+            const room = MOCK_CHAT_ROOMS.find((r) => r.id === 'room-all');
+            return <ChatRoom room={room} onBack={null} />;
           }
 
+          // Open a channel room
+          if (activeRoomId) {
+            const room = MOCK_CHAT_ROOMS.find((r) => r.id === activeRoomId);
+            return <ChatRoom room={room} onBack={() => setActiveRoomId(null)} />;
+          }
+
+          // Open a DM conversation
+          if (activePeerId) {
+            const peer = MOCK_MESH_PEERS.find((p) => p.id === activePeerId);
+            return <DMConversation peer={peer} onBack={() => setActivePeerId(null)} />;
+          }
+
+          // Peers visible to this role
+          const peers = MOCK_MESH_PEERS.filter((p) =>
+            role === 'AUTHORITY' ? true : (p.role === 'CIVILIAN' || p.role === 'VOLUNTEER')
+          );
+          const peersWithThreads = peers.filter((p) => (directMessages[p.id] || []).length > 0);
+
+          const getLastMsg = (peerId) => {
+            const t = directMessages[peerId];
+            return t && t.length ? t[t.length - 1] : null;
+          };
+
+          const accent = ROLES[role].accent;
+
           return (
-            <div className="px-3 pt-3 pb-28 space-y-2">
-              <div className="font-mono text-[10px] tracking-widest text-zinc-500 mb-3">
-                COMMS · {rooms.length} CHANNEL{rooms.length > 1 ? 'S' : ''}
+            <div className="flex flex-col" style={{ height: 'calc(100vh - 3rem - 3.5rem)' }}>
+              {/* Tab strip */}
+              <div className="flex border-b border-zinc-800 shrink-0">
+                {[
+                  { id: 'channels', label: 'CHANNELS', badge: rooms.length },
+                  { id: 'direct',   label: 'DIRECT',   badge: peersWithThreads.length || null },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className="relative flex-1 py-2.5 font-mono text-[10px] tracking-widest transition-colors"
+                    style={activeTab === t.id ? { color: accent } : { color: '#52525b' }}
+                  >
+                    {t.label}
+                    {t.badge !== null && (
+                      <span className="ml-1 font-mono text-[9px]">({t.badge})</span>
+                    )}
+                    {activeTab === t.id && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: accent }} />
+                    )}
+                  </button>
+                ))}
               </div>
-              {rooms.map((room) => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  role={role}
-                  onClick={() => setActiveRoomId(room.id)}
-                />
-              ))}
+
+              {/* CHANNELS */}
+              {activeTab === 'channels' && (
+                <div className="px-3 pt-3 pb-28 space-y-2 overflow-y-auto flex-1">
+                  <div className="font-mono text-[10px] tracking-widest text-zinc-500 mb-1">
+                    {rooms.length} CHANNEL{rooms.length !== 1 ? 'S' : ''}
+                  </div>
+                  {rooms.map((room) => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      role={role}
+                      onClick={() => setActiveRoomId(room.id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* DIRECT */}
+              {activeTab === 'direct' && (
+                <div className="overflow-y-auto flex-1 pb-28">
+                  <div className="px-3 pt-3 pb-1 font-mono text-[10px] tracking-widest text-zinc-500">
+                    {peers.length} PEER{peers.length !== 1 ? 'S' : ''} IN MESH
+                  </div>
+                  {peers.map((peer) => {
+                    const last       = getLastMsg(peer.id);
+                    const peerAccent = ROLES[peer.role]?.accent || '#a1a1aa';
+                    return (
+                      <button
+                        key={peer.id}
+                        onClick={() => setActivePeerId(peer.id)}
+                        className="w-full flex items-center gap-3 px-3 py-3 border-b border-zinc-800/60 hover:bg-zinc-900/40 text-left transition-colors"
+                      >
+                        {/* Avatar with online dot */}
+                        <div className="relative shrink-0">
+                          <div
+                            className="w-10 h-10 flex items-center justify-center font-mono text-[10px] font-bold"
+                            style={{ background: peerAccent + '22', border: `1px solid ${peerAccent}44`, color: peerAccent }}
+                          >
+                            {ROLES[peer.role]?.badge}
+                          </div>
+                          <span
+                            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-ink-950"
+                            style={{ background: peer.status === 'online' ? '#3FB950' : '#52525b' }}
+                          />
+                        </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline justify-between gap-1">
+                            <span className="text-[13px] font-medium text-zinc-100 truncate">{peer.name}</span>
+                            {last && (
+                              <span className="font-mono text-[9px] text-zinc-600 shrink-0">{timeAgo(last.ts)}</span>
+                            )}
+                          </div>
+                          <div className="font-mono text-[9px] tracking-widest mt-0.5" style={{ color: peerAccent }}>
+                            {peer.role}
+                          </div>
+                          {last ? (
+                            <div className="text-[11px] text-zinc-500 truncate mt-0.5">
+                              {last.sender_node_id === 'node-self' ? 'You: ' : ''}{last.text}
+                            </div>
+                          ) : (
+                            <div className="font-mono text-[9px] text-zinc-700 mt-0.5">No messages yet</div>
+                          )}
+                        </div>
+                        <ChevronRight size={14} className="text-zinc-700 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         }
 
         // ───────────────────────────────────────────────────────────────
-        // BOTTOM NAVIGATION
+        // BOTTOM NAVIGATION — civilians see 3 tabs, others see 5
         // ───────────────────────────────────────────────────────────────
         function BottomNav({ active, onChange, role }) {
-          const items = [
-            { id: 'home',      icon: Home,          label: role === 'AUTHORITY' ? 'CMD' : role === 'VOLUNTEER' ? 'TASKS' : 'HOME' },
-            { id: 'map',       icon: MapPin,         label: 'MAP' },
-            { id: 'chat',      icon: MessageSquare,  label: 'COMMS' },
-            { id: 'assistant', icon: Bot,            label: 'AI' },
-            { id: 'profile',   icon: User,           label: 'NODE' },
+          // Civilians: HOME · COMMS · AI  (no tactical map, no node info)
+          const civilianItems = [
+            { id: 'home',      icon: Home,          label: 'HOME'  },
+            { id: 'chat',      icon: MessageSquare, label: 'COMMS' },
+            { id: 'assistant', icon: Bot,           label: 'AI'    },
           ];
+          const operatorItems = [
+            { id: 'home',      icon: Home,          label: role === 'AUTHORITY' ? 'CMD' : 'TASKS' },
+            { id: 'map',       icon: MapPin,         label: 'MAP'   },
+            { id: 'chat',      icon: MessageSquare,  label: 'COMMS' },
+            { id: 'assistant', icon: Bot,            label: 'AI'    },
+            { id: 'profile',   icon: User,           label: 'NODE'  },
+          ];
+          const items  = role === 'CIVILIAN' ? civilianItems : operatorItems;
+          const cols   = role === 'CIVILIAN' ? 'grid-cols-3' : 'grid-cols-5';
           const accent = ROLES[role].accent;
+
           return (
             <nav className="fixed bottom-0 inset-x-0 z-30 bg-ink-950/95 backdrop-blur border-t border-zinc-900">
-              <div className="grid grid-cols-5">
+              <div className={`grid ${cols}`}>
                 {items.map((it) => {
                   const Icon = it.icon;
                   const isActive = active === it.id;
@@ -2815,108 +3915,84 @@
         }
 
         // ───────────────────────────────────────────────────────────────
-        // ROOT APP
+        // APP SHELL — reads from global context; only owns UI nav state.
+        // The mesh connection and all shared state live in AppProvider
+        // above the router, so navigation never kills the connection.
         // ───────────────────────────────────────────────────────────────
-        function App() {
-          const [session, setSession] = useState(null); // { name, role }
-          const [tab, setTab] = useState('home');
-          const [signals, setSignals] = useState(MOCK_SIGNALS);
-          const [tasks] = useState(MOCK_TASKS);
-          const [peerCount] = useState(MOCK_PEERS_COUNT);
-          const [battery] = useState(78);
-          const [aiState, setAiState] = useState({
-            status: 'absent', progress: 0, sizeMb: 2940, downloadedMb: 0,
-          });
-          const [aiPanelOpen, setAiPanelOpen] = useState(false);
-          const [composeCategory, setComposeCategory] = useState(null);
-          const [openSignalId, setOpenSignalId] = useState(null);
+        function AppShell() {
+          const {
+            session, setSession,
+            signals, addSignal,
+            tasks,
+            peerCount,
+            battery,
+            meshConnected,
+            aiState, startDownload, cancelDownload,
+          } = useApp();
+
+          // Pure UI state — navigating between tabs does NOT reset these
+          const [tab,           setTab]           = useState('home');
+          const [aiPanelOpen,   setAiPanelOpen]   = useState(false);
+          const [composeOpen,   setComposeOpen]   = useState(false);
+          const [openSignalId,  setOpenSignalId]  = useState(null);
           const [openClusterId, setOpenClusterId] = useState(null);
-          const downloadTimer = useRef(null);
 
           const changeTab = (t) => { setOpenClusterId(null); setTab(t); };
 
-          // simulated download
-          const startDownload = () => {
-            setAiState((s) => ({ ...s, status: 'downloading', progress: 0, downloadedMb: 0 }));
-            clearInterval(downloadTimer.current);
-            downloadTimer.current = setInterval(() => {
-              setAiState((s) => {
-                if (s.status !== 'downloading') return s;
-                const next = Math.min(100, s.progress + Math.random() * 6 + 2);
-                const dmb = Math.round((next / 100) * s.sizeMb);
-                if (next >= 100) {
-                  clearInterval(downloadTimer.current);
-                  setTimeout(() => setAiState((x) => ({ ...x, status: 'verifying' })), 200);
-                  setTimeout(() => setAiState((x) => ({ ...x, status: 'ready' })), 2000);
-                }
-                return { ...s, progress: next, downloadedMb: dmb };
-              });
-            }, 320);
-          };
-
-          const cancelDownload = () => {
-            clearInterval(downloadTimer.current);
-            setAiState((s) => ({ ...s, status: 'absent', progress: 0, downloadedMb: 0 }));
-          };
-
-          useEffect(() => () => clearInterval(downloadTimer.current), []);
-
-          const openSignal = useCallback((id) => setOpenSignalId(id), []);
+          const openSignal    = useCallback((id) => setOpenSignalId(id), []);
           const openSignalObj = openSignalId ? signals.find((s) => s.id === openSignalId) : null;
 
-          const submitSignal = ({ category, message, people }) => {
-            // Civilian does NOT pick priority. Mock Layer-1 keyword triage infers it.
+          const submitSignal = ({ message, people }) => {
             const lc = message.toLowerCase();
             const inferredPriority =
               /unconscious|not breathing|drown|severe|bleed|critical|trapped|labour/.test(lc) ? 'CRITICAL' :
-              /injur|fever|hurt|fire|water rising|stuck/.test(lc) ? 'HIGH' :
-              /food|water|shelter|info/.test(lc) ? 'NORMAL' : 'HIGH';
+              /injur|fever|hurt|fire|water rising|stuck/.test(lc)                              ? 'HIGH'     :
+              /food|water|shelter|info/.test(lc)                                               ? 'NORMAL'   : 'HIGH';
 
-            const s = {
-              id: 'sig-' + Math.random().toString(36).slice(2, 8),
-              sender_node_id: 'node-self',
-              sender_name: session.name,
-              sender_role: session.role,
-              category,
-              priority: inferredPriority,
+            addSignal({
+              id:              'sig-' + Math.random().toString(36).slice(2, 8),
+              sender_node_id:  'node-self',
+              sender_name:     session.name,
+              sender_role:     session.role,
+              category:        'UNCLASSIFIED',
+              priority:        inferredPriority,
               message,
               summary: aiState.status === 'ready'
-                ? message.slice(0, 60) + (message.length > 60 ? '…' : '')
-                : null,
-              needs: [],
-              people_count: people ? parseInt(people, 10) : 0,
-              area: 'Your Location', area_id: 'area-self',
-              latitude: 28.6121, longitude: 77.2103,
+                ? message.slice(0, 60) + (message.length > 60 ? '…' : '') : null,
+              needs:           [],
+              people_count:    people ? parseInt(people, 10) : 0,
+              area:            'Your Location',
+              area_id:         'area-self',
+              latitude:        28.6121,
+              longitude:       77.2103,
               manual_location: 'Auto-fetched (28.6121° N, 77.2103° E)',
-              status: 'NEW',
-              hop_count: 0, ttl: 8,
-              created_at: Date.now(), updated_at: Date.now(),
-            };
-            setSignals((prev) => [s, ...prev]);
-            setComposeCategory(null);
+              // Offline? drop into queue — will broadcast on reconnect
+              status:          meshConnected ? 'NEW' : 'QUEUED',
+              hop_count:       0,
+              ttl:             8,
+              created_at:      Date.now(),
+              updated_at:      Date.now(),
+            });
+            setComposeOpen(false);
             setTab('home');
           };
 
-          // Login first
-          if (!session) {
-            return <LoginScreen onContinue={setSession} />;
-          }
+          if (!session) return <LoginScreen onContinue={setSession} />;
 
-          // Main screens
+          const priOrder = { CRITICAL: 0, HIGH: 1, NORMAL: 2, LOW: 3 };
+
           let body;
           if (tab === 'home') {
             if (session.role === 'CIVILIAN') {
               body = (
                 <CivilianDashboard
-                  session={session}
-                  signals={signals}
-                  aiState={aiState}
-                  onRaise={(cat) => setComposeCategory(cat)}
+                  onOpenSOS={() => setComposeOpen(true)}
                   onOpenAssistant={() => {
                     if (aiState.status === 'absent') setAiPanelOpen(true);
                     setTab('assistant');
                   }}
                   onOpenSignal={openSignal}
+                  onGoComms={() => changeTab('chat')}
                 />
               );
             } else if (session.role === 'VOLUNTEER') {
@@ -2927,13 +4003,12 @@
                   signals={signals}
                   onOpenTask={(id) => alert('Task ' + id)}
                   onOpenSignal={openSignal}
-                  onGoMap={() => setTab('map')}
+                  onGoMap={() => changeTab('map')}
                 />
               );
             } else {
               if (openClusterId) {
-                const cluster = MOCK_CLUSTERS.find((c) => c.id === openClusterId);
-                const priOrder = { CRITICAL: 0, HIGH: 1, NORMAL: 2, LOW: 3 };
+                const cluster   = MOCK_CLUSTERS.find((c) => c.id === openClusterId);
                 const clSignals = cluster
                   ? [...signals.filter((s) => cluster.signal_ids.includes(s.id))]
                       .sort((a, b) => priOrder[a.priority] - priOrder[b.priority])
@@ -2941,7 +4016,7 @@
                 const topPriority = clSignals.reduce((best, s) =>
                   priOrder[s.priority] < priOrder[best] ? s.priority : best, 'LOW');
                 const totalPeople = clSignals.reduce((n, s) => n + (s.people_count || 0), 0);
-                const unresolved = clSignals.filter((s) => s.status !== 'RESOLVED').length;
+                const unresolved  = clSignals.filter((s) => s.status !== 'RESOLVED').length;
                 body = (
                   <ZoneDashboard
                     cluster={{ ...cluster, clSignals, topPriority, totalPeople, unresolved }}
@@ -2964,9 +4039,15 @@
           } else if (tab === 'map') {
             body = <MapScreen session={session} onOpenSignal={openSignal} />;
           } else if (tab === 'chat') {
-            body = <ChatScreen session={session} role={session.role} />;
+            body = <ChatScreen />;
           } else if (tab === 'assistant') {
-            body = <AssistantScreen aiState={aiState} session={session} onDownload={() => { setAiPanelOpen(true); startDownload(); }} />;
+            body = (
+              <AssistantScreen
+                aiState={aiState}
+                session={session}
+                onDownload={() => { setAiPanelOpen(true); startDownload(); }}
+              />
+            );
           } else if (tab === 'profile') {
             body = (
               <ProfileScreen
@@ -2995,10 +4076,10 @@
 
               <BottomNav active={tab} onChange={changeTab} role={session.role} />
 
-              {/* FAB — civilian only */}
+              {/* FAB — civilian SOS shortcut */}
               {session.role === 'CIVILIAN' && tab === 'home' && (
                 <button
-                  onClick={() => setComposeCategory('MEDICAL')}
+                  onClick={() => setComposeOpen(true)}
                   className="fixed bottom-20 right-4 sm:right-[max(1rem,calc(50%-13rem))] z-20 w-14 h-14 flex items-center justify-center rounded-full"
                   style={{
                     background: '#FF4D4D',
@@ -3027,14 +4108,24 @@
                 />
               )}
 
-              {composeCategory && (
+              {composeOpen && (
                 <ComposeSheet
-                  category={composeCategory}
-                  onClose={() => setComposeCategory(null)}
+                  onClose={() => setComposeOpen(false)}
                   onSubmit={submitSignal}
                 />
               )}
             </div>
+          );
+        }
+
+        // ───────────────────────────────────────────────────────────────
+        // ROOT APP — AppProvider wraps the shell so state outlives tabs
+        // ───────────────────────────────────────────────────────────────
+        function App() {
+          return (
+            <AppProvider>
+              <AppShell />
+            </AppProvider>
           );
         }
 

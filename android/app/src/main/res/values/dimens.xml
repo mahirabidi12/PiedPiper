@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Top bar / nav -->
+    <dimen name="top_bar_height">48dp</dimen>
+    <dimen name="bottom_nav_height">56dp</dimen>
+
+    <!-- Card / list -->
+    <dimen name="left_accent_width">3dp</dimen>
+    <dimen name="card_corner_radius">0dp</dimen>
+    <dimen name="tactical_corner_length">8dp</dimen>
+
+    <!-- Buttons -->
+    <dimen name="button_height">44dp</dimen>
+    <dimen name="button_height_small">36dp</dimen>
+
+    <!-- Icon boxes -->
+    <dimen name="icon_box_sm">28dp</dimen>
+    <dimen name="icon_box_md">36dp</dimen>
+    <dimen name="icon_box_lg">48dp</dimen>
+    <dimen name="icon_box_xl">56dp</dimen>
+
+    <!-- Radar / map -->
+    <dimen name="radar_size">120dp</dimen>
+</resources>

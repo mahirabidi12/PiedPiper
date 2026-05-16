@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:orientation="horizontal"
+    android:background="@color/ink_900">
+
+    <!-- Left accent bar (role color set programmatically) -->
+    <View
+        android:id="@+id/peerAccentBar"
+        android:layout_width="@dimen/left_accent_width"
+        android:layout_height="match_parent"
+        android:background="@color/text_dim" />
+
+    <!-- Role badge box -->
+    <TextView
+        android:id="@+id/tvPeerRoleBadge"
+        android:layout_width="@dimen/icon_box_md"
+        android:layout_height="@dimen/icon_box_md"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:gravity="center"
+        android:fontFamily="monospace"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.08"
+        android:textColor="@color/civilian"
+        android:background="@color/civilian_tint" />
+
+    <!-- Name + node ID -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvPeerName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                android:textColor="@color/text_primary"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <!-- Status dot -->
+            <View
+                android:id="@+id/peerStatusDot"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:background="@color/mesh_offline"
+                android:layout_marginEnd="14dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="2dp">
+
+            <TextView
+                android:id="@+id/tvPeerNodeId"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textColor="@color/text_dim" />
+
+            <TextView
+                android:id="@+id/tvPeerLastSeen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textColor="@color/text_dim"
+                android:layout_marginEnd="14dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:background="@color/border_default" />
+
+</LinearLayout>

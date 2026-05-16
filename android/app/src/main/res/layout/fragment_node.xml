@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ink_950">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="80dp">
+
+        <!-- ── Identity card ─────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_terminal_block"
+            android:padding="16dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp">
+
+            <!-- Role icon + name + status dot -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/tvNodeRoleBadge"
+                    android:layout_width="@dimen/icon_box_xl"
+                    android:layout_height="@dimen/icon_box_xl"
+                    android:gravity="center"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"
+                    android:textColor="@color/civilian"
+                    android:background="@color/civilian_tint"
+                    android:layout_marginEnd="12dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvNodeUserName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:id="@+id/tvNodeRoleLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="9sp"
+                        android:textColor="@color/civilian"
+                        android:letterSpacing="0.12"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <!-- Live mesh status indicator -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+                    <View
+                        android:id="@+id/nodeStatusDot"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@color/mesh_offline" />
+                    <TextView
+                        android:id="@+id/tvMeshStatusLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="7sp"
+                        android:textColor="@color/mesh_offline"
+                        android:letterSpacing="0.08"
+                        android:layout_marginTop="4dp"
+                        android:text="OFFLINE" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Stats grid: NODE | PEERS | BATT -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_btn_neutral"
+                    android:padding="8dp"
+                    android:layout_marginEnd="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NODE"
+                        android:fontFamily="monospace"
+                        android:textSize="7sp"
+                        android:textColor="@color/text_dim"
+                        android:letterSpacing="0.10" />
+                    <TextView
+                        android:id="@+id/tvNodeId"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_btn_neutral"
+                    android:padding="8dp"
+                    android:layout_marginEnd="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PEERS"
+                        android:fontFamily="monospace"
+                        android:textSize="7sp"
+                        android:textColor="@color/text_dim"
+                        android:letterSpacing="0.10" />
+                    <TextView
+                        android:id="@+id/tvNodePeerCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:fontFamily="monospace"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_btn_neutral"
+                    android:padding="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BATT"
+                        android:fontFamily="monospace"
+                        android:textSize="7sp"
+                        android:textColor="@color/text_dim"
+                        android:letterSpacing="0.10" />
+                    <TextView
+                        android:id="@+id/tvNodeBattery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Mesh Status section ───────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/section_mesh_status"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_default" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/ink_900">
+
+            <!-- P2P Transport row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="P2P Transport"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_primary" />
+                    <TextView
+                        android:id="@+id/tvTransportValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nearby · P2P_CLUSTER"
+                        android:fontFamily="monospace"
+                        android:textSize="9sp"
+                        android:textColor="@color/text_muted"
+                        android:layout_marginTop="1dp" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/dotTransport"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@color/mesh_offline" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_default" />
+
+            <!-- Gossip Router row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Gossip Router"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_primary" />
+                    <TextView
+                        android:id="@+id/tvGossipValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="9sp"
+                        android:textColor="@color/text_muted"
+                        android:text="0 peers · ttl 8"
+                        android:layout_marginTop="1dp" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/dotGossip"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@color/mesh_offline" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_default" />
+
+            <!-- Database row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Database"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_primary" />
+                    <TextView
+                        android:id="@+id/tvDbValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="disaster_mesh.db"
+                        android:fontFamily="monospace"
+                        android:textSize="9sp"
+                        android:textColor="@color/text_muted"
+                        android:layout_marginTop="1dp" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/dotDatabase"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@color/mesh_online" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Connected Peers section ───────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:id="@+id/tvPeersHeader"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/section_connected_peers"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_default" />
+
+        <!-- Empty peers state -->
+        <TextView
+            android:id="@+id/tvNoPeers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_no_peers"
+            android:fontFamily="monospace"
+            android:textSize="10sp"
+            android:textColor="@color/text_dim"
+            android:gravity="center"
+            android:padding="24dp"
+            android:visibility="visible" />
+
+        <!-- Peers list (no scroll — sits inside NestedScrollView) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPeers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:visibility="gone" />
+
+        <!-- ── Sync Log section ──────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/section_sync_log"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_default" />
+
+        <!-- Sync log entries injected programmatically -->
+        <LinearLayout
+            android:id="@+id/containerSyncLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/ink_900"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+
+        <!-- ── Actions section ───────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/section_actions"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_default" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@color/ink_900">
+
+            <!-- Switch Role -->
+            <LinearLayout
+                android:id="@+id/btnSwitchRole"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:background="@drawable/bg_card_default"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/btn_switch_role"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_primary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="→"
+                    android:fontFamily="monospace"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+
+            <!-- Leave Mesh (destructive) -->
+            <LinearLayout
+                android:id="@+id/btnLeaveMesh"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:background="@drawable/bg_btn_critical"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/btn_leave_mesh"
+                    android:textSize="13sp"
+                    android:textColor="@color/priority_critical" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="×"
+                    android:fontFamily="monospace"
+                    android:textSize="16sp"
+                    android:textColor="@color/priority_critical" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Footer -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_app_footer"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/text_dim"
+            android:letterSpacing="0.10"
+            android:gravity="center"
+            android:padding="16dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
