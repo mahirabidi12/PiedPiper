@@ -34,6 +34,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val dmInbox: StateFlow<List<DirectMessageEntity>> = db.directMessageDao().observeLatestPerThread()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Tickets assigned to a specific volunteer node (all statuses, for history). */
+    fun assignedSignals(nodeId: String): Flow<List<SignalEntity>> =
+        db.signalDao().observeAssignedTo(nodeId)
+
+    /** Active tickets assigned to a specific volunteer (excludes terminal statuses). */
+    fun activeAssignedSignals(nodeId: String): Flow<List<SignalEntity>> =
+        db.signalDao().observeActiveAssignedTo(nodeId)
+
     fun dmThread(peerId: String, localNodeId: String): Flow<List<DirectMessageEntity>> {
         val threadId = dmThreadId(localNodeId, peerId)
         return db.directMessageDao().observeThread(threadId)

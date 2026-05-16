@@ -182,10 +182,17 @@ class MapFragment : Fragment() {
                 snippet   = "${signal.senderName}: ${signal.message.take(60)}"
                 icon      = buildPinDrawable(pinColor, 28)
                 setOnMarkerClickListener { _, _ ->
-                    SignalDetailBottomSheet.newInstance(signal) { s, newStatus ->
-                        (requireActivity() as MainActivity).meshService
-                            ?.updateSignalStatus(s.id, newStatus)
-                    }.show(childFragmentManager, "signal_detail_map")
+                    SignalDetailBottomSheet.newInstance(
+                        signal = signal,
+                        onAction = { s: Signal, action: SignalDetailBottomSheet.TicketAction ->
+                            val svc = (requireActivity() as MainActivity).meshService
+                            when (action) {
+                                SignalDetailBottomSheet.TicketAction.RESOLVE -> svc?.resolveTicket(s.id)
+                                SignalDetailBottomSheet.TicketAction.CANCEL  -> svc?.cancelTicket(s.id)
+                                else -> svc?.updateSignalStatus(s.id, com.disastermesh.app.model.SignalStatus.ACKNOWLEDGED)
+                            }
+                        }
+                    ).show(childFragmentManager, "signal_detail_map")
                     true
                 }
             }

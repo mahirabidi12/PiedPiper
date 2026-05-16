@@ -29,13 +29,17 @@ class CivilianHomeFragment : Fragment() {
     private val appViewModel: AppViewModel by activityViewModels()
 
     private val queuedAdapter = SignalAdapter { signal ->
-        SignalDetailBottomSheet.newInstance(signal) { _, _ -> }
-            .show(childFragmentManager, "signal_detail_queued")
+        SignalDetailBottomSheet.newInstance(
+            signal = signal,
+            onAction = { _: com.disastermesh.app.model.Signal, _: SignalDetailBottomSheet.TicketAction -> }
+        ).show(childFragmentManager, "signal_detail_queued")
     }
 
     private val signalAdapter = SignalAdapter { signal ->
-        SignalDetailBottomSheet.newInstance(signal) { _, _ -> }
-            .show(childFragmentManager, "signal_detail")
+        SignalDetailBottomSheet.newInstance(
+            signal = signal,
+            onAction = { _: com.disastermesh.app.model.Signal, _: SignalDetailBottomSheet.TicketAction -> }
+        ).show(childFragmentManager, "signal_detail")
     }
 
     override fun onCreateView(

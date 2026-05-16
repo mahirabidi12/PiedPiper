@@ -5,97 +5,67 @@
     android:orientation="vertical"
     android:background="@color/ink_950">
 
-    <!-- ── Stats strip ───────────────────────────────────────────────────── -->
+    <!-- ── Stats strip (tap to filter) ─────────────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@drawable/bg_terminal_block"
-        android:padding="12dp"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp">
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/tvStatActive"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:fontFamily="monospace"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="@color/volunteer" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ACTIVE"
-                android:fontFamily="monospace"
-                android:textSize="7sp"
-                android:letterSpacing="0.08"
+        <LinearLayout android:id="@+id/statActive"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:id="@+id/tvStatActive"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/volunteer" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="ACTIVE" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
                 android:textColor="@color/text_dim" />
         </LinearLayout>
 
-        <View android:layout_width="1dp" android:layout_height="match_parent"
+        <View android:layout_width="1dp" android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
             android:background="@color/border_default" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/tvStatNearby"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:fontFamily="monospace"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="@color/civilian" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="NEARBY"
-                android:fontFamily="monospace"
-                android:textSize="7sp"
-                android:letterSpacing="0.08"
+        <LinearLayout android:id="@+id/statInProgress"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:id="@+id/tvStatNearby"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/civilian" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="IN PROGRESS" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
                 android:textColor="@color/text_dim" />
         </LinearLayout>
 
-        <View android:layout_width="1dp" android:layout_height="match_parent"
+        <View android:layout_width="1dp" android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
             android:background="@color/border_default" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/tvStatResolved"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:fontFamily="monospace"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_muted" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="RESOLVED"
-                android:fontFamily="monospace"
-                android:textSize="7sp"
-                android:letterSpacing="0.08"
+        <LinearLayout android:id="@+id/statResolved"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:id="@+id/tvStatResolved"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/status_resolved" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="RESOLVED" android:fontFamily="monospace"
+                android:textSize="7sp" android:letterSpacing="0.08"
                 android:textColor="@color/text_dim" />
         </LinearLayout>
     </LinearLayout>
@@ -131,56 +101,115 @@
             android:text="◆ INVENTORY" />
     </LinearLayout>
 
-    <!-- ── Section: Assigned Tasks ───────────────────────────────────────── -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="8dp">
-
-        <View
-            android:layout_width="2dp"
-            android:layout_height="10dp"
-            android:background="@color/volunteer"
-            android:layout_marginEnd="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ASSIGNED TASKS"
-            android:fontFamily="monospace"
-            android:textSize="9sp"
-            android:letterSpacing="0.10"
-            android:textColor="@color/text_muted" />
-    </LinearLayout>
-
-    <View android:layout_width="match_parent" android:layout_height="1dp"
-        android:background="@color/border_default" />
-
-    <TextView
-        android:id="@+id/tvNoTasks"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="No tasks assigned"
-        android:fontFamily="monospace"
-        android:textSize="10sp"
-        android:textColor="@color/text_dim"
-        android:gravity="center"
-        android:padding="24dp"
-        android:visibility="visible" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvSignals"
+    <!-- ── Scrollable list area ────────────────────────────────────────────── -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:clipToPadding="false"
-        android:visibility="gone" />
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Active tasks section header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="8dp">
+                <View
+                    android:layout_width="2dp"
+                    android:layout_height="10dp"
+                    android:background="@color/volunteer"
+                    android:layout_marginEnd="8dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ASSIGNED TASKS"
+                    android:fontFamily="monospace"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.10"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/border_default" />
+
+            <TextView
+                android:id="@+id/tvNoTasks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No tasks assigned"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/text_dim"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="visible" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSignals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:clipToPadding="false"
+                android:visibility="gone" />
+
+            <!-- Closed tasks section -->
+            <LinearLayout
+                android:id="@+id/sectionClosed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="@color/border_default"
+                    android:layout_marginTop="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="8dp">
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="10dp"
+                        android:background="@color/text_muted"
+                        android:layout_marginEnd="8dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CLOSED TASKS"
+                        android:fontFamily="monospace"
+                        android:textSize="9sp"
+                        android:letterSpacing="0.10"
+                        android:textColor="@color/text_muted" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvClosedSignals"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="8dp"
+                    android:clipToPadding="false" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

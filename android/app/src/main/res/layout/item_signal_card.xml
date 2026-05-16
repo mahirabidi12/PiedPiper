@@ -148,6 +148,24 @@
                     android:textSize="8sp"
                     android:textColor="@color/text_muted" />
             </LinearLayout>
+
+            <!-- Cancel button — shown only on authority screens -->
+            <TextView
+                android:id="@+id/btnCancelTicket"
+                android:layout_width="match_parent"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:text="CANCEL TICKET"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:letterSpacing="0.10"
+                android:textColor="@color/priority_critical"
+                android:background="@color/critical_tint"
+                android:layout_marginTop="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
