@@ -53,20 +53,22 @@
         android:layout_height="1dp"
         android:background="@color/border_default" />
 
-    <!-- ── Zone stats strip ─────────────────────────────────────────────────── -->
+    <!-- ── Zone stats strip (tap to filter) ──────────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@drawable/bg_card_default"
-        android:padding="12dp"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="8dp">
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+        <LinearLayout android:id="@+id/statTotal"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
             <TextView android:id="@+id/tvZoneStatTotal"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="0" android:fontFamily="monospace" android:textSize="18sp"
@@ -76,11 +78,15 @@
                 android:textSize="7sp" android:textColor="@color/text_dim" />
         </LinearLayout>
 
-        <View android:layout_width="1dp" android:layout_height="match_parent"
+        <View android:layout_width="1dp" android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
             android:background="@color/border_default" />
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+        <LinearLayout android:id="@+id/statOpen"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
             <TextView android:id="@+id/tvZoneStatOpen"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="0" android:fontFamily="monospace" android:textSize="18sp"
@@ -90,11 +96,15 @@
                 android:textSize="7sp" android:textColor="@color/text_dim" />
         </LinearLayout>
 
-        <View android:layout_width="1dp" android:layout_height="match_parent"
+        <View android:layout_width="1dp" android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
             android:background="@color/border_default" />
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+        <LinearLayout android:id="@+id/statAffected"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
             <TextView android:id="@+id/tvZoneStatAffected"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="—" android:fontFamily="monospace" android:textSize="18sp"
@@ -104,11 +114,15 @@
                 android:textSize="7sp" android:textColor="@color/text_dim" />
         </LinearLayout>
 
-        <View android:layout_width="1dp" android:layout_height="match_parent"
+        <View android:layout_width="1dp" android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
             android:background="@color/border_default" />
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+        <LinearLayout android:id="@+id/statCritical"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
             <TextView android:id="@+id/tvZoneStatCritical"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="0" android:fontFamily="monospace" android:textSize="18sp"
@@ -117,6 +131,25 @@
                 android:text="CRITICAL" android:fontFamily="monospace"
                 android:textSize="7sp" android:textColor="@color/text_dim" />
         </LinearLayout>
+
+        <View android:layout_width="1dp" android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            android:background="@color/border_default" />
+
+        <LinearLayout android:id="@+id/statFailed"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:id="@+id/tvZoneStatFailed"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0" android:fontFamily="monospace" android:textSize="18sp"
+                android:textStyle="bold" android:textColor="@color/status_failed" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="FAILED" android:fontFamily="monospace"
+                android:textSize="7sp" android:textColor="@color/text_dim" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- ── Action buttons row ─────────────────────────────────────────────── -->

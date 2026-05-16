@@ -16,23 +16,54 @@
         android:gravity="center_vertical"
         android:padding="12dp">
 
-        <!-- Count badge -->
+        <!-- Count stepper: [−] EditText [+] -->
         <LinearLayout
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:background="@color/ink_800"
-            android:layout_marginEnd="10dp"
-            android:orientation="vertical">
+            android:layout_marginEnd="10dp">
+
             <TextView
+                android:id="@+id/btnMinus"
+                android:layout_width="32dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:text="−"
+                android:textSize="18sp"
+                android:textColor="@color/priority_critical"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+
+            <EditText
                 android:id="@+id/tvCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="52dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:inputType="number"
                 android:text="0"
                 android:fontFamily="monospace"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:background="@android:color/transparent"
+                android:padding="0dp"
+                android:maxLength="5" />
+
+            <TextView
+                android:id="@+id/btnPlus"
+                android:layout_width="32dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:text="+"
+                android:textSize="18sp"
+                android:textColor="@color/volunteer"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <!-- Label + meta -->
@@ -81,36 +112,6 @@
                     android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Minus button -->
-        <TextView
-            android:id="@+id/btnMinus"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:gravity="center"
-            android:text="−"
-            android:textSize="18sp"
-            android:textColor="@color/priority_critical"
-            android:background="@color/critical_tint"
-            android:layout_marginEnd="6dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:visibility="gone" />
-
-        <!-- Plus button -->
-        <TextView
-            android:id="@+id/btnPlus"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:gravity="center"
-            android:text="+"
-            android:textSize="18sp"
-            android:textColor="@color/volunteer"
-            android:background="@color/volunteer_tint"
-            android:layout_marginEnd="6dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:visibility="gone" />
 
         <!-- Delete button (authority only) -->
         <TextView

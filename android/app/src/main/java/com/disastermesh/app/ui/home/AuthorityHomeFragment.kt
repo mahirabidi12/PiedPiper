@@ -13,6 +13,7 @@ import com.disastermesh.app.adapter.AreaClusterAdapter
 import com.disastermesh.app.adapter.SignalAdapter
 import com.disastermesh.app.databinding.FragmentHomeAuthorityBinding
 import com.disastermesh.app.map.LocationClusterer
+import com.disastermesh.app.model.Signal
 import com.disastermesh.app.model.SignalPriority
 import com.disastermesh.app.model.SignalStatus
 import com.disastermesh.app.ui.AppViewModel
@@ -20,7 +21,6 @@ import com.disastermesh.app.ui.MainActivity
 import com.disastermesh.app.ui.sheet.AssignTicketBottomSheet
 import com.disastermesh.app.ui.sheet.BroadcastBottomSheet
 import com.disastermesh.app.ui.inventory.InventoryFragment
-import com.disastermesh.app.ui.sheet.ResolveTicketBottomSheet
 import com.disastermesh.app.ui.sheet.SignalDetailBottomSheet
 import com.disastermesh.app.ui.zone.ZoneDetailFragment
 import kotlinx.coroutines.flow.collectLatest
@@ -31,8 +31,13 @@ class AuthorityHomeFragment : Fragment() {
     private var _binding: FragmentHomeAuthorityBinding? = null
     private val binding get() = _binding!!
 
+    private enum class AuthFilter { ALL, CRITICAL, ACTIVE, RESOLVED }
+
     private val appViewModel: AppViewModel by activityViewModels()
     private var showingZones = true
+    private var activeFilter = AuthFilter.ALL
+    private var allSignalsCache: List<Signal> = emptyList()
+    private var closedSignalsCache: List<Signal> = emptyList()
 
     private val zoneAdapter = AreaClusterAdapter { cluster ->
         val fragment = ZoneDetailFragment.newInstance(
@@ -45,35 +50,60 @@ class AuthorityHomeFragment : Fragment() {
             .commit()
     }
 
-    private val signalAdapter = SignalAdapter { signal ->
+    private val signalAdapter = SignalAdapter(
+        onCancel = { signal ->
+            val svc = (requireActivity() as MainActivity).meshService ?: return@SignalAdapter
+            svc.cancelTicket(signal.id)
+        },
+        onClick = { signal ->
+        val svc = (requireActivity() as MainActivity).meshService ?: return@SignalAdapter
+
         when (signal.status) {
-            SignalStatus.NEW, SignalStatus.ACKNOWLEDGED -> {
-                AssignTicketBottomSheet.newInstance(signal, appViewModel.inventory.value) { volunteerId, volunteerName, inventoryJson ->
-                    val svc = (requireActivity() as MainActivity).meshService ?: return@newInstance
-                    // Deduct inventory
-                    val items = org.json.JSONObject(inventoryJson)
-                    items.keys().forEach { key ->
-                        appViewModel.adjustInventory(key, -items.getInt(key))
-                    }
-                    svc.assignSignal(signal.id, volunteerId, volunteerName, inventoryJson)
+            SignalStatus.NEW, SignalStatus.ACKNOWLEDGED, SignalStatus.QUEUED -> {
+                AssignTicketBottomSheet.newInstance(signal) { volunteerIds, volunteerNames, inventoryJson, instructions ->
+                    svc.assignSignalToVolunteers(
+                        signalId       = signal.id,
+                        volunteerIds   = volunteerIds,
+                        volunteerNames = volunteerNames,
+                        inventoryJson  = inventoryJson,
+                        instructions   = instructions
+                    )
                 }.show(childFragmentManager, "assign_ticket")
             }
+
+            SignalStatus.ASSIGNED, SignalStatus.ACCEPTED,
+            SignalStatus.WAITING_FOR_INVENTORY, SignalStatus.ON_HOLD,
             SignalStatus.IN_PROGRESS -> {
-                ResolveTicketBottomSheet.newInstance(signal) { resolved ->
-                    val svc = (requireActivity() as MainActivity).meshService ?: return@newInstance
-                    if (resolved) {
-                        svc.updateSignalStatus(signal.id, SignalStatus.RESOLVED)
-                    } else {
-                        svc.clearSignalAssignment(signal.id, signal.inventoryAllocated)
+                SignalDetailBottomSheet.newInstance(
+                    signal = signal,
+                    onAction = { s: Signal, action: SignalDetailBottomSheet.TicketAction ->
+                        when (action) {
+                            SignalDetailBottomSheet.TicketAction.RESOLVE     -> svc.resolveTicket(s.id)
+                            SignalDetailBottomSheet.TicketAction.CANCEL      -> svc.cancelTicket(s.id)
+                            SignalDetailBottomSheet.TicketAction.FAIL        -> svc.failTicket(s.id)
+                            SignalDetailBottomSheet.TicketAction.ACKNOWLEDGE -> svc.updateSignalStatus(s.id, SignalStatus.ACKNOWLEDGED)
+                            SignalDetailBottomSheet.TicketAction.IN_ROUTE    -> svc.updateSignalStatus(s.id, SignalStatus.IN_PROGRESS)
+                            else -> {}
+                        }
                     }
-                }.show(childFragmentManager, "resolve_ticket")
+                ).show(childFragmentManager, "ticket_detail")
             }
-            else -> {
-                SignalDetailBottomSheet.newInstance(signal) { s, newStatus ->
-                    (requireActivity() as MainActivity).meshService?.updateSignalStatus(s.id, newStatus)
-                }.show(childFragmentManager, "signal_detail")
+
+            SignalStatus.RESOLVED, SignalStatus.EXPIRED,
+            SignalStatus.REJECTED, SignalStatus.CANCELLED, SignalStatus.FAILED -> {
+                SignalDetailBottomSheet.newInstance(
+                    signal = signal,
+                    onAction = { _: Signal, _: SignalDetailBottomSheet.TicketAction -> }
+                ).show(childFragmentManager, "signal_detail")
             }
         }
+    })
+
+    private val closedSignalAdapter = SignalAdapter { signal ->
+        SignalDetailBottomSheet.newInstance(
+            signal = signal,
+            onAction = { _: Signal, _: SignalDetailBottomSheet.TicketAction -> }
+        ).show(childFragmentManager, "signal_detail_closed")
     }
 
     override fun onCreateView(
@@ -87,10 +117,18 @@ class AuthorityHomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.rvSignals.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvClosedSignals.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvClosedSignals.adapter = closedSignalAdapter
+
         setZonesTab()
 
         binding.tabZones.setOnClickListener      { setZonesTab() }
         binding.tabAllSignals.setOnClickListener { setAllSignalsTab() }
+
+        binding.statTotal.setOnClickListener    { setSignalFilter(AuthFilter.ALL) }
+        binding.statCritical.setOnClickListener { setSignalFilter(AuthFilter.CRITICAL) }
+        binding.statActive.setOnClickListener   { setSignalFilter(AuthFilter.ACTIVE) }
+        binding.statResolved.setOnClickListener { setSignalFilter(AuthFilter.RESOLVED) }
 
         binding.btnBroadcast.setOnClickListener {
             BroadcastBottomSheet.newInstance { message ->
@@ -99,7 +137,6 @@ class AuthorityHomeFragment : Fragment() {
         }
 
         binding.btnSafeZone.setOnClickListener {
-            // Navigate to map tab with drop mode pre-enabled
             requireActivity().supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, com.disastermesh.app.ui.map.MapFragment.newInstance(dropMode = true))
                 .commit()
@@ -119,6 +156,7 @@ class AuthorityHomeFragment : Fragment() {
     private fun setZonesTab() {
         showingZones = true
         binding.rvSignals.adapter = zoneAdapter
+        binding.sectionClosed.visibility = View.GONE
         binding.tabZones.setTextColor(requireContext().getColor(R.color.authority))
         binding.tabZones.setBackgroundColor(requireContext().getColor(R.color.authority_tint))
         binding.tabAllSignals.setTextColor(requireContext().getColor(R.color.text_muted))
@@ -132,6 +170,37 @@ class AuthorityHomeFragment : Fragment() {
         binding.tabAllSignals.setBackgroundColor(requireContext().getColor(R.color.authority_tint))
         binding.tabZones.setTextColor(requireContext().getColor(R.color.text_muted))
         binding.tabZones.setBackgroundColor(requireContext().getColor(R.color.ink_800))
+        applySignalFilter()
+    }
+
+    private fun setSignalFilter(filter: AuthFilter) {
+        if (showingZones) setAllSignalsTab()   // auto-switch to all signals tab
+        activeFilter = filter
+        applySignalFilter()
+        updateFilterHighlight()
+    }
+
+    private fun applySignalFilter() {
+        val filtered = when (activeFilter) {
+            AuthFilter.ALL      -> allSignalsCache
+            AuthFilter.CRITICAL -> allSignalsCache.filter { it.priority == SignalPriority.CRITICAL }
+            AuthFilter.ACTIVE   -> allSignalsCache.filter { !it.status.isTerminal }
+            AuthFilter.RESOLVED -> allSignalsCache.filter { it.status == SignalStatus.RESOLVED }
+        }
+        val active = filtered.filter { !it.status.isTerminal }
+        val closed = filtered.filter { it.status.isTerminal }
+        signalAdapter.submitList(active)
+        closedSignalAdapter.submitList(closed)
+        binding.sectionClosed.visibility = if (closed.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun updateFilterHighlight() {
+        val on  = requireContext().getColor(R.color.authority_tint)
+        val off = android.graphics.Color.TRANSPARENT
+        binding.statTotal.setBackgroundColor(    if (activeFilter == AuthFilter.ALL)      on else off)
+        binding.statCritical.setBackgroundColor( if (activeFilter == AuthFilter.CRITICAL) on else off)
+        binding.statActive.setBackgroundColor(   if (activeFilter == AuthFilter.ACTIVE)   on else off)
+        binding.statResolved.setBackgroundColor( if (activeFilter == AuthFilter.RESOLVED) on else off)
     }
 
     private fun observeSignals() {
@@ -139,21 +208,33 @@ class AuthorityHomeFragment : Fragment() {
             appViewModel.signals.collectLatest { entities ->
                 val signals = entities.map { it.toDomain() }
 
+                val activeStatuses = setOf(
+                    SignalStatus.NEW, SignalStatus.ACKNOWLEDGED,
+                    SignalStatus.ASSIGNED, SignalStatus.ACCEPTED,
+                    SignalStatus.IN_PROGRESS, SignalStatus.WAITING_FOR_INVENTORY,
+                    SignalStatus.ON_HOLD
+                )
+
                 binding.tvStatTotal.text        = signals.size.toString()
                 binding.tvStatCritical.text     = signals.count { it.priority == SignalPriority.CRITICAL }.toString()
-                binding.tvStatInProgress.text   = signals.count {
-                    it.status == SignalStatus.IN_PROGRESS || it.status == SignalStatus.ACKNOWLEDGED
-                }.toString()
+                binding.tvStatInProgress.text   = signals.count { it.status in activeStatuses }.toString()
                 binding.tvStatResolvedAuth.text = signals.count { it.status == SignalStatus.RESOLVED }.toString()
 
-                val active   = signals.filter { it.status != SignalStatus.RESOLVED && it.status != SignalStatus.EXPIRED }
-                val clusters = LocationClusterer.cluster(active)
+                allSignalsCache   = signals
+                closedSignalsCache = signals.filter { it.status.isTerminal }
 
-                binding.tvNoZones.visibility = if (clusters.isEmpty()) View.VISIBLE else View.GONE
-                binding.rvSignals.visibility = if (clusters.isEmpty()) View.GONE    else View.VISIBLE
+                // Cluster ALL signals so zone detail can show history;
+                // only display zones that still have at least one active signal.
+                val allClusters     = LocationClusterer.cluster(signals)
+                val displayClusters = allClusters.filter { c -> c.signals.any { !it.status.isTerminal } }
 
-                if (showingZones) zoneAdapter.submitList(clusters)
-                signalAdapter.submitList(signals)
+                binding.tvNoZones.visibility = if (displayClusters.isEmpty()) View.VISIBLE else View.GONE
+
+                if (showingZones) {
+                    zoneAdapter.submitList(displayClusters)
+                } else {
+                    applySignalFilter()
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ package com.disastermesh.app.adapter
 
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -14,7 +15,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 class SignalAdapter(
-    private val onClick: ((Signal) -> Unit)? = null
+    private val onClick: ((Signal) -> Unit)? = null,
+    private val onCancel: ((Signal) -> Unit)? = null
 ) : ListAdapter<Signal, SignalAdapter.VH>(DIFF) {
 
     inner class VH(val binding: ItemSignalCardBinding) : RecyclerView.ViewHolder(binding.root)
@@ -47,12 +49,19 @@ class SignalAdapter(
         // Status chip
         holder.binding.tvStatus.text = signal.status.name
         val statusColor = when (signal.status) {
-            SignalStatus.NEW         -> ctx.getColor(R.color.status_new)
-            SignalStatus.ACKNOWLEDGED -> ctx.getColor(R.color.status_acknowledged)
-            SignalStatus.IN_PROGRESS -> ctx.getColor(R.color.status_in_progress)
-            SignalStatus.RESOLVED    -> ctx.getColor(R.color.status_resolved)
-            SignalStatus.EXPIRED     -> ctx.getColor(R.color.text_dim)
-            SignalStatus.QUEUED      -> ctx.getColor(R.color.text_muted)
+            SignalStatus.NEW                  -> ctx.getColor(R.color.status_new)
+            SignalStatus.ACKNOWLEDGED         -> ctx.getColor(R.color.status_acknowledged)
+            SignalStatus.ASSIGNED             -> ctx.getColor(R.color.status_assigned)
+            SignalStatus.ACCEPTED             -> ctx.getColor(R.color.status_accepted)
+            SignalStatus.IN_PROGRESS          -> ctx.getColor(R.color.status_in_progress)
+            SignalStatus.WAITING_FOR_INVENTORY -> ctx.getColor(R.color.status_waiting)
+            SignalStatus.ON_HOLD              -> ctx.getColor(R.color.status_on_hold)
+            SignalStatus.RESOLVED             -> ctx.getColor(R.color.status_resolved)
+            SignalStatus.REJECTED             -> ctx.getColor(R.color.status_rejected)
+            SignalStatus.CANCELLED            -> ctx.getColor(R.color.status_cancelled)
+            SignalStatus.FAILED               -> ctx.getColor(R.color.status_failed)
+            SignalStatus.EXPIRED              -> ctx.getColor(R.color.text_dim)
+            SignalStatus.QUEUED               -> ctx.getColor(R.color.text_muted)
         }
         holder.binding.tvStatus.setTextColor(statusColor)
 
@@ -77,6 +86,14 @@ class SignalAdapter(
         holder.binding.tvPeopleCount.text = if (people != null && people > 0) "· $people people" else ""
 
         holder.binding.root.setOnClickListener { onClick?.invoke(signal) }
+
+        // Cancel button — only show for non-terminal signals when authority provides onCancel
+        if (onCancel != null && !signal.status.isTerminal) {
+            holder.binding.btnCancelTicket.visibility = View.VISIBLE
+            holder.binding.btnCancelTicket.setOnClickListener { onCancel.invoke(signal) }
+        } else {
+            holder.binding.btnCancelTicket.visibility = View.GONE
+        }
     }
 
     private fun timeAgo(epochMs: Long): String {

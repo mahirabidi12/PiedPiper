@@ -19,9 +19,11 @@ import com.disastermesh.app.core.UserSession
 import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.model.*
 import com.disastermesh.app.notification.SignalNotificationManager
+import com.disastermesh.app.notification.TicketNotificationManager
 import com.disastermesh.app.ui.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -62,18 +64,17 @@ class MeshService : Service() {
     private val _meshStatus = MutableStateFlow(MeshStatus.OFFLINE)
     val meshStatus: StateFlow<MeshStatus> = _meshStatus.asStateFlow()
 
-    /** Emits each new Signal as it arrives over the mesh. */
     private val _incomingSignals = MutableSharedFlow<Signal>(replay = 0)
     val incomingSignals: SharedFlow<Signal> = _incomingSignals.asSharedFlow()
 
-    /** Emits each new ChatMessage as it arrives over the mesh. */
     private val _incomingChat = MutableSharedFlow<ChatMessage>(replay = 0)
     val incomingChat: SharedFlow<ChatMessage> = _incomingChat.asSharedFlow()
 
-    /** Room-aware: observe all messages for a room from DB (includes history). */
     fun observeRoom(roomId: String) = db.chatMessageDao().observeRoom(roomId)
     fun observeSignals() = db.signalDao().observeAll()
     fun observeMySignals(nodeId: String) = db.signalDao().observeByNode(nodeId)
+    fun observeAssignedTo(nodeId: String) = db.signalDao().observeAssignedTo(nodeId)
+    fun observeActiveAssignedTo(nodeId: String) = db.signalDao().observeActiveAssignedTo(nodeId)
     fun observePeers() = db.peerDao().observeConnected()
     fun observeAllPeers() = db.peerDao().observeAll()
     fun observeSyncLog() = db.syncLogDao().observeRecent()
@@ -86,8 +87,6 @@ class MeshService : Service() {
         private const val NOTIF_ID = 1001
     }
 
-    // Guard: onStartCommand may fire more than once (OS restart, rebind).
-    // Only initialize the mesh once per service instance.
     private var started = false
 
     private val bluetoothReceiver = object : BroadcastReceiver() {
@@ -119,16 +118,10 @@ class MeshService : Service() {
         db = AppDatabase.getInstance(applicationContext)
         createNotificationChannel()
         registerReceiver(bluetoothReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
-        // One-time cleanup of content-duplicate chat rows left behind by the
-        // previous buggy store-and-forward (each forwarded copy had a fresh
-        // UUID so the PrimaryKey couldn't catch them). Keeps the earliest row
-        // per (sender, room, text). Safe on every start — a clean DB returns 0.
         serviceScope.launch(Dispatchers.IO) {
             val removed = db.chatMessageDao().purgeContentDuplicates()
             if (removed > 0) Log.i(TAG, "Purged $removed duplicate chat rows on startup")
         }
-        // Reclaim any leftover .part / .tmp / cacheDir copies of the model
-        // binary from interrupted downloads — fixes the ~750 MB ghost cache.
         com.disastermesh.app.ai.ModelDownloader.clearTempDownloads(this)
         Log.d(TAG, "MeshService created")
     }
@@ -192,7 +185,10 @@ class MeshService : Service() {
                     )
                 }
             },
-            onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ }
+            onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ },
+            onTicketAssigned = { signal ->
+                TicketNotificationManager.notifyAssigned(applicationContext, signal)
+            }
         )
 
         meshManager.start()
@@ -210,7 +206,7 @@ class MeshService : Service() {
         Log.d(TAG, "MeshService destroyed")
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // ── Public API — chat / signals ───────────────────────────────────────────
 
     fun sendChat(roomId: String, text: String) {
         if (::gossipRouter.isInitialized) gossipRouter.sendChat(roomId, text)
@@ -237,12 +233,192 @@ class MeshService : Service() {
         return db.directMessageDao().observeThread(threadId)
     }
 
-    /** Assign a volunteer + inventory to a signal and broadcast the status change. */
-    fun assignSignal(signalId: String, volunteerId: String, volunteerName: String, inventoryJson: String) {
+    // ── Ticket lifecycle API ──────────────────────────────────────────────────
+
+    /**
+     * Authority assigns one or more volunteers to a ticket.
+     *  - Deducts inventory immediately (reserved as soon as assigned).
+     *  - Broadcasts TICKET_ASSIGNMENT to all peers.
+     *  - Sets status = ASSIGNED (or WAITING_FOR_INVENTORY if stock is low).
+     */
+    fun assignSignalToVolunteers(
+        signalId: String,
+        volunteerIds: List<String>,
+        volunteerNames: List<String>,
+        inventoryJson: String,
+        instructions: String
+    ) {
+        if (volunteerIds.isEmpty()) return
+
         serviceScope.launch(Dispatchers.IO) {
-            db.signalDao().updateAssignment(signalId, volunteerId, volunteerName, inventoryJson, SignalStatus.IN_PROGRESS.name)
+            val nodeId  = NodeIdentity.get(applicationContext)
+            val session = UserSession.get(applicationContext) ?: return@launch
+            val now     = System.currentTimeMillis()
+
+            // Deduct requested inventory; track whether any item was short
+            var inventoryShort = false
+            val items = JSONObject(inventoryJson)
+            items.keys().forEach { key ->
+                val requested = items.getInt(key)
+                val available = db.inventoryDao().getByKey(key)?.count ?: 0
+                if (requested > available) inventoryShort = true
+                val delta = -minOf(requested, available)
+                db.inventoryDao().adjustCount(key, delta)
+                val updated = db.inventoryDao().getByKey(key) ?: return@forEach
+                if (::gossipRouter.isInitialized) {
+                    gossipRouter.sendInventoryUpdate(
+                        key, updated.label, updated.unit, updated.count, "ADJUST", delta
+                    )
+                }
+            }
+
+            val status = if (inventoryShort) "WAITING_FOR_INVENTORY" else "ASSIGNED"
+
+            val volunteerIdsJson  = JSONArray(volunteerIds).toString()
+            val volunteerNamesJson = JSONArray(volunteerNames).toString()
+
+            db.signalDao().updateAssignment(
+                id                   = signalId,
+                primaryVolunteerId   = volunteerIds.first(),
+                primaryVolunteerName = volunteerNames.first(),
+                volunteerIdsJson     = volunteerIdsJson,
+                volunteerNamesJson   = volunteerNamesJson,
+                inventoryJson        = inventoryJson,
+                instructions         = instructions,
+                status               = status,
+                now                  = now
+            )
+
+            if (::gossipRouter.isInitialized) {
+                gossipRouter.sendTicketAssignment(
+                    signalId             = signalId,
+                    volunteerIdsJson     = volunteerIdsJson,
+                    volunteerNamesJson   = volunteerNamesJson,
+                    primaryVolunteerId   = volunteerIds.first(),
+                    primaryVolunteerName = volunteerNames.first(),
+                    inventoryJson        = inventoryJson,
+                    instructions         = instructions,
+                    status               = status
+                )
+            }
+
+            // Notify assigned volunteers if they're on this device
+            val signal = db.signalDao().getById(signalId)?.toDomain()
+            if (signal != null) {
+                val localNodeId = nodeId
+                if (volunteerIds.contains(localNodeId)) {
+                    TicketNotificationManager.notifyAssigned(applicationContext, signal)
+                }
+            }
         }
+    }
+
+    /**
+     * Legacy single-volunteer assign — kept for callers that haven't migrated yet.
+     */
+    fun assignSignal(signalId: String, volunteerId: String, volunteerName: String, inventoryJson: String) {
+        assignSignalToVolunteers(
+            signalId       = signalId,
+            volunteerIds   = listOf(volunteerId),
+            volunteerNames = listOf(volunteerName),
+            inventoryJson  = inventoryJson,
+            instructions   = ""
+        )
+    }
+
+    /**
+     * Volunteer accepts the ticket. Inventory is already reserved — just advance status.
+     */
+    fun acceptTicket(signalId: String) {
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.ACCEPTED.name)
+    }
+
+    /**
+     * Volunteer rejects the ticket. Refunds inventory and clears assignment.
+     */
+    fun rejectTicket(signalId: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            refundInventory(signalId)
+            db.signalDao().clearAssignment(signalId, SignalStatus.REJECTED.name)
+        }
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.REJECTED.name)
+    }
+
+    /**
+     * Volunteer starts working — advance to IN_PROGRESS.
+     */
+    fun startTicket(signalId: String) {
         if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.IN_PROGRESS.name)
+    }
+
+    /**
+     * Volunteer marks the ticket resolved. Inventory deduction becomes permanent.
+     */
+    fun resolveTicket(signalId: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            db.signalDao().updateStatus(signalId, SignalStatus.RESOLVED.name)
+        }
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.RESOLVED.name)
+    }
+
+    /**
+     * Authority or volunteer marks the ticket as failed. Refunds inventory.
+     */
+    fun failTicket(signalId: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            refundInventory(signalId)
+            db.signalDao().clearAssignment(signalId, SignalStatus.FAILED.name)
+        }
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.FAILED.name)
+    }
+
+    /**
+     * Authority cancels the ticket. Refunds inventory and clears assignment.
+     */
+    fun cancelTicket(signalId: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            refundInventory(signalId)
+            db.signalDao().clearAssignment(signalId, SignalStatus.CANCELLED.name)
+        }
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.CANCELLED.name)
+    }
+
+    /**
+     * Authority puts a ticket on hold (no inventory change).
+     */
+    fun holdTicket(signalId: String) {
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.ON_HOLD.name)
+    }
+
+    /**
+     * Authority reassigns ticket to a new set of volunteers.
+     * Refunds any currently reserved inventory, then performs fresh assignment.
+     */
+    fun reassignTicket(
+        signalId: String,
+        newVolunteerIds: List<String>,
+        newVolunteerNames: List<String>,
+        inventoryJson: String,
+        instructions: String
+    ) {
+        serviceScope.launch(Dispatchers.IO) {
+            refundInventory(signalId)
+        }
+        assignSignalToVolunteers(signalId, newVolunteerIds, newVolunteerNames, inventoryJson, instructions)
+    }
+
+    /** Legacy clear-assignment used by ResolveTicketBottomSheet (unresolvable path). */
+    fun clearSignalAssignment(signalId: String, inventoryJson: String?) {
+        serviceScope.launch(Dispatchers.IO) {
+            if (!inventoryJson.isNullOrBlank()) {
+                val items = JSONObject(inventoryJson)
+                items.keys().forEach { key ->
+                    db.inventoryDao().adjustCount(key, items.getInt(key))
+                }
+            }
+            db.signalDao().clearAssignment(signalId, SignalStatus.EXPIRED.name)
+        }
+        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.EXPIRED.name)
     }
 
     // ── Inventory API ─────────────────────────────────────────────────────────
@@ -264,7 +440,6 @@ class MeshService : Service() {
             db.inventoryDao().upsert(entity)
         }
         if (::gossipRouter.isInitialized) {
-            val session = UserSession.get(applicationContext) ?: return
             gossipRouter.sendInventoryUpdate(key, label, unit, count, "ADD", count)
         }
     }
@@ -281,7 +456,6 @@ class MeshService : Service() {
                 updatedBy     = nodeId,
                 updatedByName = session.name
             )
-            // Broadcast before DB write so peers get the update ASAP
             if (::gossipRouter.isInitialized) {
                 gossipRouter.sendInventoryUpdate(
                     key, entity.label, entity.unit, entity.count, "ADJUST", delta
@@ -305,23 +479,26 @@ class MeshService : Service() {
         }
     }
 
-    /** Refund allocated inventory and mark signal unresolvable/expired. */
-    fun clearSignalAssignment(signalId: String, inventoryJson: String?) {
-        serviceScope.launch(Dispatchers.IO) {
-            if (!inventoryJson.isNullOrBlank()) {
-                val items = org.json.JSONObject(inventoryJson)
-                items.keys().forEach { key ->
-                    db.inventoryDao().adjustCount(key, items.getInt(key))
-                }
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    /** Read inventoryAllocated from DB and restore each item's count. */
+    private suspend fun refundInventory(signalId: String) {
+        val signal = db.signalDao().getById(signalId) ?: return
+        val inventoryJson = signal.inventoryAllocated ?: return
+        if (inventoryJson.isBlank() || inventoryJson == "{}") return
+        val items = JSONObject(inventoryJson)
+        items.keys().forEach { key ->
+            val qty = items.getInt(key)
+            db.inventoryDao().adjustCount(key, qty)
+            val updated = db.inventoryDao().getByKey(key) ?: return@forEach
+            if (::gossipRouter.isInitialized) {
+                gossipRouter.sendInventoryUpdate(
+                    key, updated.label, updated.unit, updated.count, "ADJUST", qty
+                )
             }
-            db.signalDao().clearAssignment(signalId, SignalStatus.EXPIRED.name)
         }
-        if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.EXPIRED.name)
     }
 
-    // Nearby P2P_CLUSTER can open multiple transport connections (BT + Wi-Fi Direct)
-    // to the same physical device, each with a different endpointId but the same nodeId.
-    // Count unique nodeIds to get the real peer count.
     private fun uniquePeerCount(): Int =
         meshManager.connectedEndpoints.values
             .map { it.split("|").firstOrNull() ?: it }
@@ -331,7 +508,7 @@ class MeshService : Service() {
     private fun dmThreadId(a: String, b: String) =
         "dm-${listOf(a, b).sorted().joinToString("-")}"
 
-    // ── Peer callbacks → notification update ──────────────────────────────────
+    // ── Peer callbacks ────────────────────────────────────────────────────────
 
     private fun buildCallbacks() = object : MeshManager.MeshCallbacks {
         override fun onRawPacketReceived(fromEndpointId: String, bytes: ByteArray) {
