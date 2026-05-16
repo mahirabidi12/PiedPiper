@@ -167,85 +167,180 @@
             android:text="RESUMABLE · BACKGROUND · ONE-TIME · WORKS OFFLINE AFTER" />
     </LinearLayout>
 
-    <!-- ── Answer scroll area ───────────────────────────────────────────── -->
-    <ScrollView
-        android:id="@+id/scrollAnswer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="16dp"
-        android:fillViewport="true">
-
-        <TextView
-            android:id="@+id/tvAnswer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:lineSpacingMultiplier="1.5"
-            android:text="Ask a survival question. The assistant works fully offline once the model is downloaded." />
-    </ScrollView>
-
-    <!-- ── Quick-prompt chips ────────────────────────────────────────────── -->
+    <!-- ── Chat thread bar (session + new-thread action) ────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
         android:paddingTop="8dp"
-        android:paddingBottom="4dp">
+        android:paddingBottom="8dp">
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="10dp"
+            android:background="@color/civilian"
+            android:layout_marginEnd="6dp" />
 
         <TextView
-            android:id="@+id/chipCut"
+            android:id="@+id/tvSessionTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
-            android:background="@drawable/bg_btn_neutral"
-            android:padding="7dp"
-            android:layout_marginEnd="4dp"
             android:fontFamily="monospace"
-            android:textSize="8sp"
+            android:textSize="9sp"
+            android:letterSpacing="0.10"
             android:textColor="@color/text_muted"
-            android:letterSpacing="0.06"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="Treat deep cut?" />
+            android:text="SURVIVAL CHAT" />
 
         <TextView
-            android:id="@+id/chipShelter"
-            android:layout_width="0dp"
+            android:id="@+id/btnNewSession"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
             android:background="@drawable/bg_btn_neutral"
-            android:padding="7dp"
-            android:layout_marginEnd="4dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:fontFamily="monospace"
             android:textSize="8sp"
             android:textColor="@color/text_muted"
-            android:letterSpacing="0.06"
+            android:letterSpacing="0.08"
             android:clickable="true"
             android:focusable="true"
-            android:text="Shelter aftershock?" />
-
-        <TextView
-            android:id="@+id/chipWater"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:background="@drawable/bg_btn_neutral"
-            android:padding="7dp"
-            android:fontFamily="monospace"
-            android:textSize="8sp"
-            android:textColor="@color/text_muted"
-            android:letterSpacing="0.06"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="Purify water?" />
+            android:text="+ NEW" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <!-- ── Chat-style conversation list ─────────────────────────────────── -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAiMessages"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false"
+            android:overScrollMode="ifContentScrolls" />
+
+        <!-- First-run suggestion panel — visible ONLY when the chat is empty
+             AND the input is empty. Mounts to a no-op the moment the user
+             types a character or fires any query. -->
+        <ScrollView
+            android:id="@+id/suggestionPanel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="32dp"
+                android:paddingBottom="24dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:gravity="center"
+                    android:text="Ask a survival question" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_muted"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.4"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="22dp"
+                    android:text="Pick a starter below, or type your own.\nThe assistant works fully offline." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="10dp"
+                        android:background="@color/civilian"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="8sp"
+                        android:letterSpacing="0.14"
+                        android:textColor="@color/text_muted"
+                        android:text="QUICK START" />
+                </LinearLayout>
+
+                <!-- Each row is a tactical, full-width tappable bar. -->
+                <LinearLayout
+                    android:id="@+id/suggestion1"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="How do I treat a deep cut?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/suggestion2"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="What supplies do I need for a flood?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/suggestion3"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="How can I make water safer to drink?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/suggestion4"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="What is the safest shelter during an aftershock?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
 
     <!-- ── Input row ────────────────────────────────────────────────────── -->
     <View

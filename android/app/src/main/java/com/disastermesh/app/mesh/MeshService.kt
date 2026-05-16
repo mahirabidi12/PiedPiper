@@ -127,6 +127,9 @@ class MeshService : Service() {
             val removed = db.chatMessageDao().purgeContentDuplicates()
             if (removed > 0) Log.i(TAG, "Purged $removed duplicate chat rows on startup")
         }
+        // Reclaim any leftover .part / .tmp / cacheDir copies of the model
+        // binary from interrupted downloads — fixes the ~750 MB ghost cache.
+        com.disastermesh.app.ai.ModelDownloader.clearTempDownloads(this)
         Log.d(TAG, "MeshService created")
     }
 

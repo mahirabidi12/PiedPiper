@@ -124,4 +124,45 @@
         <item name="android:textColor">@color/text_primary</item>
     </style>
 
+    <!-- ── Suggestion list (AI first-run picker) ───────────────────────── -->
+    <style name="Widget.DisasterMesh.SuggestionRow" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@drawable/bg_btn_neutral</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="Widget.DisasterMesh.SuggestionAccent" parent="">
+        <item name="android:layout_width">2dp</item>
+        <item name="android:layout_height">16dp</item>
+        <item name="android:background">@color/civilian</item>
+        <item name="android:layout_marginEnd">12dp</item>
+    </style>
+
+    <style name="Widget.DisasterMesh.SuggestionLabel" parent="">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="Widget.DisasterMesh.SuggestionArrow" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_dim</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:text">→</item>
+    </style>
+
 </resources>

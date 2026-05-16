@@ -20,9 +20,11 @@ import kotlinx.coroutines.launch
         SeenPacketEntity::class,
         SyncLogEntity::class,
         InventoryEntity::class,
-        DirectMessageEntity::class
+        DirectMessageEntity::class,
+        AiSessionEntity::class,
+        AiMessageEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +36,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncLogDao(): SyncLogDao
     abstract fun inventoryDao(): InventoryDao
     abstract fun directMessageDao(): DirectMessageDao
+    abstract fun aiSessionDao(): AiSessionDao
+    abstract fun aiMessageDao(): AiMessageDao
 
     companion object {
         private const val DB_NAME = "disaster_mesh.db"
@@ -73,6 +77,43 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // v3 → v4: Added the on-device AI chat history layer
+        // (ai_sessions + ai_messages with pinned/archived flags).
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `ai_sessions` (
+                        `id`               TEXT    NOT NULL,
+                        `topic`            TEXT    NOT NULL,
+                        `title`            TEXT    NOT NULL,
+                        `created_at`       INTEGER NOT NULL,
+                        `last_message_at`  INTEGER NOT NULL,
+                        `message_count`    INTEGER NOT NULL DEFAULT 0,
+                        `language_code`    TEXT    NOT NULL DEFAULT 'en',
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ai_sessions_topic` ON `ai_sessions` (`topic`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ai_sessions_last_message_at` ON `ai_sessions` (`last_message_at`)")
+
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `ai_messages` (
+                        `id`         TEXT    NOT NULL,
+                        `session_id` TEXT    NOT NULL,
+                        `is_user`    INTEGER NOT NULL,
+                        `text`       TEXT    NOT NULL,
+                        `created_at` INTEGER NOT NULL,
+                        `pinned`     INTEGER NOT NULL DEFAULT 0,
+                        `archived`   INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ai_messages_session_id` ON `ai_messages` (`session_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ai_messages_created_at` ON `ai_messages` (`created_at`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ai_messages_pinned` ON `ai_messages` (`pinned`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -80,7 +121,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DB_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
