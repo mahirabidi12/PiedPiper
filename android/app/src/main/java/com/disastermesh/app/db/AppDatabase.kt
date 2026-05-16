@@ -117,12 +117,16 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         // v4 → v5: Added timestamp/tracking columns to inventory and created audit_log table.
+        // The ALTER TABLEs are guarded — devices that ran the pre-release v4 build already
+        // have these columns and would crash with "duplicate column name" otherwise.
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE inventory ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("ALTER TABLE inventory ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''")
-                db.execSQL("ALTER TABLE inventory ADD COLUMN updated_by_name TEXT NOT NULL DEFAULT ''")
-                db.execSQL("ALTER TABLE inventory ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0")
+                listOf(
+                    "ALTER TABLE inventory ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0",
+                    "ALTER TABLE inventory ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''",
+                    "ALTER TABLE inventory ADD COLUMN updated_by_name TEXT NOT NULL DEFAULT ''",
+                    "ALTER TABLE inventory ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0"
+                ).forEach { sql -> try { db.execSQL(sql) } catch (_: Exception) {} }
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS `audit_log` (
                         `id`           TEXT    NOT NULL,
