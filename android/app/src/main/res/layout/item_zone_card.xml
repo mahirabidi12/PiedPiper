@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/bg_card_default"
+    android:paddingStart="0dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="6dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Critical severity accent bar -->
+    <View
+        android:id="@+id/zoneAccentBar"
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:background="@color/priority_critical"
+        android:layout_marginEnd="12dp" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Area label + critical badge row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvZoneLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:text="Unknown Location" />
+
+            <LinearLayout
+                android:id="@+id/containerCriticalBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_btn_critical"
+                android:paddingStart="7dp"
+                android:paddingEnd="7dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:visibility="gone">
+                <View
+                    android:layout_width="5dp"
+                    android:layout_height="5dp"
+                    android:background="@color/priority_critical"
+                    android:layout_marginEnd="5dp" />
+                <TextView
+                    android:id="@+id/tvZoneCritical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.06"
+                    android:textColor="@color/priority_critical"
+                    android:text="0 CRITICAL" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Category counts row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvZoneMedical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/category_medical"
+                android:layout_marginEnd="10dp"
+                android:text="✚ 0" />
+
+            <TextView
+                android:id="@+id/tvZoneRescue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/category_rescue"
+                android:layout_marginEnd="10dp"
+                android:text="⬆ 0" />
+
+            <TextView
+                android:id="@+id/tvZoneResource"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/category_resource"
+                android:layout_marginEnd="10dp"
+                android:text="◆ 0" />
+
+            <TextView
+                android:id="@+id/tvZoneSafety"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/category_safety"
+                android:layout_marginEnd="10dp"
+                android:text="▲ 0" />
+
+            <TextView
+                android:id="@+id/tvZoneOther"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textColor="@color/text_muted"
+                android:text="● 0" />
+        </LinearLayout>
+
+        <!-- Total + time row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvZoneTotal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textColor="@color/text_muted"
+                android:text="0 signals · 0 open" />
+
+            <TextView
+                android:id="@+id/tvZoneTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="8sp"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Arrow indicator -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:fontFamily="monospace"
+        android:textSize="14sp"
+        android:textColor="@color/text_dim"
+        android:layout_marginStart="10dp"
+        android:text="›" />
+</LinearLayout>

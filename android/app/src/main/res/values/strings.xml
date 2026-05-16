@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DisasterMesh</string>
+
+    <!-- Login -->
+    <string name="hint_display_name">Display name (max 32 chars)</string>
+    <string name="label_choose_role">Choose your role</string>
+    <string name="btn_join_mesh">JOIN MESH</string>
+    <string name="role_civilian">CIVILIAN</string>
+    <string name="role_volunteer">VOLUNTEER</string>
+    <string name="role_authority">AUTHORITY</string>
+    <string name="role_civilian_blurb">Raise emergency signals, request help, and receive safety information.</string>
+    <string name="role_volunteer_blurb">Respond to distress signals and complete assigned relief tasks.</string>
+    <string name="role_authority_blurb">Coordinate response, assign tasks, and designate safe zones.</string>
+
+    <!-- Nav labels -->
+    <string name="nav_home">HOME</string>
+    <string name="nav_map">MAP</string>
+    <string name="nav_comms">COMMS</string>
+    <string name="nav_ai">AI</string>
+    <string name="nav_node">NODE</string>
+    <string name="nav_tasks">TASKS</string>
+    <string name="nav_cmd">CMD</string>
+
+    <!-- Top bar -->
+    <string name="label_app_title">DISASTERMESH</string>
+    <string name="label_peers_connected">%1$d PEERS</string>
+    <string name="label_mesh_offline">MESH OFFLINE</string>
+
+    <!-- Mesh service notification -->
+    <string name="notif_channel_mesh">Mesh Network</string>
+    <string name="notif_channel_mesh_desc">Keeps the DisasterMesh peer network active in the background.</string>
+    <string name="notif_mesh_title">DisasterMesh Active</string>
+    <string name="notif_mesh_text">%1$d peer(s) connected · Searching…</string>
+
+    <!-- Signals -->
+    <string name="section_raise_signal">RAISE SIGNAL</string>
+    <string name="section_my_signals">MY ACTIVE SIGNALS</string>
+    <string name="section_all_signals">ALL SIGNALS</string>
+    <string name="hint_signal_message">Describe the situation…</string>
+    <string name="hint_people_count">No. of people affected</string>
+    <string name="btn_raise_signal">RAISE SIGNAL</string>
+    <string name="btn_cancel">CANCEL</string>
+    <string name="label_gps_locked">GPS LOCKED</string>
+    <string name="label_gps_searching">GPS SEARCHING…</string>
+    <string name="label_no_signals">No active signals</string>
+
+    <!-- Signal categories -->
+    <string name="cat_medical">MEDICAL</string>
+    <string name="cat_rescue">RESCUE</string>
+    <string name="cat_resource">RESOURCE</string>
+    <string name="cat_safety">SAFETY</string>
+    <string name="cat_info">INFO</string>
+    <string name="cat_icon_medical">✚</string>
+    <string name="cat_icon_rescue">⬆</string>
+    <string name="cat_icon_resource">◆</string>
+    <string name="cat_icon_safety">▲</string>
+    <string name="cat_icon_info">●</string>
+
+    <!-- Chat -->
+    <string name="section_comms">COMMS</string>
+    <string name="hint_chat_input">Send a message…</string>
+    <string name="btn_send">↑</string>
+    <string name="room_all_name">All Hands</string>
+    <string name="room_all_desc">All roles · open channel</string>
+    <string name="room_vol_name">Volunteer Ops</string>
+    <string name="room_vol_desc">Volunteers + Authorities only</string>
+    <string name="room_auth_name">Command</string>
+    <string name="room_auth_desc">Authorities only</string>
+
+    <!-- Profile / Node -->
+    <string name="section_mesh_status">MESH STATUS</string>
+    <string name="section_connected_peers">CONNECTED PEERS [00]</string>
+    <string name="section_sync_log">SYNC LOG</string>
+    <string name="section_actions">ACTIONS</string>
+    <string name="label_no_peers">No peers discovered yet</string>
+    <string name="label_app_footer">DISASTERMESH v1 · OFFLINE-FIRST · NO SERVER</string>
+    <string name="btn_switch_role">Switch Role</string>
+    <string name="btn_leave_mesh">Leave Mesh &amp; Reset Session</string>
+
+    <!-- Buttons -->
+    <string name="btn_accept_all">ACCEPT ALL</string>
+    <string name="btn_review_each">REVIEW EACH</string>
+    <string name="btn_open_zone">OPEN ZONE →</string>
+    <string name="btn_resolve_gemma">RESOLVE VIA GEMMA</string>
+</resources>

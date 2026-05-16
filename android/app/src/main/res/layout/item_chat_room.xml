@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Room accent color set programmatically in ChatRoomAdapter -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/bg_card_default"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="6dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Left accent bar -->
+    <View
+        android:id="@+id/roomAccentBar"
+        android:layout_width="@dimen/left_accent_width"
+        android:layout_height="match_parent"
+        android:background="@color/room_all" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="top">
+
+        <!-- Hash icon -->
+        <LinearLayout
+            android:id="@+id/roomIconBox"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:background="@color/civilian_tint"
+            android:layout_marginEnd="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#"
+                android:fontFamily="monospace"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/civilian" />
+        </LinearLayout>
+
+        <!-- Room info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="2dp">
+
+                <TextView
+                    android:id="@+id/tvRoomName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginEnd="6dp" />
+
+                <TextView
+                    android:id="@+id/tvUnreadBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/ink_950"
+                    android:background="@color/civilian"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp"
+                    android:paddingTop="1dp"
+                    android:paddingBottom="1dp"
+                    android:visibility="gone" />
+
+                <View android:layout_width="0dp" android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tvMsgCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvRoomDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:textColor="@color/text_muted"
+                android:layout_marginBottom="6dp"
+                android:ellipsize="end"
+                android:singleLine="true" />
+
+            <!-- Last message preview -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:id="@+id/tvLastMsgBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/civilian"
+                    android:background="@drawable/bg_card_elevated"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="1dp"
+                    android:paddingBottom="1dp"
+                    android:layout_marginEnd="6dp"
+                    android:visibility="gone" />
+                <TextView
+                    android:id="@+id/tvLastMsgText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_secondary"
+                    android:ellipsize="end"
+                    android:singleLine="true" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

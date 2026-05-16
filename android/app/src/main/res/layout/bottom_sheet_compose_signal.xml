@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/ink_900">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="14dp">
+        <TextView
+            android:id="@+id/btnClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✕"
+            android:textSize="14sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="12dp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="RAISE SIGNAL"
+            android:fontFamily="monospace"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:textColor="@color/text_primary" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/border_default" />
+
+    <!-- Shown when no mesh peers are connected -->
+    <LinearLayout
+        android:id="@+id/tvOfflineWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_btn_neutral"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+        <View
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:background="@color/mesh_offline"
+            android:layout_marginEnd="8dp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:textColor="@color/text_muted"
+            android:text="OFFLINE — signal will be queued and sent when peers are found" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <!-- Selected category display -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:id="@+id/categoryIconBox"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:background="@color/critical_tint"
+                    android:layout_marginEnd="12dp">
+                    <TextView
+                        android:id="@+id/tvCategoryIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✚"
+                        android:textSize="18sp"
+                        android:textColor="@color/category_medical" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CATEGORY"
+                        android:fontFamily="monospace"
+                        android:textSize="7sp"
+                        android:textColor="@color/text_dim"
+                        android:layout_marginBottom="2dp" />
+                    <TextView
+                        android:id="@+id/tvCategoryName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MEDICAL"
+                        android:fontFamily="monospace"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/category_medical" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Message -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.DisasterMesh.TextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_signal_message"
+                android:layout_marginBottom="10dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="4"
+                    android:maxLines="8"
+                    android:textColor="@color/text_primary"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- People count -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.DisasterMesh.TextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_people_count"
+                android:layout_marginBottom="10dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPeopleCount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/text_primary"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- GPS chip -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_btn_neutral"
+                android:padding="10dp"
+                android:layout_marginBottom="14dp">
+                <View
+                    android:id="@+id/gpsDot"
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:background="@color/mesh_searching"
+                    android:layout_marginEnd="8dp" />
+                <TextView
+                    android:id="@+id/tvGpsStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/label_gps_searching"
+                    android:fontFamily="monospace"
+                    android:textSize="9sp"
+                    android:textColor="@color/text_muted" />
+                <TextView
+                    android:id="@+id/tvGpsCoords"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:textColor="@color/text_dim"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Action buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnCancel"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_weight="1"
+                    android:text="@string/btn_cancel"
+                    style="@style/Widget.DisasterMesh.Button.Secondary"
+                    android:layout_marginEnd="8dp" />
+                <Button
+                    android:id="@+id/btnRaiseSignal"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_weight="1"
+                    android:text="@string/btn_raise_signal"
+                    android:enabled="false"
+                    style="@style/Widget.DisasterMesh.Button.Primary" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
