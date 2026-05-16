@@ -6,39 +6,55 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.disastermesh.app.R
+import com.disastermesh.app.databinding.ItemChatMessageBroadcastBinding
 import com.disastermesh.app.databinding.ItemChatMessageInBinding
 import com.disastermesh.app.databinding.ItemChatMessageOutBinding
 import com.disastermesh.app.model.ChatMessage
 import com.disastermesh.app.model.Role
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 
-private const val VIEW_IN  = 0
-private const val VIEW_OUT = 1
+private const val VIEW_IN        = 0
+private const val VIEW_OUT       = 1
+private const val VIEW_BROADCAST = 2
+
+private fun ChatMessage.isBroadcast() = text.startsWith("[BROADCAST")
 
 class ChatMessageAdapter(
     private val localNodeId: String
 ) : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(DIFF) {
 
     override fun getItemViewType(position: Int): Int {
-        return if (getItem(position).senderNodeId == localNodeId) VIEW_OUT else VIEW_IN
+        val msg = getItem(position)
+        return when {
+            msg.isBroadcast()                    -> VIEW_BROADCAST
+            msg.senderNodeId == localNodeId      -> VIEW_OUT
+            else                                 -> VIEW_IN
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == VIEW_OUT) {
-            OutVH(ItemChatMessageOutBinding.inflate(LayoutInflater.from(parent.context), parent, false))
-        } else {
-            InVH(ItemChatMessageInBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            VIEW_BROADCAST -> BroadcastVH(ItemChatMessageBroadcastBinding.inflate(inflater, parent, false))
+            VIEW_OUT       -> OutVH(ItemChatMessageOutBinding.inflate(inflater, parent, false))
+            else           -> InVH(ItemChatMessageInBinding.inflate(inflater, parent, false))
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val msg = getItem(position)
         when (holder) {
-            is InVH  -> bindIn(holder, msg)
-            is OutVH -> bindOut(holder, msg)
+            is BroadcastVH -> bindBroadcast(holder, msg)
+            is InVH        -> bindIn(holder, msg)
+            is OutVH       -> bindOut(holder, msg)
         }
+    }
+
+    private fun bindBroadcast(holder: BroadcastVH, msg: ChatMessage) {
+        holder.binding.tvBroadcastSender.text    = "${msg.senderRole.badge} ${msg.senderName}"
+        holder.binding.tvBroadcastTimestamp.text = formatTime(msg.createdAt)
+        holder.binding.tvBroadcastText.text      = msg.text
     }
 
     private fun bindIn(holder: InVH, msg: ChatMessage) {
@@ -68,15 +84,10 @@ class ChatMessageAdapter(
         holder.binding.tvOutTimestamp.text = formatTime(msg.createdAt)
     }
 
-    private fun formatTime(epochMs: Long): String {
-        val diffMs = System.currentTimeMillis() - epochMs
-        return if (diffMs < TimeUnit.HOURS.toMillis(1)) {
-            SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(epochMs))
-        } else {
-            SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(epochMs))
-        }
-    }
+    private fun formatTime(epochMs: Long): String =
+        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(epochMs))
 
+    inner class BroadcastVH(val binding: ItemChatMessageBroadcastBinding) : RecyclerView.ViewHolder(binding.root)
     inner class InVH(val binding: ItemChatMessageInBinding) : RecyclerView.ViewHolder(binding.root)
     inner class OutVH(val binding: ItemChatMessageOutBinding) : RecyclerView.ViewHolder(binding.root)
 
