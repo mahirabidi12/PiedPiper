@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ink_950">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="80dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="INVENTORY"
+                    android:fontFamily="monospace"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:letterSpacing="0.08" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="3dp">
+
+                    <View
+                        android:id="@+id/syncDot"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:background="@color/mesh_searching"
+                        android:layout_marginEnd="5dp" />
+
+                    <TextView
+                        android:id="@+id/tvSyncStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SYNCING…"
+                        android:fontFamily="monospace"
+                        android:textSize="9sp"
+                        android:textColor="@color/text_dim" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnAddItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ ADD"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/authority"
+                android:background="@color/authority_tint"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/border_default"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Stats row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_terminal_block"
+                android:padding="10dp"
+                android:layout_marginEnd="6dp">
+                <TextView
+                    android:id="@+id/tvStatItems"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:fontFamily="monospace"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ITEM TYPES"
+                    android:fontFamily="monospace"
+                    android:textSize="7sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_terminal_block"
+                android:padding="10dp"
+                android:layout_marginEnd="6dp">
+                <TextView
+                    android:id="@+id/tvStatLowStock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:fontFamily="monospace"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/priority_high" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LOW STOCK"
+                    android:fontFamily="monospace"
+                    android:textSize="7sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_terminal_block"
+                android:padding="10dp">
+                <TextView
+                    android:id="@+id/tvStatPeers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:fontFamily="monospace"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/mesh_online" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SYNCED PEERS"
+                    android:fontFamily="monospace"
+                    android:textSize="7sp"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Inventory list -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="STOCK"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_dim"
+                android:letterSpacing="0.12" />
+
+            <TextView
+                android:id="@+id/tvFilterLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SHOW ALL"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textColor="@color/text_muted"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvNoItems"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No inventory items"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:textColor="@color/text_dim"
+            android:gravity="center"
+            android:padding="24dp"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvInventory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
+        <!-- Audit log section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="AUDIT LOG"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_dim"
+                android:letterSpacing="0.12" />
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/border_default"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="4dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAuditLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
+        <TextView
+            android:id="@+id/tvNoAuditLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No actions recorded yet"
+            android:fontFamily="monospace"
+            android:textSize="10sp"
+            android:textColor="@color/text_dim"
+            android:gravity="center"
+            android:padding="16dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

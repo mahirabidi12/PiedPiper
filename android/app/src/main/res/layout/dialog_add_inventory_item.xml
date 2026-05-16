@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etItemLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Item name (e.g. Water Bottles)"
+        android:inputType="textCapWords"
+        android:layout_marginBottom="12dp" />
+
+    <EditText
+        android:id="@+id/etItemUnit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Unit (e.g. bottles, kits, packs)"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+    <EditText
+        android:id="@+id/etItemCount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Initial count"
+        android:inputType="number" />
+</LinearLayout>
