@@ -245,6 +245,66 @@ class MeshService : Service() {
         if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.IN_PROGRESS.name)
     }
 
+    // ── Inventory API ─────────────────────────────────────────────────────────
+
+    fun addInventoryItem(key: String, label: String, unit: String, count: Int) {
+        serviceScope.launch(Dispatchers.IO) {
+            val now    = System.currentTimeMillis()
+            val session = UserSession.get(applicationContext) ?: return@launch
+            val nodeId  = NodeIdentity.get(applicationContext)
+            val entity  = com.disastermesh.app.db.entities.InventoryEntity(
+                key           = key,
+                label         = label,
+                unit          = unit,
+                count         = count,
+                updatedAt     = now,
+                updatedBy     = nodeId,
+                updatedByName = session.name
+            )
+            db.inventoryDao().upsert(entity)
+        }
+        if (::gossipRouter.isInitialized) {
+            val session = UserSession.get(applicationContext) ?: return
+            gossipRouter.sendInventoryUpdate(key, label, unit, count, "ADD", count)
+        }
+    }
+
+    fun adjustInventoryItem(key: String, delta: Int) {
+        serviceScope.launch(Dispatchers.IO) {
+            val session = UserSession.get(applicationContext) ?: return@launch
+            val nodeId  = NodeIdentity.get(applicationContext)
+            val current = db.inventoryDao().getByKey(key) ?: return@launch
+            val now     = System.currentTimeMillis()
+            val entity  = current.copy(
+                count         = maxOf(0, current.count + delta),
+                updatedAt     = now,
+                updatedBy     = nodeId,
+                updatedByName = session.name
+            )
+            // Broadcast before DB write so peers get the update ASAP
+            if (::gossipRouter.isInitialized) {
+                gossipRouter.sendInventoryUpdate(
+                    key, entity.label, entity.unit, entity.count, "ADJUST", delta
+                )
+            }
+            db.inventoryDao().upsert(entity)
+        }
+    }
+
+    fun deleteInventoryItem(key: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            val session = UserSession.get(applicationContext) ?: return@launch
+            val nodeId  = NodeIdentity.get(applicationContext)
+            val item    = db.inventoryDao().getByKey(key) ?: return@launch
+            db.inventoryDao().markDeleted(key, by = nodeId, byName = session.name)
+            if (::gossipRouter.isInitialized) {
+                gossipRouter.sendInventoryUpdate(
+                    key, item.label, item.unit, 0, "DELETE", 0, isDeleted = true
+                )
+            }
+        }
+    }
+
     /** Refund allocated inventory and mark signal unresolvable/expired. */
     fun clearSignalAssignment(signalId: String, inventoryJson: String?) {
         serviceScope.launch(Dispatchers.IO) {

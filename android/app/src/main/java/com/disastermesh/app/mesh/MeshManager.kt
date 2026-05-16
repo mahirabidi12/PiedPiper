@@ -36,7 +36,8 @@ class MeshManager(
     private val client = Nearby.getConnectionsClient(context)
 
     // endpointId → displayName  (only currently connected peers)
-    private val connected = mutableMapOf<String, String>()
+    // ConcurrentHashMap: Nearby callbacks write on main thread, broadcast() reads on IO thread
+    private val connected = java.util.concurrent.ConcurrentHashMap<String, String>()
     val connectedEndpoints: Map<String, String> get() = connected.toMap()
 
     // Stores the endpoint name from onConnectionInitiated until onConnectionResult fires
@@ -210,6 +211,16 @@ class MeshManager(
             pendingNames.remove(endpointId)
             Log.d(TAG, "Disconnected: $endpointId ($name) | total=${connected.size}")
             callbacks.onPeerDisconnected(endpointId)
+            // Restart both advertising and discovery so both sides get fresh BLE
+            // advertisements and active scans — cuts reconnection time significantly.
+            if (!stopped) {
+                client.stopDiscovery()
+                client.stopAdvertising()
+                advertisingRetryDelay = RETRY_INITIAL_MS
+                discoveryRetryDelay   = RETRY_INITIAL_MS
+                startAdvertising()
+                startDiscovery()
+            }
         }
     }
 

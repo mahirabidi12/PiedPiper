@@ -8,7 +8,7 @@ import org.json.JSONObject
  * JSON layout:
  * {
  *   "id":           "<UUID>",
- *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|CHAT",
+ *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|CHAT|DM|INVENTORY_UPDATE|INVENTORY_SYNC",
  *   "ttl":          8,
  *   "hopCount":     0,
  *   "originNodeId": "<UUID>",
@@ -32,7 +32,19 @@ data class MeshPacket(
     val payload: String          // JSON string; structure determined by type
 ) {
 
-    enum class PacketType { HELLO, SIGNAL, SIGNAL_UPDATE, CHAT, DM }
+    enum class PacketType { HELLO, SIGNAL, SIGNAL_UPDATE, CHAT, DM, INVENTORY_UPDATE, INVENTORY_SYNC }
+
+    /** Lightweight snapshot of an inventory item for sync payloads. */
+    data class InventorySnapshot(
+        val key: String,
+        val label: String,
+        val unit: String,
+        val count: Int,
+        val updatedAt: Long,
+        val updatedBy: String,
+        val updatedByName: String,
+        val isDeleted: Boolean
+    )
 
     fun toJson(): String = JSONObject().apply {
         put("id", id)
@@ -102,5 +114,29 @@ data class MeshPacket(
                 put("recipientNodeId", recipientNodeId)
                 put("text", text)
             }.toString()
+
+        fun inventoryUpdatePayload(
+            key: String, label: String, unit: String, count: Int,
+            updatedAt: Long, updatedBy: String, updatedByName: String,
+            action: String, delta: Int, isDeleted: Boolean
+        ): String = JSONObject().apply {
+            put("key", key); put("label", label); put("unit", unit)
+            put("count", count); put("updatedAt", updatedAt)
+            put("updatedBy", updatedBy); put("updatedByName", updatedByName)
+            put("action", action); put("delta", delta); put("isDeleted", isDeleted)
+        }.toString()
+
+        fun inventorySyncPayload(items: List<InventorySnapshot>): String {
+            val arr = org.json.JSONArray()
+            items.forEach { item ->
+                arr.put(JSONObject().apply {
+                    put("key", item.key); put("label", item.label); put("unit", item.unit)
+                    put("count", item.count); put("updatedAt", item.updatedAt)
+                    put("updatedBy", item.updatedBy); put("updatedByName", item.updatedByName)
+                    put("isDeleted", item.isDeleted)
+                })
+            }
+            return JSONObject().apply { put("items", arr) }.toString()
+        }
     }
 }

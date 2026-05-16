@@ -66,6 +66,7 @@ class GossipRouter(
         scope.launch(Dispatchers.IO) {
             Log.d(TAG, "Peer connected: $endpointId ($endpointName)")
             sendHello(endpointId)
+            sendInventorySync(endpointId)   // inventory first — immediately visible on reconnect
             sendStoreAndForward(endpointId)
             flushQueuedSignals()   // promote any QUEUED → NEW and re-broadcast
         }
@@ -115,11 +116,13 @@ class GossipRouter(
 
     private suspend fun persistAndNotify(packet: MeshPacket, fromEndpointId: String) {
         when (packet.type) {
-            MeshPacket.PacketType.HELLO         -> handleHello(packet, fromEndpointId)
-            MeshPacket.PacketType.SIGNAL        -> handleSignal(packet)
-            MeshPacket.PacketType.SIGNAL_UPDATE -> handleSignalUpdate(packet)
-            MeshPacket.PacketType.CHAT          -> handleChat(packet)
-            MeshPacket.PacketType.DM            -> handleDm(packet)
+            MeshPacket.PacketType.HELLO            -> handleHello(packet, fromEndpointId)
+            MeshPacket.PacketType.SIGNAL           -> handleSignal(packet)
+            MeshPacket.PacketType.SIGNAL_UPDATE    -> handleSignalUpdate(packet)
+            MeshPacket.PacketType.CHAT             -> handleChat(packet)
+            MeshPacket.PacketType.DM               -> handleDm(packet)
+            MeshPacket.PacketType.INVENTORY_UPDATE -> handleInventoryUpdate(packet)
+            MeshPacket.PacketType.INVENTORY_SYNC   -> handleInventorySync(packet)
         }
     }
 
@@ -474,6 +477,156 @@ class GossipRouter(
             meshManager.sendTo(endpointId, packet.toJson().toByteArray(Charsets.UTF_8))
             Log.d(TAG, "DM sent directly to ${peer.name} via $endpointId")
         }
+    }
+
+    // ── Inventory handlers ────────────────────────────────────────────────────
+
+    private suspend fun handleInventoryUpdate(packet: MeshPacket) {
+        val p      = JSONObject(packet.payload)
+        val key    = p.getString("key")
+        val now    = System.currentTimeMillis()
+        val entity = com.disastermesh.app.db.entities.InventoryEntity(
+            key           = key,
+            label         = p.getString("label"),
+            unit          = p.getString("unit"),
+            count         = p.getInt("count"),
+            updatedAt     = p.getLong("updatedAt"),
+            updatedBy     = p.getString("updatedBy"),
+            updatedByName = p.getString("updatedByName"),
+            isDeleted     = p.optBoolean("isDeleted", false)
+        )
+        db.inventoryDao().upsertIfNewer(entity)
+
+        val action = p.optString("action", "UPDATE")
+        val delta  = p.optInt("delta", 0)
+        val detail = when (action) {
+            "ADD"    -> "Added ${entity.count} ${entity.unit}"
+            "ADJUST" -> if (delta >= 0) "+$delta ${entity.unit}" else "$delta ${entity.unit}"
+            "DELETE" -> "Removed from inventory"
+            else     -> "Updated"
+        }
+        db.auditLogDao().insert(
+            com.disastermesh.app.db.entities.AuditLogEntity(
+                id          = packet.id,
+                entityType  = "INVENTORY",
+                entityId    = key,
+                entityLabel = entity.label,
+                action      = action,
+                actorNodeId = packet.originNodeId,
+                actorName   = packet.originName,
+                detail      = detail,
+                createdAt   = now
+            )
+        )
+        db.syncLogDao().insert(
+            com.disastermesh.app.db.entities.SyncLogEntity(
+                message   = "Inventory [$action] ${entity.label} by ${packet.originName}",
+                createdAt = now
+            )
+        )
+    }
+
+    private suspend fun handleInventorySync(packet: MeshPacket) {
+        val p    = JSONObject(packet.payload)
+        val arr  = p.getJSONArray("items")
+        val now  = System.currentTimeMillis()
+        repeat(arr.length()) { i ->
+            val item = arr.getJSONObject(i)
+            val entity = com.disastermesh.app.db.entities.InventoryEntity(
+                key           = item.getString("key"),
+                label         = item.getString("label"),
+                unit          = item.getString("unit"),
+                count         = item.getInt("count"),
+                updatedAt     = item.getLong("updatedAt"),
+                updatedBy     = item.getString("updatedBy"),
+                updatedByName = item.getString("updatedByName"),
+                isDeleted     = item.optBoolean("isDeleted", false)
+            )
+            db.inventoryDao().upsertIfNewer(entity)
+        }
+        if (arr.length() > 0) {
+            db.syncLogDao().insert(
+                com.disastermesh.app.db.entities.SyncLogEntity(
+                    message   = "Inventory sync from ${packet.originName}: ${arr.length()} items",
+                    createdAt = now
+                )
+            )
+        }
+    }
+
+    // ── Inventory outgoing ────────────────────────────────────────────────────
+
+    fun sendInventoryUpdate(
+        key: String, label: String, unit: String, count: Int,
+        action: String, delta: Int, isDeleted: Boolean = false
+    ) {
+        val now    = System.currentTimeMillis()
+        val packet = buildPacket(
+            MeshPacket.PacketType.INVENTORY_UPDATE,
+            MeshPacket.inventoryUpdatePayload(
+                key           = key,
+                label         = label,
+                unit          = unit,
+                count         = count,
+                updatedAt     = now,
+                updatedBy     = localNodeId,
+                updatedByName = localName,
+                action        = action,
+                delta         = delta,
+                isDeleted     = isDeleted
+            )
+        )
+        scope.launch(Dispatchers.IO) {
+            db.seenPacketDao().markSeen(
+                com.disastermesh.app.db.entities.SeenPacketEntity(packet.id, packet.type.name, localNodeId, now)
+            )
+            db.auditLogDao().insert(
+                com.disastermesh.app.db.entities.AuditLogEntity(
+                    id          = packet.id,
+                    entityType  = "INVENTORY",
+                    entityId    = key,
+                    entityLabel = label,
+                    action      = action,
+                    actorNodeId = localNodeId,
+                    actorName   = localName,
+                    detail      = when (action) {
+                        "ADD"    -> "Added $count $unit"
+                        "ADJUST" -> if (delta >= 0) "+$delta $unit" else "$delta $unit"
+                        "DELETE" -> "Removed from inventory"
+                        else     -> "Updated"
+                    },
+                    createdAt   = now
+                )
+            )
+        }
+        meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+        Log.d(TAG, "Sent INVENTORY_UPDATE: $key [$action] delta=$delta")
+    }
+
+    private suspend fun sendInventorySync(toEndpointId: String) {
+        val items = db.inventoryDao().getAllForSync()
+        if (items.isEmpty()) return
+        val snapshots = items.map { e ->
+            MeshPacket.InventorySnapshot(
+                key           = e.key,
+                label         = e.label,
+                unit          = e.unit,
+                count         = e.count,
+                updatedAt     = e.updatedAt,
+                updatedBy     = e.updatedBy,
+                updatedByName = e.updatedByName,
+                isDeleted     = e.isDeleted
+            )
+        }
+        val packet = buildPacket(
+            MeshPacket.PacketType.INVENTORY_SYNC,
+            MeshPacket.inventorySyncPayload(snapshots)
+        )
+        db.seenPacketDao().markSeen(
+            com.disastermesh.app.db.entities.SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
+        )
+        meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
+        Log.d(TAG, "Sent INVENTORY_SYNC to $toEndpointId: ${snapshots.size} items")
     }
 
     private fun dmThreadId(a: String, b: String) =
