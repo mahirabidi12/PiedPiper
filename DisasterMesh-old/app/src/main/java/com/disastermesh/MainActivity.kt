@@ -194,6 +194,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupMeshManager() {
         meshManager = MeshManager(
             context = this,
+            localNodeId = session.nodeId,
+            localRole = session.role.name,
             deviceName = session.name,
             onMessageReceived = { message ->
                 runOnUiThread {

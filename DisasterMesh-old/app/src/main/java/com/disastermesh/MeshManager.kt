@@ -7,6 +7,8 @@ import com.google.android.gms.nearby.connection.*
 
 class MeshManager(
     private val context: Context,
+    private val localNodeId: String,
+    private val localRole: String,
     private val deviceName: String,
     private val onMessageReceived: (Message) -> Unit,
     private val onPeersChanged: (peerCount: Int, peerNames: List<String>) -> Unit
@@ -77,9 +79,9 @@ class MeshManager(
             .setStrategy(Strategy.P2P_CLUSTER)
             .build()
 
-        client.startAdvertising(deviceName, SERVICE_ID, connectionLifecycleCallback, options)
+        client.startAdvertising("$localNodeId|$localRole", SERVICE_ID, connectionLifecycleCallback, options)
             .addOnSuccessListener {
-                Log.d(TAG, "Advertising as: $deviceName")
+                Log.d(TAG, "Advertising as: $deviceName ($localNodeId) [$localRole]")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "Advertising failed: ${e.message}")
@@ -104,8 +106,19 @@ class MeshManager(
 
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.d(TAG, "Found peer: $endpointId (${info.endpointName})")
-            client.requestConnection(deviceName, endpointId, connectionLifecycleCallback)
+            val parts        = info.endpointName.split("|")
+            val remoteNodeId = parts.getOrElse(0) { info.endpointName }
+            val remoteRole   = parts.getOrElse(1) { "" }
+            Log.d(TAG, "Found peer: $endpointId ($remoteNodeId) [$remoteRole]")
+
+            // Tiebreaker: only apply against other discoverers (not Authority).
+            // Authority never calls requestConnection(), so skipping against it would
+            // leave nobody initiating — they'd never connect.
+            if (remoteRole != Role.AUTHORITY.name && localNodeId > remoteNodeId) {
+                Log.d(TAG, "Tiebreaker: waiting for $remoteNodeId to initiate")
+                return
+            }
+            client.requestConnection("$localNodeId|$localRole", endpointId, connectionLifecycleCallback)
                 .addOnFailureListener { e ->
                     Log.d(TAG, "Request connection note: ${e.message}")
                 }
