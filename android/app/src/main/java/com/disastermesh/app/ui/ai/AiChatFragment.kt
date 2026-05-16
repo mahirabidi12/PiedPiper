@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.fragment.app.Fragment
 import androidx.core.widget.addTextChangedListener
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -46,10 +46,10 @@ class AiChatFragment : Fragment() {
     private lateinit var db: AppDatabase
     private lateinit var adapter: AiChatAdapter
 
-    private val viewModel: AiChatViewModel by viewModels()
+    private val viewModel: AiChatViewModel by activityViewModels()
 
     /** ID of the conversation thread we're currently rendering. */
-    private var activeSessionId: String = DEFAULT_SESSION_ID
+    private var activeSessionId: String = ""
 
     /** Handle to the active observe-session coroutine — cancelled on session switch. */
     private var observerJob: Job? = null
@@ -73,7 +73,7 @@ class AiChatFragment : Fragment() {
         setupAskButton()
         setupLanguageButton()
         setupNewSessionButton()
-        ensureSessionAndObserve(DEFAULT_SESSION_ID)
+        observeActiveSession()
         warmUpModel()
     }
 
@@ -159,7 +159,20 @@ class AiChatFragment : Fragment() {
         binding.btnNewSession.setOnClickListener {
             // Fresh thread — new id, observation switches to it.
             val newId = "ai-session-${UUID.randomUUID()}"
-            ensureSessionAndObserve(newId)
+            viewModel.setActiveSessionId(newId)
+        }
+    }
+
+    private fun observeActiveSession() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.activeSessionId
+                    .collectLatest { sessionId ->
+                        if (sessionId != activeSessionId || observerJob == null) {
+                            ensureSessionAndObserve(sessionId)
+                        }
+                    }
+            }
         }
     }
 
@@ -234,8 +247,8 @@ class AiChatFragment : Fragment() {
             return
         }
 
-        val lang      = LanguagePreference.current
-        val sessionId = activeSessionId
+        val lang = LanguagePreference.current
+        val sessionId = viewModel.activeSessionId.value
 
         viewLifecycleOwner.lifecycleScope.launch {
             setLoading(true)
@@ -246,10 +259,14 @@ class AiChatFragment : Fragment() {
                 AiHistory.appendMessage(db, sessionId, isUser = true, text = question)
             }
 
-            // 2. Open the volatile bubble — empty for now, the chunks will
-            //    fill it. The chat list re-renders via combine() on every
+            // 2. Open the volatile bubble with a visible placeholder. The
+            //    first non-empty chunk replaces it in-place. The chat list
+            //    re-renders via combine() on every
             //    pushChunk(); Room is untouched during this loop.
-            viewModel.startStream(sessionId)
+            viewModel.startStream(
+                sessionId,
+                getString(R.string.ai_thinking_label)
+            )
             var finalText = ""
 
             GemmaClient.generateStream(
@@ -274,8 +291,10 @@ class AiChatFragment : Fragment() {
                     setLoading(false)
                 }
                 .collect { cumulativeText ->
-                    finalText = cumulativeText
-                    viewModel.pushChunk(cumulativeText)
+                    if (cumulativeText.isNotBlank()) {
+                        finalText = cumulativeText
+                        viewModel.pushChunk(cumulativeText)
+                    }
                 }
         }
     }
@@ -287,6 +306,7 @@ class AiChatFragment : Fragment() {
      */
     private fun setLoading(loading: Boolean) {
         isLoading = loading
+        if (_binding == null) return
         setAskEnabled(!loading)
         setStatus(if (loading) "STREAMING" else "READY",
                   if (loading) R.color.mesh_searching else R.color.ai_ready)
@@ -426,9 +446,6 @@ class AiChatFragment : Fragment() {
     }
 
     companion object {
-        /** Default freeform session every user lands on. New threads use a fresh UUID. */
-        private const val DEFAULT_SESSION_ID = "ai-default"
-
         /** Sentinel id for the volatile streaming bubble. Stable across
          *  chunk emissions so DiffUtil treats it as the same row and only
          *  rebinds its text instead of inserting/removing the bubble. */

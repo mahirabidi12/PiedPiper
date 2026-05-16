@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="gemma_supported_languages">
+        <item>English</item>
+        <item>Mandarin Chinese</item>
+        <item>Hindi</item>
+        <item>Spanish</item>
+        <item>Arabic</item>
+        <item>Bengali</item>
+        <item>Portuguese</item>
+        <item>Russian</item>
+        <item>Japanese</item>
+        <item>Punjabi</item>
+        <item>German</item>
+        <item>Javanese</item>
+        <item>Korean</item>
+        <item>French</item>
+        <item>Telugu</item>
+        <item>Marathi</item>
+        <item>Turkish</item>
+        <item>Tamil</item>
+        <item>Vietnamese</item>
+        <item>Urdu</item>
+        <item>Indonesian</item>
+        <item>Italian</item>
+        <item>Persian (Farsi)</item>
+        <item>Polish</item>
+        <item>Ukrainian</item>
+        <item>Gujarati</item>
+        <item>Kannada</item>
+        <item>Malayalam</item>
+        <item>Thai</item>
+        <item>Swahili</item>
+        <item>Hausa</item>
+        <item>Yoruba</item>
+        <item>Igbo</item>
+        <item>Amharic</item>
+        <item>Dutch</item>
+        <item>Romanian</item>
+        <item>Greek</item>
+        <item>Hebrew</item>
+        <item>Hungarian</item>
+        <item>Czech</item>
+        <item>Swedish</item>
+        <item>Danish</item>
+        <item>Finnish</item>
+        <item>Norwegian</item>
+        <item>Bulgarian</item>
+        <item>Serbian</item>
+        <item>Croatian</item>
+        <item>Slovak</item>
+        <item>Catalan</item>
+        <item>Burmese</item>
+        <item>Sinhala</item>
+        <item>Nepali</item>
+        <item>Khmer</item>
+        <item>Lao</item>
+        <item>Mongolian</item>
+        <item>Kazakh</item>
+        <item>Uzbek</item>
+        <item>Azerbaijani</item>
+        <item>Armenian</item>
+        <item>Georgian</item>
+        <item>Pashto</item>
+        <item>Sundanese</item>
+        <item>Malay</item>
+        <item>Tagalog (Filipino)</item>
+        <item>Cebuano</item>
+        <item>Zulu</item>
+        <item>Xhosa</item>
+        <item>Afrikaans</item>
+        <item>Somali</item>
+        <item>Malagasy</item>
+        <item>Haitian Creole</item>
+        <item>Quechua</item>
+        <item>Maori</item>
+        <item>Samoan</item>
+        <item>Hawaiian</item>
+        <item>Welsh</item>
+        <item>Irish</item>
+        <item>Basque</item>
+        <item>Icelandic</item>
+        <item>Esperanto</item>
+        <item>Albanian</item>
+        <item>Belarusian</item>
+        <item>Bosnian</item>
+        <item>Slovenian</item>
+        <item>Estonian</item>
+        <item>Latvian</item>
+        <item>Lithuanian</item>
+        <item>Macedonian</item>
+        <item>Maltese</item>
+        <item>Luxembourgish</item>
+        <item>Galician</item>
+        <item>Occitan</item>
+        <item>Breton</item>
+        <item>Frisian</item>
+        <item>Scottish Gaelic</item>
+        <item>Manx</item>
+        <item>Romansh</item>
+        <item>Corsican</item>
+        <item>Sardinian</item>
+        <item>Yiddish</item>
+        <item>Ladino</item>
+        <item>Assamese</item>
+        <item>Odia</item>
+        <item>Sindhi</item>
+        <item>Kashmiri</item>
+        <item>Konkani</item>
+        <item>Maithili</item>
+        <item>Dogri</item>
+        <item>Manipuri</item>
+        <item>Bodo</item>
+        <item>Santali</item>
+        <item>Dari</item>
+        <item>Tajik</item>
+        <item>Kyrgyz</item>
+        <item>Turkmen</item>
+        <item>Uyghur</item>
+        <item>Tatar</item>
+        <item>Bashkir</item>
+        <item>Chechen</item>
+        <item>Kurdish (Kurmanji)</item>
+        <item>Kurdish (Sorani)</item>
+        <item>Oromo</item>
+        <item>Tigrinya</item>
+        <item>Kinyarwanda</item>
+        <item>Kirundi</item>
+        <item>Lingala</item>
+        <item>Shona</item>
+        <item>Sesotho</item>
+        <item>Tswana</item>
+        <item>Swati</item>
+        <item>Tsonga</item>
+        <item>Ndebele</item>
+        <item>Wolof</item>
+        <item>Fula</item>
+        <item>Bambara</item>
+        <item>Akan</item>
+        <item>Ewe</item>
+        <item>Tamazight (Berber)</item>
+        <item>Hmong</item>
+        <item>Tibetan</item>
+        <item>Dzongkha</item>
+        <item>Dhivehi</item>
+        <item>Guarani</item>
+        <item>Aymara</item>
+        <item>Nahuatl</item>
+        <item>Navajo</item>
+        <item>Inuktitut</item>
+        <item>Cree</item>
+        <item>Ojibwe</item>
+        <item>Fijian</item>
+        <item>Tongan</item>
+        <item>Tahitian</item>
+        <item>Tok Pisin</item>
+        <item>Interlingua</item>
+        <item>Cantonese</item>
+        <item>Wu Chinese</item>
+        <item>Hakka Chinese</item>
+        <item>Min Nan Chinese</item>
+        <item>Nuosu Yi</item>
+    </string-array>
+</resources>

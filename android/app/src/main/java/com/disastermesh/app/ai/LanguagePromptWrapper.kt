@@ -11,31 +11,26 @@ package com.disastermesh.app.ai
  * Switching language = injecting a system directive in front of the user's
  * query. That's it. No engine reload, no memory cost, no model swap.
  *
- * Call [wrap] right before handing the prompt to GemmaClient.generate(). For
- * [SurvivalLanguage.ENGLISH] the query is returned untouched — no directive
- * needed when the default behaviour already matches.
+ * Call [wrap] right before handing the prompt to GemmaClient.generate(). Every
+ * selected language, including English, is represented by an explicit
+ * directive prefix so the model receives one consistent instruction format.
  */
 object LanguagePromptWrapper {
 
     private const val DIRECTIVE_TEMPLATE =
-        "[System Directive: You must process the following user query and output your entire " +
-        "response strictly in %s. Do not include English fallback translations or explanations " +
-        "outside of this language.]\nUser: %s"
+        "[System Directive: Respond strictly in %s]\nUser: %s"
 
     /**
      * Wraps [query] with a strict system directive forcing [language] for the response.
      *
-     * Example output (HINDI):
+        * Example output (HINDI):
      * ```
-     * [System Directive: You must process the following user query and output your entire
-     *  response strictly in Hindi. Do not include English fallback translations or
-     *  explanations outside of this language.]
+        * [System Directive: Respond strictly in Hindi]
      * User: How do I treat a deep cut?
      * ```
      */
     fun wrap(query: String, language: SurvivalLanguage): String {
         val trimmed = query.trim()
-        if (language == SurvivalLanguage.ENGLISH) return trimmed
         return DIRECTIVE_TEMPLATE.format(language.displayName, trimmed)
     }
 
