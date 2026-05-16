@@ -1,7 +1,11 @@
 package com.disastermesh.app.mesh
 
 import android.app.*
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
@@ -74,7 +78,7 @@ class MeshService : Service() {
     fun observeAllPeers() = db.peerDao().observeAll()
     fun observeSyncLog() = db.syncLogDao().observeRecent()
 
-    enum class MeshStatus { OFFLINE, SEARCHING, ONLINE }
+    enum class MeshStatus { OFFLINE, SEARCHING, ONLINE, BT_OFF }
 
     companion object {
         private const val TAG = "MeshService"
@@ -86,12 +90,35 @@ class MeshService : Service() {
     // Only initialize the mesh once per service instance.
     private var started = false
 
+    private val bluetoothReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != BluetoothAdapter.ACTION_STATE_CHANGED) return
+            when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                BluetoothAdapter.STATE_OFF -> {
+                    Log.w(TAG, "Bluetooth off — pausing mesh")
+                    _meshStatus.value = MeshStatus.BT_OFF
+                    _peerCount.value  = 0
+                    if (::meshManager.isInitialized) meshManager.stop()
+                }
+                BluetoothAdapter.STATE_ON -> {
+                    Log.d(TAG, "Bluetooth on — restarting mesh")
+                    _meshStatus.value = MeshStatus.SEARCHING
+                    val session = UserSession.get(applicationContext)
+                    if (::meshManager.isInitialized && session != null) {
+                        meshManager.start()
+                    }
+                }
+            }
+        }
+    }
+
     // ── Service lifecycle ─────────────────────────────────────────────────────
 
     override fun onCreate() {
         super.onCreate()
         db = AppDatabase.getInstance(applicationContext)
         createNotificationChannel()
+        registerReceiver(bluetoothReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
         Log.d(TAG, "MeshService created")
     }
 
@@ -150,7 +177,7 @@ class MeshService : Service() {
             onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ }
         )
 
-        meshManager.start(initiateConnections = session.role != Role.AUTHORITY)
+        meshManager.start()
         _meshStatus.value = MeshStatus.SEARCHING
         Log.d(TAG, "Mesh started as ${session.name} [${session.role}]")
         return START_STICKY
@@ -159,6 +186,7 @@ class MeshService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         started = false
+        unregisterReceiver(bluetoothReceiver)
         if (::meshManager.isInitialized) meshManager.stop()
         serviceScope.cancel()
         Log.d(TAG, "MeshService destroyed")
@@ -213,6 +241,15 @@ class MeshService : Service() {
         if (::gossipRouter.isInitialized) gossipRouter.sendSignalUpdate(signalId, SignalStatus.EXPIRED.name)
     }
 
+    // Nearby P2P_CLUSTER can open multiple transport connections (BT + Wi-Fi Direct)
+    // to the same physical device, each with a different endpointId but the same nodeId.
+    // Count unique nodeIds to get the real peer count.
+    private fun uniquePeerCount(): Int =
+        meshManager.connectedEndpoints.values
+            .map { it.split("|").firstOrNull() ?: it }
+            .distinct()
+            .size
+
     private fun dmThreadId(a: String, b: String) =
         "dm-${listOf(a, b).sorted().joinToString("-")}"
 
@@ -225,7 +262,7 @@ class MeshService : Service() {
 
         override fun onPeerConnected(endpointId: String, endpointName: String) {
             gossipRouter.onPeerConnected(endpointId, endpointName)
-            val count = meshManager.connectedEndpoints.size
+            val count = uniquePeerCount()
             _peerCount.value = count
             _meshStatus.value = MeshStatus.ONLINE
             updateNotification(count)
@@ -233,7 +270,7 @@ class MeshService : Service() {
 
         override fun onPeerDisconnected(endpointId: String) {
             gossipRouter.onPeerDisconnected(endpointId)
-            val count = meshManager.connectedEndpoints.size
+            val count = uniquePeerCount()
             _peerCount.value = count
             if (count == 0) _meshStatus.value = MeshStatus.SEARCHING
             updateNotification(count)

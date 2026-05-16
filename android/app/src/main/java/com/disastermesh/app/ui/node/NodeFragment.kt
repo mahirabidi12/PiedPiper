@@ -177,9 +177,10 @@ class NodeFragment : Fragment() {
     private fun applyMeshStatus(status: MeshService.MeshStatus, peerCount: Int) {
         val ctx = requireContext()
         val (dotColor, label, transportText) = when (status) {
-            MeshService.MeshStatus.ONLINE    -> Triple(R.color.mesh_online,    "ONLINE",    "Nearby · P2P_CLUSTER")
-            MeshService.MeshStatus.SEARCHING -> Triple(R.color.mesh_searching, "SEARCHING", "Nearby · P2P_CLUSTER")
-            MeshService.MeshStatus.OFFLINE   -> Triple(R.color.mesh_offline,   "OFFLINE",   "—")
+            MeshService.MeshStatus.ONLINE    -> Triple(R.color.mesh_online,       "ONLINE",         "Nearby · P2P_CLUSTER")
+            MeshService.MeshStatus.SEARCHING -> Triple(R.color.mesh_searching,    "SEARCHING",      "Nearby · P2P_CLUSTER")
+            MeshService.MeshStatus.BT_OFF    -> Triple(R.color.priority_critical, "BLUETOOTH OFF",  "Enable Bluetooth to join mesh")
+            MeshService.MeshStatus.OFFLINE   -> Triple(R.color.mesh_offline,      "OFFLINE",        "—")
         }
         val color = ctx.getColor(dotColor)
 

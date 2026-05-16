@@ -26,6 +26,7 @@
     <string name="label_app_title">DISASTERMESH</string>
     <string name="label_peers_connected">%1$d PEERS</string>
     <string name="label_mesh_offline">MESH OFFLINE</string>
+    <string name="label_bt_off">BLUETOOTH OFF</string>
 
     <!-- Mesh service notification -->
     <string name="notif_channel_mesh">Mesh Network</string>
