@@ -80,6 +80,17 @@
     <string name="btn_switch_role">Switch Role</string>
     <string name="btn_leave_mesh">Leave Mesh &amp; Reset Session</string>
 
+    <!-- Inventory Dashboard -->
+    <string name="section_inventory">INVENTORY</string>
+    <string name="label_inventory_synced">SYNCED</string>
+    <string name="label_inventory_offline">OFFLINE</string>
+    <string name="label_low_stock">LOW</string>
+    <string name="label_out_of_stock">OUT OF STOCK</string>
+    <string name="btn_add_item">+ ADD</string>
+    <string name="label_no_inventory">No inventory items</string>
+    <string name="label_audit_log">AUDIT LOG</string>
+    <string name="label_no_audit_log">No actions recorded yet</string>
+
     <!-- Buttons -->
     <string name="btn_accept_all">ACCEPT ALL</string>
     <string name="btn_review_each">REVIEW EACH</string>

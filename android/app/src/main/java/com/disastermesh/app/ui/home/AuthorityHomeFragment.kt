@@ -19,7 +19,7 @@ import com.disastermesh.app.ui.AppViewModel
 import com.disastermesh.app.ui.MainActivity
 import com.disastermesh.app.ui.sheet.AssignTicketBottomSheet
 import com.disastermesh.app.ui.sheet.BroadcastBottomSheet
-import com.disastermesh.app.ui.sheet.InventoryBottomSheet
+import com.disastermesh.app.ui.inventory.InventoryFragment
 import com.disastermesh.app.ui.sheet.ResolveTicketBottomSheet
 import com.disastermesh.app.ui.sheet.SignalDetailBottomSheet
 import com.disastermesh.app.ui.zone.ZoneDetailFragment
@@ -107,9 +107,10 @@ class AuthorityHomeFragment : Fragment() {
         }
 
         binding.btnResourcePlan.setOnClickListener {
-            InventoryBottomSheet.newInstance(canEdit = true) { key, delta ->
-                appViewModel.adjustInventory(key, delta)
-            }.show(childFragmentManager, "inventory")
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, InventoryFragment())
+                .addToBackStack("inventory")
+                .commit()
         }
 
         observeSignals()

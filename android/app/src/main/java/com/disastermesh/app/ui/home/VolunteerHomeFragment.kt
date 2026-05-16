@@ -8,12 +8,13 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.disastermesh.app.R
 import com.disastermesh.app.adapter.SignalAdapter
 import com.disastermesh.app.databinding.FragmentHomeVolunteerBinding
 import com.disastermesh.app.model.SignalStatus
 import com.disastermesh.app.ui.AppViewModel
 import com.disastermesh.app.ui.MainActivity
-import com.disastermesh.app.ui.sheet.InventoryBottomSheet
+import com.disastermesh.app.ui.inventory.InventoryFragment
 import com.disastermesh.app.ui.sheet.SignalDetailBottomSheet
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -45,9 +46,10 @@ class VolunteerHomeFragment : Fragment() {
         binding.rvSignals.adapter = signalAdapter
 
         binding.btnInventory.setOnClickListener {
-            InventoryBottomSheet.newInstance(canEdit = true) { key, delta ->
-                appViewModel.adjustInventory(key, delta)
-            }.show(childFragmentManager, "inventory")
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, InventoryFragment())
+                .addToBackStack("inventory")
+                .commit()
         }
 
         observeSignals()
