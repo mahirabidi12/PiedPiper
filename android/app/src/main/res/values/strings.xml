@@ -14,7 +14,7 @@
     <string name="role_authority_blurb">Coordinate response, assign tasks, and designate safe zones.</string>
 
     <!-- Nav labels -->
-    <string name="nav_home">HOME</string>
+    <string name="nav_home">Home</string>
     <string name="nav_map">MAP</string>
     <string name="nav_comms">COMMS</string>
     <string name="nav_ai">AI</string>
@@ -39,6 +39,7 @@
     <string name="section_my_signals">MY ACTIVE SIGNALS</string>
     <string name="section_all_signals">ALL SIGNALS</string>
     <string name="hint_signal_message">Describe the situation…</string>
+    <string name="label_ai_categorize_hint">Gemma will categorize automatically</string>
     <string name="hint_people_count">No. of people affected</string>
     <string name="btn_raise_signal">RAISE SIGNAL</string>
     <string name="btn_cancel">CANCEL</string>

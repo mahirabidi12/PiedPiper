@@ -78,9 +78,11 @@ class DirectConversationFragment private constructor() : Fragment() {
     private fun observeThread() {
         viewLifecycleOwner.lifecycleScope.launch {
             appViewModel.dmThread(peerId, localNodeId).collectLatest { messages ->
-                adapter.submitList(messages)
-                if (messages.isNotEmpty()) {
-                    binding.rvMessages.scrollToPosition(messages.size - 1)
+                adapter.submitList(messages) {
+                    val b = _binding ?: return@submitList
+                    if (messages.isNotEmpty()) {
+                        b.rvMessages.scrollToPosition(messages.size - 1)
+                    }
                 }
             }
         }

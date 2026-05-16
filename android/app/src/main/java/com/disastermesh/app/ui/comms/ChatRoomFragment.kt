@@ -63,10 +63,15 @@ class ChatRoomFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             svc.observeRoom(roomId).collectLatest { entities ->
                 val messages = entities.map { it.toDomain() }
-                messageAdapter.submitList(messages)
                 binding.tvMsgCount.text = "${messages.size} msgs"
-                if (messages.isNotEmpty()) {
-                    binding.rvMessages.scrollToPosition(messages.size - 1)
+                // submitList is async (DiffUtil runs off-thread). Scroll inside the
+                // commit callback so the new last item is actually bound before we
+                // ask the RecyclerView to scroll to it.
+                messageAdapter.submitList(messages) {
+                    val b = _binding ?: return@submitList
+                    if (messages.isNotEmpty()) {
+                        b.rvMessages.scrollToPosition(messages.size - 1)
+                    }
                 }
             }
         }

@@ -42,6 +42,10 @@ class GossipRouter(
         private const val DEFAULT_TTL = 8
         // Prune seen_packets older than 24 h to prevent unbounded growth
         private const val SEEN_PRUNE_MS = 24 * 60 * 60 * 1000L
+        // Store-and-forward window: only replay recent messages to reconnecting
+        // peers. Stops a backlog of stale rows from flooding the mesh on every
+        // reconnect cycle.
+        private const val SYNC_WINDOW_MS = 6 * 60 * 60 * 1000L
     }
 
     // ── MeshManager.MeshCallbacks ─────────────────────────────────────────────
@@ -188,14 +192,29 @@ class GossipRouter(
     }
 
     private suspend fun handleChat(packet: MeshPacket) {
-        val p = JSONObject(packet.payload)
+        val p      = JSONObject(packet.payload)
+        val roomId = p.getString("roomId")
+        val text   = p.getString("text")
+        val sender = packet.originNodeId
+
+        // Safety net: drop content duplicates even when the packet id is new.
+        // The primary dedup is packet.id at routeIncoming / DAO PrimaryKey, but
+        // any path that ever issues a fresh id for an existing logical message
+        // (as the old buggy store-and-forward did) would slip past id-based
+        // dedup. This second check guarantees the UI never sees the same
+        // (sender, room, text) tuple twice.
+        if (db.chatMessageDao().existsByContent(sender, roomId, text)) {
+            Log.d(TAG, "Content duplicate dropped: from=$sender room=$roomId")
+            return
+        }
+
         val entity = ChatMessageEntity(
             id           = packet.id,
-            roomId       = p.getString("roomId"),
-            senderNodeId = packet.originNodeId,
+            roomId       = roomId,
+            senderNodeId = sender,
             senderName   = packet.originName,
             senderRole   = packet.originRole,
-            text         = p.getString("text"),
+            text         = text,
             ttl          = packet.ttl,
             hopCount     = packet.hopCount,
             createdAt    = packet.sentAt
@@ -263,9 +282,12 @@ class GossipRouter(
             db.seenPacketDao().markSeen(
                 SeenPacketEntity(packet.id, packet.type.name, localNodeId, packet.sentAt)
             )
+            // Broadcast AFTER markSeen — otherwise a peer can echo this packet
+            // back via gossip relay before our seen_packets row exists, and we
+            // would re-process and re-relay our own message.
+            meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+            Log.d(TAG, "Sent CHAT → $roomId")
         }
-        meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
-        Log.d(TAG, "Sent CHAT → $roomId")
     }
 
     /** Broadcast a SIGNAL and also persist locally. */
@@ -293,9 +315,9 @@ class GossipRouter(
                 message   = "Signal sent [${signal.category.name}]",
                 createdAt = packet.sentAt
             ))
+            meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+            Log.d(TAG, "Sent SIGNAL: ${signal.id}")
         }
-        meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
-        Log.d(TAG, "Sent SIGNAL: ${signal.id}")
     }
 
     /** Update a signal's status locally and broadcast a SIGNAL_UPDATE to all peers. */
@@ -313,9 +335,9 @@ class GossipRouter(
                 message   = "Signal update [$newStatus] sent",
                 createdAt = packet.sentAt
             ))
+            meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+            Log.d(TAG, "Sent SIGNAL_UPDATE: $signalId → $newStatus")
         }
-        meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
-        Log.d(TAG, "Sent SIGNAL_UPDATE: $signalId → $newStatus")
     }
 
     // ── Store-and-forward ─────────────────────────────────────────────────────
@@ -350,19 +372,37 @@ class GossipRouter(
 
     private suspend fun sendStoreAndForward(toEndpointId: String) {
         val signals  = db.signalDao().getAllForSync()
-        val messages = db.chatMessageDao().getAllForSync()
+        // Bounded window: replay only recent chat history. Sending the entire
+        // un-expired backlog on every reconnect was the second source of the
+        // flood — once a peer accumulates thousands of rows, every reconnect
+        // re-sends all of them.
+        val sinceMs  = System.currentTimeMillis() - SYNC_WINDOW_MS
+        val messages = db.chatMessageDao().getRecentForSync(sinceMs)
         val total    = signals.size + messages.size
         if (total == 0) return
 
-        Log.d(TAG, "Store-and-forward: $total records → $toEndpointId")
+        Log.d(TAG, "Store-and-forward: $total records (chat window=${SYNC_WINDOW_MS / 3_600_000}h) → $toEndpointId")
 
+        // CRITICAL: forwarded packets MUST reuse the original id / sender / sentAt.
+        // buildPacket() mints a new UUID and overwrites the origin fields with the
+        // local node — using it here makes every reconnection look like a brand-new
+        // message to receiving peers, defeating dedup at the seen-packet table and
+        // the chat-message DAO (both keyed on packet.id == message id). The result
+        // was an unbounded multiplication of chat rows on every reconnect.
         signals.forEach { s ->
             // Never forward a QUEUED signal to peers — it hasn't been confirmed live yet.
             // flushQueuedSignals() handles promoting and broadcasting those separately.
             if (s.status == "QUEUED") return@forEach
-            val packet = buildPacket(
-                MeshPacket.PacketType.SIGNAL,
-                MeshPacket.signalPayload(
+            val packet = MeshPacket(
+                id           = s.id,
+                type         = MeshPacket.PacketType.SIGNAL,
+                ttl          = DEFAULT_TTL,
+                hopCount     = 0,
+                originNodeId = s.senderNodeId,
+                originRole   = s.senderRole,
+                originName   = s.senderName,
+                sentAt       = s.createdAt,
+                payload      = MeshPacket.signalPayload(
                     signalId    = s.id,
                     category    = s.category,
                     priority    = s.priority,
@@ -377,9 +417,16 @@ class GossipRouter(
         }
 
         messages.forEach { m ->
-            val packet = buildPacket(
-                MeshPacket.PacketType.CHAT,
-                MeshPacket.chatPayload(m.roomId, m.text)
+            val packet = MeshPacket(
+                id           = m.id,
+                type         = MeshPacket.PacketType.CHAT,
+                ttl          = DEFAULT_TTL,
+                hopCount     = 0,
+                originNodeId = m.senderNodeId,
+                originRole   = m.senderRole,
+                originName   = m.senderName,
+                sentAt       = m.createdAt,
+                payload      = MeshPacket.chatPayload(m.roomId, m.text)
             )
             meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
         }

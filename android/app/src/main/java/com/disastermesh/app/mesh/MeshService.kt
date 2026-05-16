@@ -119,6 +119,14 @@ class MeshService : Service() {
         db = AppDatabase.getInstance(applicationContext)
         createNotificationChannel()
         registerReceiver(bluetoothReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        // One-time cleanup of content-duplicate chat rows left behind by the
+        // previous buggy store-and-forward (each forwarded copy had a fresh
+        // UUID so the PrimaryKey couldn't catch them). Keeps the earliest row
+        // per (sender, room, text). Safe on every start — a clean DB returns 0.
+        serviceScope.launch(Dispatchers.IO) {
+            val removed = db.chatMessageDao().purgeContentDuplicates()
+            if (removed > 0) Log.i(TAG, "Purged $removed duplicate chat rows on startup")
+        }
         Log.d(TAG, "MeshService created")
     }
 
