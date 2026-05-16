@@ -146,28 +146,36 @@ class MeshManager(
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
             // info.endpointName is "$remoteNodeId|$remoteRole"
-            val parts          = info.endpointName.split("|")
-            val remoteNodeId   = parts.getOrElse(0) { info.endpointName }
-            val remoteRole     = parts.getOrElse(1) { "" }
+            val parts        = info.endpointName.split("|")
+            val remoteNodeId = parts.getOrElse(0) { info.endpointName }
+            val remoteRole   = parts.getOrElse(1) { "" }
             Log.d(TAG, "Endpoint found: $endpointId ($remoteNodeId) [$remoteRole]")
 
-            if (!connected.containsKey(endpointId)) {
-                pendingNames[endpointId] = remoteNodeId
+            // Skip self-discovery — Nearby sometimes returns stale cached ads from our own previous session
+            if (remoteNodeId == localNodeId) {
+                Log.d(TAG, "Skipping self-discovery: $endpointId")
+                return
             }
 
-            // Tiebreaker: only apply when the remote is ALSO discovering (non-Authority).
-            // Authority never calls requestConnection(), so if we skip here against an Authority
-            // with a lower nodeId, nobody would ever initiate — they'd never connect.
-            // Against another discoverer (Civilian/Volunteer), the lower nodeId always initiates
-            // so exactly one requestConnection() is in flight — no STATUS_ENDPOINT_IO_ERROR.
-            if (remoteRole != "AUTHORITY" && localNodeId > remoteNodeId) {
+            // Skip if already connected or handshake already in flight
+            if (connected.containsKey(endpointId) || pendingNames.containsKey(endpointId)) {
+                Log.d(TAG, "Already connected/pending $endpointId — skipping")
+                return
+            }
+
+            pendingNames[endpointId] = remoteNodeId
+
+            // Tiebreaker: lower nodeId always initiates so exactly one requestConnection()
+            // is in flight between any pair — prevents STATUS_ENDPOINT_IO_ERROR (8012).
+            if (localNodeId > remoteNodeId) {
                 Log.d(TAG, "Tiebreaker: waiting for $remoteNodeId to initiate")
                 return
             }
 
             client.requestConnection("$localNodeId|$localRole", endpointId, connectionLifecycleCallback)
                 .addOnFailureListener { e ->
-                    Log.d(TAG, "requestConnection note: ${e.message}")
+                    Log.d(TAG, "requestConnection failed → $endpointId: ${e.message}")
+                    pendingNames.remove(endpointId)
                 }
         }
 

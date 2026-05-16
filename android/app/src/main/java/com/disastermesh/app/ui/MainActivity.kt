@@ -205,14 +205,24 @@ class MainActivity : AppCompatActivity() {
     private fun observeMeshState() {
         val svc = meshService ?: return
         lifecycleScope.launch {
+            svc.meshStatus.collectLatest { status ->
+                val (text, colorRes) = when (status) {
+                    MeshService.MeshStatus.ONLINE    -> getString(R.string.label_peers_connected, svc.peerCount.value) to R.color.mesh_online
+                    MeshService.MeshStatus.SEARCHING -> getString(R.string.label_mesh_offline)   to R.color.mesh_searching
+                    MeshService.MeshStatus.BT_OFF    -> getString(R.string.label_bt_off)         to R.color.priority_critical
+                    MeshService.MeshStatus.OFFLINE   -> getString(R.string.label_mesh_offline)   to R.color.mesh_offline
+                }
+                binding.tvPeerCount.text = text
+                val color = getColor(colorRes)
+                binding.meshDot.setBackgroundColor(color)
+                binding.tvPeerCount.setTextColor(color)
+            }
+        }
+        lifecycleScope.launch {
             svc.peerCount.collectLatest { count ->
-                binding.tvPeerCount.text = if (count > 0)
-                    getString(R.string.label_peers_connected, count)
-                else
-                    getString(R.string.label_mesh_offline)
-                val dotColor = if (count > 0) R.color.mesh_online else R.color.mesh_searching
-                binding.meshDot.setBackgroundColor(getColor(dotColor))
-                binding.tvPeerCount.setTextColor(getColor(dotColor))
+                if (svc.meshStatus.value == MeshService.MeshStatus.ONLINE) {
+                    binding.tvPeerCount.text = getString(R.string.label_peers_connected, count)
+                }
             }
         }
     }
