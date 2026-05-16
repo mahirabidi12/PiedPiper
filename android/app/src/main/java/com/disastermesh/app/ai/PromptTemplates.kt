@@ -66,4 +66,78 @@ object PromptTemplates {
 
     fun classifySignal(rawMessage: String): String =
         "Classify this emergency message: ${rawMessage.trim()}"
+
+    // ── Zone Analysis ─────────────────────────────────────────────────────────
+
+    val ZONE_ANALYSIS_SYSTEM_INSTRUCTION = """
+        You are a tactical AI assistant embedded in a disaster response command system.
+        You will receive a structured data dump of emergency signals from a geographic zone cluster.
+        Produce a concise SITREP (situation report) for the authority in charge.
+
+        FORMAT — use exactly these four sections, each on its own line:
+        SITUATION: <2-3 sentences on overall state of the zone>
+        PRIORITIES: <numbered list of the most urgent actions, max 5>
+        RESOURCES NEEDED: <brief comma-separated list of required supplies or teams>
+        RISK LEVEL: <one of: CRITICAL / HIGH / MODERATE / LOW>
+
+        Rules:
+        - Under 300 words total.
+        - No filler phrases, no pleasantries.
+        - Be direct and clinical — this is read by an authority coordinator under stress.
+        - Base your assessment only on the data provided. Do not invent facts.
+    """.trimIndent()
+
+    fun zoneAnalysis(
+        areaLabel: String,
+        signals: List<com.disastermesh.app.model.Signal>
+    ): String {
+        val active = signals.filter {
+            it.status != com.disastermesh.app.model.SignalStatus.RESOLVED &&
+            it.status != com.disastermesh.app.model.SignalStatus.EXPIRED
+        }
+        val totalPeople = active.mapNotNull { it.peopleCount }.sum()
+
+        val sb = StringBuilder()
+        sb.appendLine("ZONE: $areaLabel")
+        sb.appendLine("Active signals: ${active.size}  (total incl. resolved: ${signals.size})")
+        if (totalPeople > 0) sb.appendLine("Estimated people affected: $totalPeople")
+        sb.appendLine()
+
+        sb.appendLine("Category breakdown:")
+        com.disastermesh.app.model.SignalCategory.entries.forEach { cat ->
+            val count = active.count { it.category == cat }
+            if (count > 0) {
+                val critical = active.count {
+                    it.category == cat &&
+                    it.priority == com.disastermesh.app.model.SignalPriority.CRITICAL
+                }
+                sb.append("  ${cat.name}: $count")
+                if (critical > 0) sb.append("  ($critical CRITICAL)")
+                sb.appendLine()
+            }
+        }
+
+        sb.appendLine()
+        sb.appendLine("Priority distribution:")
+        com.disastermesh.app.model.SignalPriority.entries.forEach { pri ->
+            val count = active.count { it.priority == pri }
+            if (count > 0) sb.appendLine("  ${pri.name}: $count")
+        }
+
+        sb.appendLine()
+        sb.appendLine("Signal details:")
+        active.take(12).forEachIndexed { i, s ->
+            val people = if ((s.peopleCount ?: 0) > 0) " [${s.peopleCount} people]" else ""
+            val loc = if (s.latitude != null && s.longitude != null)
+                " @ %.4f,%.4f".format(s.latitude, s.longitude) else ""
+            sb.appendLine(
+                "${i + 1}. [${s.category.name}/${s.priority.name}]" +
+                " \"${s.message.take(90)}\"$people$loc"
+            )
+        }
+        if (active.size > 12)
+            sb.appendLine("...and ${active.size - 12} more active signals not shown.")
+
+        return sb.toString()
+    }
 }

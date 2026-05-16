@@ -8,9 +8,13 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.disastermesh.app.R
 import com.disastermesh.app.adapter.SignalAdapter
+import com.disastermesh.app.ai.GemmaClient
+import com.disastermesh.app.ai.PromptTemplates
 import com.disastermesh.app.databinding.FragmentZoneDetailBinding
 import com.disastermesh.app.db.AppDatabase
+import com.disastermesh.app.model.Signal
 import com.disastermesh.app.model.SignalPriority
 import com.disastermesh.app.model.SignalStatus
 import com.disastermesh.app.ui.MainActivity
@@ -23,6 +27,9 @@ class ZoneDetailFragment : Fragment() {
 
     private var _binding: FragmentZoneDetailBinding? = null
     private val binding get() = _binding!!
+
+    private var currentSignals: List<Signal> = emptyList()
+    private var analysing = false
 
     private val signalAdapter = SignalAdapter { signal ->
         SignalDetailBottomSheet.newInstance(signal) { s, newStatus ->
@@ -52,10 +59,59 @@ class ZoneDetailFragment : Fragment() {
         }
 
         binding.btnGemmaZone.setOnClickListener {
-            Toast.makeText(requireContext(), "Gemma zone analysis — requires AI model", Toast.LENGTH_SHORT).show()
+            if (analysing) return@setOnClickListener
+            runZoneAnalysis(areaLabel)
         }
 
         observeZoneSignals(signalIds)
+    }
+
+    private fun runZoneAnalysis(areaLabel: String) {
+        if (GemmaClient.status != GemmaClient.Status.READY) {
+            Toast.makeText(
+                requireContext(),
+                "AI model not loaded — open the AI tab to load it first.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val active = currentSignals.filter {
+            it.status != SignalStatus.RESOLVED && it.status != SignalStatus.EXPIRED
+        }
+        if (active.isEmpty()) {
+            Toast.makeText(requireContext(), "No active signals to analyse.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        setBtnState(loading = true)
+
+        GemmaClient.generate(
+            prompt            = PromptTemplates.zoneAnalysis(areaLabel, currentSignals),
+            systemInstruction = PromptTemplates.ZONE_ANALYSIS_SYSTEM_INSTRUCTION,
+            onResult          = { result ->
+                if (!isAdded || _binding == null) return@generate
+                setBtnState(loading = false)
+                ZoneAnalysisBottomSheet.newInstance(areaLabel, result)
+                    .show(childFragmentManager, "zone_analysis")
+            },
+            onError           = { err ->
+                if (!isAdded || _binding == null) return@generate
+                setBtnState(loading = false)
+                Toast.makeText(requireContext(), "Analysis failed: $err", Toast.LENGTH_LONG).show()
+            }
+        )
+    }
+
+    private fun setBtnState(loading: Boolean) {
+        analysing = loading
+        binding.btnGemmaZone.isClickable = !loading
+        binding.tvGemmaZoneBtnLabel.text = if (loading) "ANALYSING…" else "GEMMA ZONE ANALYSIS"
+        val dotColor = requireContext().getColor(
+            if (loading) R.color.ai_loading else R.color.ai_ready
+        )
+        binding.aiDotZone.setBackgroundColor(dotColor)
+        binding.tvGemmaZoneBtnLabel.setTextColor(dotColor)
     }
 
     private fun observeZoneSignals(signalIds: List<String>) {
@@ -74,6 +130,7 @@ class ZoneDetailFragment : Fragment() {
                         }
                     })
             }.collectLatest { signals ->
+                currentSignals = signals
                 signalAdapter.submitList(signals)
 
                 val open     = signals.count { it.status != SignalStatus.RESOLVED && it.status != SignalStatus.EXPIRED }
