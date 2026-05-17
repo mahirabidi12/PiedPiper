@@ -83,6 +83,37 @@
                     android:lineSpacingMultiplier="1.4" />
             </LinearLayout>
 
+            <!-- Gemma resolution recommendation -->
+            <LinearLayout
+                android:id="@+id/resolutionPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_terminal_block"
+                android:padding="12dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GEMMA RESOLUTION"
+                    android:fontFamily="monospace"
+                    android:textSize="8sp"
+                    android:letterSpacing="0.14"
+                    android:textColor="@color/ai_ready"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/tvResolutionStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Waiting for volunteer and inventory data..."
+                    android:fontFamily="monospace"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_muted"
+                    android:lineSpacingMultiplier="1.25" />
+            </LinearLayout>
+
             <!-- Volunteer multi-select section -->
             <TextView
                 android:layout_width="wrap_content"

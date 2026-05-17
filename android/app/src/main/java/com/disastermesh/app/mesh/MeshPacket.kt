@@ -9,11 +9,7 @@ import org.json.JSONObject
  * JSON layout:
  * {
  *   "id":           "<UUID>",
-<<<<<<< HEAD
- *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|CHAT|DM|INVENTORY_UPDATE|INVENTORY_SYNC|CRITICAL_POI_UPDATE|SAFE_ZONE_UPDATE",
-=======
- *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|TICKET_ASSIGNMENT|CHAT|DM|INVENTORY_UPDATE|INVENTORY_SYNC",
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
+ *   "type":         "HELLO|SIGNAL|SIGNAL_UPDATE|TICKET_ASSIGNMENT|CHAT|DM|INVENTORY_UPDATE|INVENTORY_SYNC|CRITICAL_POI_UPDATE|SAFE_ZONE_UPDATE",
  *   "ttl":          8,
  *   "hopCount":     0,
  *   "originNodeId": "<UUID>",
@@ -38,20 +34,16 @@ data class MeshPacket(
 ) {
 
     enum class PacketType {
-<<<<<<< HEAD
         HELLO,
         SIGNAL,
         SIGNAL_UPDATE,
+        TICKET_ASSIGNMENT,
         CHAT,
         DM,
         INVENTORY_UPDATE,
         INVENTORY_SYNC,
         CRITICAL_POI_UPDATE,
         SAFE_ZONE_UPDATE
-=======
-        HELLO, SIGNAL, SIGNAL_UPDATE, TICKET_ASSIGNMENT,
-        CHAT, DM, INVENTORY_UPDATE, INVENTORY_SYNC
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     }
 
     /** Lightweight snapshot of an inventory item for sync payloads. */

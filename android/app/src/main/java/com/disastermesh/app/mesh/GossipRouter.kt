@@ -35,11 +35,8 @@ class GossipRouter(
     private val onSignalReceived: (Signal) -> Unit,
     private val onChatReceived: (ChatMessage) -> Unit,
     private val onPeerUpdated: (Peer) -> Unit,
-<<<<<<< HEAD
-    private val onCriticalPoiUpdated: (CriticalPoiEntity) -> Unit
-=======
+    private val onCriticalPoiUpdated: (CriticalPoiEntity) -> Unit,
     private val onTicketAssigned: ((Signal) -> Unit)? = null
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
 ) : MeshManager.MeshCallbacks {
 
     companion object {
@@ -100,6 +97,7 @@ class GossipRouter(
             SeenPacketEntity(packet.id, packet.type.name, packet.originNodeId, System.currentTimeMillis())
         )
 
+        refreshPeerPresence(packet, fromEndpointId)
         persistAndNotify(packet, fromEndpointId)
 
         val relay = packet.copy(hopCount = packet.hopCount + 1)
@@ -109,19 +107,27 @@ class GossipRouter(
         db.seenPacketDao().pruneOlderThan(System.currentTimeMillis() - SEEN_PRUNE_MS)
     }
 
+    private suspend fun refreshPeerPresence(packet: MeshPacket, fromEndpointId: String) {
+        if (packet.originNodeId == localNodeId) return
+        val now = System.currentTimeMillis()
+        val existing = db.peerDao().getByNodeId(packet.originNodeId)
+        val peer = PeerEntity(
+            nodeId = packet.originNodeId,
+            name = packet.originName,
+            role = packet.originRole,
+            endpointId = fromEndpointId,
+            connectionState = "CONNECTED",
+            firstSeen = existing?.firstSeen ?: now,
+            lastSeen = now
+        )
+        db.peerDao().upsert(peer)
+        withContext(Dispatchers.Main) {
+            onPeerUpdated(peer.toDomain())
+        }
+    }
+
     private suspend fun persistAndNotify(packet: MeshPacket, fromEndpointId: String) {
         when (packet.type) {
-<<<<<<< HEAD
-            MeshPacket.PacketType.HELLO            -> handleHello(packet, fromEndpointId)
-            MeshPacket.PacketType.SIGNAL           -> handleSignal(packet)
-            MeshPacket.PacketType.SIGNAL_UPDATE    -> handleSignalUpdate(packet)
-            MeshPacket.PacketType.CHAT             -> handleChat(packet)
-            MeshPacket.PacketType.DM               -> handleDm(packet)
-            MeshPacket.PacketType.INVENTORY_UPDATE -> handleInventoryUpdate(packet)
-            MeshPacket.PacketType.INVENTORY_SYNC   -> handleInventorySync(packet)
-            MeshPacket.PacketType.CRITICAL_POI_UPDATE -> handleCriticalPoiUpdate(packet)
-            MeshPacket.PacketType.SAFE_ZONE_UPDATE -> handleSafeZoneUpdate(packet)
-=======
             MeshPacket.PacketType.HELLO             -> handleHello(packet, fromEndpointId)
             MeshPacket.PacketType.SIGNAL            -> handleSignal(packet)
             MeshPacket.PacketType.SIGNAL_UPDATE     -> handleSignalUpdate(packet)
@@ -130,7 +136,8 @@ class GossipRouter(
             MeshPacket.PacketType.DM                -> handleDm(packet)
             MeshPacket.PacketType.INVENTORY_UPDATE  -> handleInventoryUpdate(packet)
             MeshPacket.PacketType.INVENTORY_SYNC    -> handleInventorySync(packet)
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
+            MeshPacket.PacketType.CRITICAL_POI_UPDATE -> handleCriticalPoiUpdate(packet)
+            MeshPacket.PacketType.SAFE_ZONE_UPDATE  -> handleSafeZoneUpdate(packet)
         }
     }
 
@@ -390,7 +397,6 @@ class GossipRouter(
         payload      = payload
     )
 
-<<<<<<< HEAD
     private fun buildCriticalPoiPacket(
         poiId: String,
         name: String,
@@ -422,8 +428,6 @@ class GossipRouter(
     )
 
     /** Broadcast a CHAT message and also persist locally. */
-=======
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     fun sendChat(roomId: String, text: String) {
         val packet = buildPacket(MeshPacket.PacketType.CHAT, MeshPacket.chatPayload(roomId, text))
         scope.launch(Dispatchers.IO) {
@@ -514,7 +518,6 @@ class GossipRouter(
         }
     }
 
-<<<<<<< HEAD
     fun sendCriticalPoiUpdate(
         poiId: String,
         name: String,
@@ -614,7 +617,8 @@ class GossipRouter(
             meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
             Log.d(TAG, "Sent SAFE_ZONE_UPDATE: $zoneId")
         }
-=======
+    }
+
     /**
      * Full ticket assignment — broadcast by authority when assigning volunteers.
      * Receivers update the complete assignment state (volunteers, inventory, instructions).
@@ -679,7 +683,6 @@ class GossipRouter(
         }
         meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
         Log.d(TAG, "Sent TICKET_ASSIGNMENT: $signalId → volunteers=$volunteerIdsJson")
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     }
 
     // ── Store-and-forward ─────────────────────────────────────────────────────
