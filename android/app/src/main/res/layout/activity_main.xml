@@ -85,24 +85,36 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- 1dp border above bottom nav -->
-    <View
+    <!-- ── Floating glass bottom navigation (hidden during login) ────── -->
+    <FrameLayout
         android:id="@+id/bottomNavBorder"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/border_default"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="6dp"
+        android:background="@android:color/transparent"
+        android:visibility="gone">
 
-    <!-- ── Bottom Navigation (hidden during login) ───────────────────── -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_nav_height"
-        android:background="@color/ink_900"
-        app:menu="@menu/menu_bottom_nav"
-        app:itemIconTint="@color/text_dim"
-        app:itemTextColor="@color/text_dim"
-        app:labelVisibilityMode="labeled"
-        android:visibility="gone" />
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/bottom_nav_height"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_bottom_nav_glass"
+            android:elevation="16dp"
+            app:menu="@menu/menu_bottom_nav"
+            app:itemIconTint="@color/text_dim"
+            app:itemTextColor="@color/text_dim"
+            app:itemIconSize="20dp"
+            app:itemPaddingTop="1dp"
+            app:itemPaddingBottom="1dp"
+            app:itemRippleColor="@color/border_default"
+            app:itemActiveIndicatorStyle="@style/Widget.DisasterMesh.BottomNav.ActiveIndicator"
+            app:itemTextAppearanceActive="@style/TextAppearance.DisasterMesh.NavLabel.Compact"
+            app:itemTextAppearanceInactive="@style/TextAppearance.DisasterMesh.NavLabel.Compact"
+            app:labelVisibilityMode="labeled" />
+    </FrameLayout>
 
 </LinearLayout>

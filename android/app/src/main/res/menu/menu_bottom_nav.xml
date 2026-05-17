@@ -6,17 +6,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_home"
+        android:icon="@drawable/ic_nav_cmd"
         android:title="@string/nav_home" />
     <item
         android:id="@+id/nav_map"
+        android:icon="@drawable/ic_nav_map"
         android:title="@string/nav_map" />
     <item
         android:id="@+id/nav_comms"
+        android:icon="@drawable/ic_nav_comms"
         android:title="@string/nav_comms" />
     <item
         android:id="@+id/nav_ai"
+        android:icon="@drawable/ic_nav_ai"
         android:title="@string/nav_ai" />
     <item
         android:id="@+id/nav_node"
+        android:icon="@drawable/ic_nav_node"
         android:title="@string/nav_node" />
 </menu>

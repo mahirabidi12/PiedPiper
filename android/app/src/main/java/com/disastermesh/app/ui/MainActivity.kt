@@ -1,6 +1,7 @@
 package com.disastermesh.app.ui
 
 import android.Manifest
+import android.content.res.ColorStateList
 import android.content.ComponentName
 import android.util.Log
 import android.content.Context
@@ -167,6 +168,7 @@ class MainActivity : AppCompatActivity() {
                 else           -> return@setOnItemSelectedListener false
             }
             replaceFragment(fragment, addToBackStack = false)
+            session?.role?.let { role -> applyBottomNavGlassTint(role, item.itemId) }
             true
         }
 
@@ -177,7 +179,32 @@ class MainActivity : AppCompatActivity() {
                 Role.VOLUNTEER -> getString(R.string.nav_tasks)
                 Role.AUTHORITY -> getString(R.string.nav_cmd)
             }
+            applyBottomNavGlassTint(role, binding.bottomNav.selectedItemId)
         }
+    }
+
+    private fun applyBottomNavGlassTint(role: Role, selectedItemId: Int) {
+        val active = when (selectedItemId) {
+            R.id.nav_home -> when (role) {
+                Role.CIVILIAN  -> getColor(R.color.civilian)
+                Role.VOLUNTEER -> getColor(R.color.volunteer)
+                Role.AUTHORITY -> getColor(R.color.authority)
+            }
+            R.id.nav_map   -> getColor(R.color.civilian)
+            R.id.nav_comms -> getColor(R.color.volunteer)
+            R.id.nav_ai    -> getColor(R.color.ai_loading)
+            R.id.nav_node  -> getColor(R.color.priority_critical)
+            else           -> getColor(R.color.text_secondary)
+        }
+        val states = arrayOf(
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf()
+        )
+        val colors = intArrayOf(active, getColor(R.color.text_dim))
+        val tint = ColorStateList(states, colors)
+        binding.bottomNav.itemIconTintList = tint
+        binding.bottomNav.itemTextColor = tint
+        binding.bottomNav.itemRippleColor = ColorStateList.valueOf(getColor(R.color.border_default))
     }
 
     private fun replaceFragment(fragment: Fragment, addToBackStack: Boolean = true) {
