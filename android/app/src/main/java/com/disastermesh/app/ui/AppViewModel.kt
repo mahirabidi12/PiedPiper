@@ -7,7 +7,6 @@ import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.db.entities.AuditLogEntity
 import com.disastermesh.app.db.entities.DirectMessageEntity
 import com.disastermesh.app.db.entities.InventoryEntity
-import com.disastermesh.app.db.entities.SafeZoneEntity
 import com.disastermesh.app.db.entities.SignalEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -31,12 +30,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val dmInbox: StateFlow<List<DirectMessageEntity>> = db.directMessageDao().observeLatestPerThread()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val criticalPoiTick: StateFlow<Long> = db.criticalPoiDao().observeLatestUpdateTick()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
-
-    val safeZones: StateFlow<List<SafeZoneEntity>> = db.safeZoneDao().observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Tickets assigned to a specific volunteer node (all statuses, for history). */
@@ -67,12 +60,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteInventory(key: String) {
         viewModelScope.launch(Dispatchers.IO) {
             db.inventoryDao().markDeleted(key, by = "", byName = "")
-        }
-    }
-
-    fun upsertSafeZone(zone: SafeZoneEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            db.safeZoneDao().upsertIfNewer(zone)
         }
     }
 

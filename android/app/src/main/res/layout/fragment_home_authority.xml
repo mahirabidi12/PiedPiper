@@ -121,29 +121,6 @@
                 android:text="◈ BROADCAST" />
         </LinearLayout>
 
-        <!-- SAFE ZONE -->
-        <LinearLayout
-            android:id="@+id/btnSafeZone"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:background="@drawable/bg_btn_volunteer"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:clickable="true"
-            android:focusable="true">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:textSize="8sp"
-                android:textStyle="bold"
-                android:textColor="@color/volunteer"
-                android:letterSpacing="0.10"
-                android:text="▲ SAFE ZONE" />
-        </LinearLayout>
-
         <!-- RESOURCE PLAN -->
         <LinearLayout
             android:id="@+id/btnResourcePlan"

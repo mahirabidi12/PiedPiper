@@ -29,7 +29,6 @@ import com.disastermesh.app.ui.home.VolunteerHomeFragment
 import com.disastermesh.app.ui.home.AuthorityHomeFragment
 import com.disastermesh.app.ui.login.LoginFragment
 import com.disastermesh.app.ui.ai.AiChatFragment
-import com.disastermesh.app.ui.map.MapFragment
 import com.disastermesh.app.ui.node.NodeFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -137,8 +136,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyRoleNavRestrictions(role: Role) {
-        // All roles get all 5 tabs — civilians need MAP for camp directions
-        // and NODE for logout / role switching
     }
 
     private fun navigateHome(role: Role) {
@@ -162,7 +159,6 @@ class MainActivity : AppCompatActivity() {
                     null            -> CivilianHomeFragment()
                 }
                 R.id.nav_comms -> ChatFragment()
-                R.id.nav_map   -> MapFragment.newInstance()
                 R.id.nav_ai    -> AiChatFragment()
                 R.id.nav_node  -> NodeFragment()
                 else           -> return@setOnItemSelectedListener false
@@ -190,7 +186,6 @@ class MainActivity : AppCompatActivity() {
                 Role.VOLUNTEER -> getColor(R.color.volunteer)
                 Role.AUTHORITY -> getColor(R.color.authority)
             }
-            R.id.nav_map   -> getColor(R.color.civilian)
             R.id.nav_comms -> getColor(R.color.volunteer)
             R.id.nav_ai    -> getColor(R.color.ai_loading)
             R.id.nav_node  -> getColor(R.color.priority_critical)
