@@ -1,11 +1,23 @@
 package com.disastermesh.app.ui.ai
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -34,6 +46,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import java.util.UUID
 
 class AiChatFragment : Fragment() {
@@ -45,6 +58,10 @@ class AiChatFragment : Fragment() {
 
     private lateinit var db: AppDatabase
     private lateinit var adapter: AiChatAdapter
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var ttsReady = false
+    private var listening = false
 
     private val viewModel: AiChatViewModel by activityViewModels()
 
@@ -56,6 +73,13 @@ class AiChatFragment : Fragment() {
 
     /** True while the input field is empty — feeds the suggestion-panel visibility. */
     private val inputIsEmpty = kotlinx.coroutines.flow.MutableStateFlow(true)
+
+    private val micPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) startSpeechToText()
+        else Toast.makeText(requireContext(), "Microphone permission denied", Toast.LENGTH_SHORT).show()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -73,6 +97,7 @@ class AiChatFragment : Fragment() {
         setupAskButton()
         setupLanguageButton()
         setupNewSessionButton()
+        setupSpeech()
         observeActiveSession()
         warmUpModel()
     }
@@ -80,15 +105,97 @@ class AiChatFragment : Fragment() {
     // ── Chat list ─────────────────────────────────────────────────────────────
 
     private fun setupChatList() {
-        adapter = AiChatAdapter(onPinToggle = { msg ->
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                AiHistory.setPinned(db, msg.id, !msg.pinned)
-            }
-        })
+        adapter = AiChatAdapter(
+            onPinToggle = { msg ->
+                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    AiHistory.setPinned(db, msg.id, !msg.pinned)
+                }
+            },
+            onSpeak = { text -> speakMessage(text) }
+        )
         binding.rvAiMessages.layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true
         }
         binding.rvAiMessages.adapter = adapter
+    }
+
+    private fun setupSpeech() {
+        textToSpeech = TextToSpeech(requireContext()) { status ->
+            ttsReady = status == TextToSpeech.SUCCESS
+            Log.d(TAG, "AI TTS init status=$status ready=$ttsReady")
+            if (ttsReady) {
+                val localeStatus = textToSpeech?.setLanguage(currentSpeechLocale())
+                Log.d(TAG, "AI TTS locale=${currentSpeechLocale()} status=$localeStatus")
+            }
+            textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {
+                    Log.d(TAG, "AI TTS started id=$utteranceId")
+                }
+
+                override fun onDone(utteranceId: String?) {
+                    Log.d(TAG, "AI TTS done id=$utteranceId")
+                }
+
+                @Deprecated("Deprecated in Java")
+                override fun onError(utteranceId: String?) {
+                    Log.e(TAG, "AI TTS error id=$utteranceId")
+                }
+            })
+        }
+
+        if (SpeechRecognizer.isRecognitionAvailable(requireContext())) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext()).apply {
+                setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        listening = true
+                        binding.btnAiMic.text = "..."
+                        binding.btnAiMic.setTextColor(requireContext().getColor(R.color.ai_loading))
+                    }
+
+                    override fun onBeginningOfSpeech() = Unit
+                    override fun onRmsChanged(rmsdB: Float) = Unit
+                    override fun onBufferReceived(buffer: ByteArray?) = Unit
+                    override fun onEndOfSpeech() {
+                        listening = false
+                        resetMicButton()
+                    }
+
+                    override fun onError(error: Int) {
+                        listening = false
+                        resetMicButton()
+                        Toast.makeText(requireContext(), speechErrorLabel(error), Toast.LENGTH_SHORT).show()
+                    }
+
+                    override fun onResults(results: Bundle?) {
+                        listening = false
+                        resetMicButton()
+                        val text = results
+                            ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                            ?.firstOrNull()
+                            ?.trim()
+                            .orEmpty()
+                        if (text.isNotBlank()) {
+                            binding.etQuestion.setText(text)
+                            binding.etQuestion.setSelection(text.length)
+                        }
+                    }
+
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val text = partialResults
+                            ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                            ?.firstOrNull()
+                            ?.trim()
+                            .orEmpty()
+                        if (text.isNotBlank()) {
+                            binding.etQuestion.setText(text)
+                            binding.etQuestion.setSelection(text.length)
+                        }
+                    }
+
+                    override fun onEvent(eventType: Int, params: Bundle?) = Unit
+                })
+            }
+        }
     }
 
     /**
@@ -183,6 +290,7 @@ class AiChatFragment : Fragment() {
         binding.btnLanguage.setOnClickListener {
             LanguageBottomSheet { lang ->
                 updateLanguageLabel(lang)
+                textToSpeech?.setLanguage(currentSpeechLocale())
             }.show(parentFragmentManager, "lang")
         }
     }
@@ -225,9 +333,80 @@ class AiChatFragment : Fragment() {
 
     private fun setupAskButton() {
         binding.btnAsk.setOnClickListener { ask() }
+        binding.btnAiMic.setOnClickListener { requestMicAndListen() }
         binding.etQuestion.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) { ask(); true } else false
         }
+    }
+
+    private fun requestMicAndListen() {
+        if (listening) {
+            speechRecognizer?.stopListening()
+            listening = false
+            resetMicButton()
+            return
+        }
+        if (speechRecognizer == null) {
+            Toast.makeText(requireContext(), "Speech recognition unavailable on this phone", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED) {
+            startSpeechToText()
+        } else {
+            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun startSpeechToText() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, currentSpeechLocale().toLanguageTag())
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak your question")
+        }
+        speechRecognizer?.startListening(intent)
+    }
+
+    private fun resetMicButton() {
+        if (_binding == null) return
+        binding.btnAiMic.text = "MIC"
+        binding.btnAiMic.setTextColor(requireContext().getColor(R.color.ai_ready))
+    }
+
+    private fun speakMessage(text: String) {
+        Log.d(TAG, "AI speaker tapped ready=$ttsReady textLen=${text.length}")
+        if (!ttsReady) {
+            Toast.makeText(requireContext(), "Text-to-speech not ready", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val engine = textToSpeech ?: run {
+            Toast.makeText(requireContext(), "Text-to-speech engine missing", Toast.LENGTH_SHORT).show()
+            return
+        }
+        engine.setLanguage(currentSpeechLocale())
+        val utteranceId = "ai-chat-${System.currentTimeMillis()}"
+        val result = engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        Log.d(TAG, "AI TTS speak result=$result id=$utteranceId")
+        if (result == TextToSpeech.ERROR) {
+            Toast.makeText(requireContext(), "Text-to-speech failed on this device", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun currentSpeechLocale(): Locale =
+        Locale.forLanguageTag(LanguagePreference.current.code)
+
+    private fun speechErrorLabel(error: Int): String = when (error) {
+        SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+        SpeechRecognizer.ERROR_CLIENT -> "Speech cancelled"
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Mic permission missing"
+        SpeechRecognizer.ERROR_NETWORK,
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Speech network unavailable"
+        SpeechRecognizer.ERROR_NO_MATCH -> "No speech detected"
+        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Speech recognizer busy"
+        SpeechRecognizer.ERROR_SERVER -> "Speech service error"
+        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Speech timed out"
+        else -> "Speech recognition failed"
     }
 
     /**
@@ -442,10 +621,17 @@ class AiChatFragment : Fragment() {
         observerJob?.cancel()
         observerJob = null
         ModelDownloader.detach()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
         _binding = null
     }
 
     companion object {
+        private const val TAG = "AiChatFragment"
+
         /** Sentinel id for the volatile streaming bubble. Stable across
          *  chunk emissions so DiffUtil treats it as the same row and only
          *  rebinds its text instead of inserting/removing the bubble. */

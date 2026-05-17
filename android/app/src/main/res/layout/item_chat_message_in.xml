@@ -55,6 +55,20 @@
                 android:fontFamily="monospace"
                 android:textSize="7sp"
                 android:textColor="@color/text_dim" />
+
+            <TextView
+                android:id="@+id/btnSpeak"
+                android:layout_width="28dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text="SPK"
+                android:fontFamily="monospace"
+                android:textSize="7sp"
+                android:textStyle="bold"
+                android:textColor="@color/ai_ready"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginStart="6dp" />
         </LinearLayout>
 
         <!-- Message bubble -->
