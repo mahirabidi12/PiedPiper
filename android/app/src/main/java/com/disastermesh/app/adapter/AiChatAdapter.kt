@@ -21,7 +21,8 @@ import java.util.Locale
  * (Feature 2: Pinned Emergency Snippets).
  */
 class AiChatAdapter(
-    private val onPinToggle: (AiMessageEntity) -> Unit = {}
+    private val onPinToggle: (AiMessageEntity) -> Unit = {},
+    private val onSpeak: (String) -> Unit = {}
 ) : ListAdapter<AiMessageEntity, RecyclerView.ViewHolder>(DIFF) {
 
     private val timeFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -44,6 +45,7 @@ class AiChatAdapter(
             is UserVH -> {
                 holder.binding.tvOutMessageText.text = msg.text
                 holder.binding.tvOutTimestamp.text   = timeFmt.format(Date(msg.createdAt))
+                holder.binding.btnOutSpeak.setOnClickListener { onSpeak(msg.text) }
             }
             is AiVH -> {
                 val ctx = holder.binding.root.context
@@ -54,6 +56,7 @@ class AiChatAdapter(
                 holder.binding.tvSenderName.setTextColor(accent)
                 holder.binding.tvMessageText.text     = msg.text
                 holder.binding.tvTimestamp.text       = timeFmt.format(Date(msg.createdAt))
+                holder.binding.btnSpeak.setOnClickListener { onSpeak(msg.text) }
                 holder.itemView.setOnLongClickListener {
                     onPinToggle(msg); true
                 }

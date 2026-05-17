@@ -21,7 +21,8 @@ private const val VIEW_BROADCAST = 2
 private fun ChatMessage.isBroadcast() = text.startsWith("[BROADCAST")
 
 class ChatMessageAdapter(
-    private val localNodeId: String
+    private val localNodeId: String,
+    private val onSpeak: (String) -> Unit
 ) : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(DIFF) {
 
     override fun getItemViewType(position: Int): Int {
@@ -55,6 +56,7 @@ class ChatMessageAdapter(
         holder.binding.tvBroadcastSender.text    = "${msg.senderRole.badge} ${msg.senderName}"
         holder.binding.tvBroadcastTimestamp.text = formatTime(msg.createdAt)
         holder.binding.tvBroadcastText.text      = msg.text
+        holder.binding.btnBroadcastSpeak.setOnClickListener { onSpeak(msg.text) }
     }
 
     private fun bindIn(holder: InVH, msg: ChatMessage) {
@@ -70,6 +72,7 @@ class ChatMessageAdapter(
         holder.binding.tvSenderName.setTextColor(roleColor)
         holder.binding.tvTimestamp.text = formatTime(msg.createdAt)
         holder.binding.tvMessageText.text = msg.text
+        holder.binding.btnSpeak.setOnClickListener { onSpeak(msg.text) }
     }
 
     private fun bindOut(holder: OutVH, msg: ChatMessage) {
@@ -82,6 +85,7 @@ class ChatMessageAdapter(
         holder.binding.tvOutMessageText.text = msg.text
         holder.binding.tvOutMessageText.setTextColor(roleColor)
         holder.binding.tvOutTimestamp.text = formatTime(msg.createdAt)
+        holder.binding.btnOutSpeak.setOnClickListener { onSpeak(msg.text) }
     }
 
     private fun formatTime(epochMs: Long): String =

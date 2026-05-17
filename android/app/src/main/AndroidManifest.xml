@@ -38,6 +38,9 @@
     <!-- Internet — required for Gemma model download -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Comms speech-to-text mic input -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:name=".DisasterMeshApp"
         android:allowBackup="false"

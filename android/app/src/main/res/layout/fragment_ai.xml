@@ -359,20 +359,45 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <EditText
-            android:id="@+id/etQuestion"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_input_dark"
-            android:padding="10dp"
-            android:textSize="13sp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_dim"
-            android:hint="Ask a survival question…"
-            android:imeOptions="actionSend"
-            android:inputType="textMultiLine|textCapSentences"
-            android:maxLines="3" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_input_dark">
+
+            <EditText
+                android:id="@+id/etQuestion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:paddingStart="10dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:textSize="13sp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_dim"
+                android:hint="Ask a survival question…"
+                android:imeOptions="actionSend"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLines="3" />
+
+            <TextView
+                android:id="@+id/btnAiMic"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:text="MIC"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:textColor="@color/ai_ready"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/btnAsk"
