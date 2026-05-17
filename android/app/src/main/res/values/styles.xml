@@ -31,6 +31,18 @@
         <item name="labelVisibilityMode">labeled</item>
     </style>
 
+    <style name="Widget.DisasterMesh.BottomNav.ActiveIndicator" parent="">
+        <item name="android:color">#22161B22</item>
+        <item name="android:width">40dp</item>
+        <item name="android:height">22dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.NavPill</item>
+    </style>
+
+    <style name="ShapeAppearance.DisasterMesh.NavPill" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">18dp</item>
+    </style>
+
     <!-- ── Bottom Sheet ──────────────────────────────────────────────────── -->
     <style name="Widget.DisasterMesh.BottomSheet" parent="Widget.MaterialComponents.BottomSheet">
         <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.Sharp</item>
@@ -90,6 +102,12 @@
     <style name="TextAppearance.DisasterMesh.NavLabel" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">8sp</item>
+        <item name="android:letterSpacing">0.10</item>
+    </style>
+
+    <style name="TextAppearance.DisasterMesh.NavLabel.Compact" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textSize">9sp</item>
         <item name="android:letterSpacing">0.10</item>
     </style>
 

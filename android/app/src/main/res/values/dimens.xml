@@ -2,7 +2,7 @@
 <resources>
     <!-- Top bar / nav -->
     <dimen name="top_bar_height">48dp</dimen>
-    <dimen name="bottom_nav_height">56dp</dimen>
+    <dimen name="bottom_nav_height">54dp</dimen>
 
     <!-- Card / list -->
     <dimen name="left_accent_width">3dp</dimen>
