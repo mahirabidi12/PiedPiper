@@ -9,10 +9,6 @@
         android:icon="@drawable/ic_nav_cmd"
         android:title="@string/nav_home" />
     <item
-        android:id="@+id/nav_map"
-        android:icon="@drawable/ic_nav_map"
-        android:title="@string/nav_map" />
-    <item
         android:id="@+id/nav_comms"
         android:icon="@drawable/ic_nav_comms"
         android:title="@string/nav_comms" />

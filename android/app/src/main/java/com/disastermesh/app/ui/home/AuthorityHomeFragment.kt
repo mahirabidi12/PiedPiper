@@ -144,13 +144,6 @@ class AuthorityHomeFragment : Fragment() {
             }.show(childFragmentManager, "broadcast")
         }
 
-        binding.btnSafeZone.setOnClickListener {
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, com.disastermesh.app.ui.map.MapFragment.newInstance(dropMode = true))
-                .commit()
-            (requireActivity() as MainActivity).let { it.binding.bottomNav.selectedItemId = R.id.nav_map }
-        }
-
         binding.btnResourcePlan.setOnClickListener {
             requireActivity().supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, InventoryFragment())

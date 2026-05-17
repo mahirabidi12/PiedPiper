@@ -15,7 +15,6 @@
 
     <!-- Nav labels -->
     <string name="nav_home">Home</string>
-    <string name="nav_map">MAP</string>
     <string name="nav_comms">COMMS</string>
     <string name="nav_ai">AI</string>
     <string name="nav_node">NODE</string>
