@@ -9,11 +9,13 @@ import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.disastermesh.app.R
+import com.disastermesh.app.ai.GemmaClient
+import com.disastermesh.app.ai.PromptTemplates
 import com.disastermesh.app.databinding.BottomSheetAssignTicketBinding
 import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.db.entities.InventoryEntity
+import com.disastermesh.app.db.entities.PeerEntity
 import com.disastermesh.app.model.Signal
-
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -33,6 +35,8 @@ class AssignTicketBottomSheet : BottomSheetDialogFragment() {
     private val selectedVolunteerIds = mutableSetOf<String>()
 
     private val quantities = mutableMapOf<String, Int>()
+    private var inventoryItems: List<InventoryEntity> = emptyList()
+    private var recommendationRequested = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = BottomSheetAssignTicketBinding.inflate(inflater, container, false)
@@ -56,17 +60,23 @@ class AssignTicketBottomSheet : BottomSheetDialogFragment() {
 
     private fun observeVolunteers() {
         viewLifecycleOwner.lifecycleScope.launch {
-            AppDatabase.getInstance(requireContext())
-                .peerDao()
-                .observeConnected()
+            val peerDao = AppDatabase.getInstance(requireContext()).peerDao()
+            peerDao.observeAll()
                 .collectLatest { peers ->
                     volunteers = peers
-                        .filter { it.role.equals("VOLUNTEER", ignoreCase = true) }
+                        .filter { it.isVolunteerPeer() }
+                        .distinctBy { it.nodeId }
                         .map { it.nodeId to it.name }
                     rebuildVolunteerCheckboxes()
+                    maybeRequestGemmaResolution()
                 }
         }
     }
+
+    private fun PeerEntity.isVolunteerPeer(): Boolean =
+        role.equals("VOLUNTEER", ignoreCase = true) ||
+        role.equals("VOL", ignoreCase = true) ||
+        role.equals("Volunteer", ignoreCase = true)
 
     private fun rebuildVolunteerCheckboxes() {
         val container = binding.containerVolunteers
@@ -102,12 +112,15 @@ class AssignTicketBottomSheet : BottomSheetDialogFragment() {
                 .inventoryDao()
                 .observeAll()
                 .collectLatest { items ->
-                    rebuildInventoryInputs(items.filter { it.count > 0 })
+                    inventoryItems = items.filter { it.count > 0 }
+                    rebuildInventoryInputs(inventoryItems)
+                    maybeRequestGemmaResolution()
                 }
         }
     }
 
     private fun rebuildInventoryInputs(items: List<InventoryEntity>) {
+        val previousQuantities = quantities.toMap()
         binding.containerInventoryInputs.removeAllViews()
         quantities.clear()
 
@@ -119,7 +132,7 @@ class AssignTicketBottomSheet : BottomSheetDialogFragment() {
 
         val inflater = LayoutInflater.from(requireContext())
         items.forEach { item ->
-            quantities[item.key] = 0
+            quantities[item.key] = previousQuantities[item.key]?.coerceIn(0, item.count) ?: 0
             val row = inflater.inflate(R.layout.item_inventory_input_row, binding.containerInventoryInputs, false)
             row.findViewById<TextView>(R.id.tvInputLabel).text = "${item.label} (${item.count} avail)"
 
@@ -156,7 +169,7 @@ class AssignTicketBottomSheet : BottomSheetDialogFragment() {
                 refreshColors(clamped)
             }
 
-            setQty(0)
+            setQty(quantities[item.key] ?: 0)
             binding.containerInventoryInputs.addView(row)
         }
     }
@@ -165,6 +178,112 @@ class AssignTicketBottomSheet : BottomSheetDialogFragment() {
         val enabled = selectedVolunteerIds.isNotEmpty()
         binding.btnConfirmAssign.isEnabled = enabled
         binding.btnConfirmAssign.alpha     = if (enabled) 1f else 0.4f
+    }
+
+    private fun maybeRequestGemmaResolution() {
+        if (recommendationRequested) return
+        val s = signal ?: return
+        if (volunteers.isEmpty()) {
+            binding.tvResolutionStatus.text = "No online free volunteers yet. Recommendation pending."
+            return
+        }
+        if (inventoryItems.isEmpty()) {
+            binding.tvResolutionStatus.text = "No inventory available. Gemma will recommend volunteers only."
+        }
+        if (GemmaClient.status != GemmaClient.Status.READY) {
+            binding.tvResolutionStatus.text = "Gemma not ready. Open the AI tab/load model, or assign manually."
+            return
+        }
+
+        recommendationRequested = true
+        binding.tvResolutionStatus.text = "Gemma is thinking...\nAnalysing ticket, free volunteers, and inventory."
+
+        GemmaClient.generate(
+            prompt = PromptTemplates.ticketResolution(
+                signal = s,
+                onlineFreeVolunteers = volunteers.size,
+                availableInventory = inventoryItems
+            ),
+            systemInstruction = PromptTemplates.TICKET_RESOLUTION_SYSTEM_INSTRUCTION,
+            onResult = { response ->
+                if (!isAdded || _binding == null) return@generate
+                val recommendation = parseRecommendation(response)
+                if (recommendation == null) {
+                    binding.tvResolutionStatus.text = "Gemma response could not be parsed. Assign manually."
+                    return@generate
+                }
+                applyRecommendation(recommendation)
+            },
+            onError = { err ->
+                if (!isAdded || _binding == null) return@generate
+                binding.tvResolutionStatus.text = "Gemma recommendation unavailable: $err"
+            }
+        )
+    }
+
+    private data class ResolutionRecommendation(
+        val volunteerCount: Int,
+        val inventory: Map<String, Int>,
+        val reason: String
+    )
+
+    private fun parseRecommendation(response: String): ResolutionRecommendation? = runCatching {
+        val cleaned = response
+            .replace(Regex("```json\\s*", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("```\\s*"), "")
+            .trim()
+        val start = cleaned.indexOf('{')
+        val end = cleaned.lastIndexOf('}')
+        if (start == -1 || end <= start) return null
+
+        val obj = JSONObject(cleaned.substring(start, end + 1))
+        val count = obj.optInt("volunteers", 0).coerceIn(0, volunteers.size)
+        val inventoryObj = obj.optJSONObject("inventory") ?: JSONObject()
+        val allowed = inventoryItems.associateBy { it.key }
+        val inventory = mutableMapOf<String, Int>()
+
+        inventoryObj.keys().forEach { key ->
+            val item = allowed[key] ?: return@forEach
+            val qty = inventoryObj.optInt(key, 0).coerceIn(0, item.count)
+            if (qty > 0) inventory[key] = qty
+        }
+
+        ResolutionRecommendation(
+            volunteerCount = count,
+            inventory = inventory,
+            reason = obj.optString("reason", "Gemma suggested a lean assignment.")
+        )
+    }.getOrNull()
+
+    private fun applyRecommendation(rec: ResolutionRecommendation) {
+        selectedVolunteerIds.clear()
+        volunteers.take(rec.volunteerCount).forEach { (nodeId, _) ->
+            selectedVolunteerIds.add(nodeId)
+        }
+        rec.inventory.forEach { (key, qty) ->
+            quantities[key] = qty
+        }
+
+        rebuildVolunteerCheckboxes()
+        rebuildInventoryInputs(inventoryItems)
+        refreshConfirmButton()
+
+        val selectedNames = volunteers.take(rec.volunteerCount).map { it.second }
+        val inventoryLabel = if (rec.inventory.isEmpty()) {
+            "No inventory"
+        } else {
+            rec.inventory.entries.joinToString(", ") { (key, qty) ->
+                val item = inventoryItems.firstOrNull { it.key == key }
+                "${item?.label ?: key}: $qty"
+            }
+        }
+        binding.tvResolutionStatus.text = buildString {
+            append("Suggested volunteers: ")
+            append(if (selectedNames.isEmpty()) "none" else selectedNames.joinToString(", "))
+            append('\n')
+            append("Suggested inventory: $inventoryLabel")
+            if (rec.reason.isNotBlank()) append("\nReason: ${rec.reason}")
+        }
     }
 
     private fun doAssign() {

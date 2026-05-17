@@ -67,6 +67,61 @@ object PromptTemplates {
     fun classifySignal(rawMessage: String): String =
         "Classify this emergency message: ${rawMessage.trim()}"
 
+    // ── Ticket Resolution Recommendation ──────────────────────────────────────
+
+    val TICKET_RESOLUTION_SYSTEM_INSTRUCTION = """
+        You are a disaster-response dispatch assistant.
+        Recommend a minimal, practical assignment for one emergency ticket using only
+        the online free volunteers and inventory counts provided.
+
+        Return ONLY a valid JSON object — no markdown, no explanation.
+
+        JSON schema:
+        {
+          "volunteers": <integer>,
+          "inventory": {
+            "<inventory_key>": <integer>
+          },
+          "reason": "<one short sentence>"
+        }
+
+        Rules:
+        - volunteers must be between 0 and onlineFreeVolunteers.
+        - Use only inventory keys listed in availableInventory.
+        - Never request more inventory than available.
+        - Keep the recommendation lean; do not over-allocate scarce supplies.
+    """.trimIndent()
+
+    fun ticketResolution(
+        signal: com.disastermesh.app.model.Signal,
+        onlineFreeVolunteers: Int,
+        availableInventory: List<com.disastermesh.app.db.entities.InventoryEntity>
+    ): String {
+        val inventoryJson = org.json.JSONArray().apply {
+            availableInventory.forEach { item ->
+                put(org.json.JSONObject().apply {
+                    put("key", item.key)
+                    put("label", item.label)
+                    put("unit", item.unit)
+                    put("count", item.count)
+                })
+            }
+        }
+
+        return org.json.JSONObject().apply {
+            put("ticket", org.json.JSONObject().apply {
+                put("id", signal.id)
+                put("category", signal.category.name)
+                put("priority", signal.priority.name)
+                put("message", signal.message)
+                put("peopleCount", signal.peopleCount ?: org.json.JSONObject.NULL)
+                put("location", signal.manualLocation ?: org.json.JSONObject.NULL)
+            })
+            put("onlineFreeVolunteers", onlineFreeVolunteers)
+            put("availableInventory", inventoryJson)
+        }.toString()
+    }
+
     // ── Zone Analysis ─────────────────────────────────────────────────────────
 
     val ZONE_ANALYSIS_SYSTEM_INSTRUCTION = """

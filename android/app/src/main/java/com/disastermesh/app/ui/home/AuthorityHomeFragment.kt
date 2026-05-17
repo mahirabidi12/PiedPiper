@@ -53,7 +53,15 @@ class AuthorityHomeFragment : Fragment() {
     private val signalAdapter = SignalAdapter(
         onCancel = { signal ->
             val svc = (requireActivity() as MainActivity).meshService ?: return@SignalAdapter
-            svc.cancelTicket(signal.id)
+            AssignTicketBottomSheet.newInstance(signal) { volunteerIds, volunteerNames, inventoryJson, instructions ->
+                svc.assignSignalToVolunteers(
+                    signalId       = signal.id,
+                    volunteerIds   = volunteerIds,
+                    volunteerNames = volunteerNames,
+                    inventoryJson  = inventoryJson,
+                    instructions   = instructions
+                )
+            }.show(childFragmentManager, "assign_ticket_resolution")
         },
         onClick = { signal ->
         val svc = (requireActivity() as MainActivity).meshService ?: return@SignalAdapter

@@ -40,6 +40,14 @@ import org.json.JSONObject
  */
 class MeshService : Service() {
 
+    data class ZoneTicketAssignment(
+        val signalId: String,
+        val volunteerIds: List<String>,
+        val volunteerNames: List<String>,
+        val inventoryJson: String,
+        val instructions: String
+    )
+
     // ── Binder ────────────────────────────────────────────────────────────────
 
     inner class MeshBinder : Binder() {
@@ -71,13 +79,10 @@ class MeshService : Service() {
     private val _incomingChat = MutableSharedFlow<ChatMessage>(replay = 0)
     val incomingChat: SharedFlow<ChatMessage> = _incomingChat.asSharedFlow()
 
-<<<<<<< HEAD
     private val _criticalPoiUpdates = MutableSharedFlow<CriticalPoiEntity>(replay = 0)
     val criticalPoiUpdates: SharedFlow<CriticalPoiEntity> = _criticalPoiUpdates.asSharedFlow()
 
     /** Room-aware: observe all messages for a room from DB (includes history). */
-=======
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
     fun observeRoom(roomId: String) = db.chatMessageDao().observeRoom(roomId)
     fun observeSignals() = db.signalDao().observeAll()
     fun observeMySignals(nodeId: String) = db.signalDao().observeByNode(nodeId)
@@ -194,13 +199,11 @@ class MeshService : Service() {
                 }
             },
             onPeerUpdated    = { /* peer list updated in DB; UI observes via Flow */ },
-<<<<<<< HEAD
             onCriticalPoiUpdated = { poi ->
                 serviceScope.launch { _criticalPoiUpdates.emit(poi) }
-=======
+            },
             onTicketAssigned = { signal ->
                 TicketNotificationManager.notifyAssigned(applicationContext, signal)
->>>>>>> e6d9e370ca6ed1f6dfaae651c40668384b66595a
             }
         )
 
@@ -306,65 +309,98 @@ class MeshService : Service() {
         if (volunteerIds.isEmpty()) return
 
         serviceScope.launch(Dispatchers.IO) {
-            val nodeId  = NodeIdentity.get(applicationContext)
-            val session = UserSession.get(applicationContext) ?: return@launch
-            val now     = System.currentTimeMillis()
-
-            // Deduct requested inventory; track whether any item was short
-            var inventoryShort = false
-            val items = JSONObject(inventoryJson)
-            items.keys().forEach { key ->
-                val requested = items.getInt(key)
-                val available = db.inventoryDao().getByKey(key)?.count ?: 0
-                if (requested > available) inventoryShort = true
-                val delta = -minOf(requested, available)
-                db.inventoryDao().adjustCount(key, delta)
-                val updated = db.inventoryDao().getByKey(key) ?: return@forEach
-                if (::gossipRouter.isInitialized) {
-                    gossipRouter.sendInventoryUpdate(
-                        key, updated.label, updated.unit, updated.count, "ADJUST", delta
-                    )
-                }
-            }
-
-            val status = if (inventoryShort) "WAITING_FOR_INVENTORY" else "ASSIGNED"
-
-            val volunteerIdsJson  = JSONArray(volunteerIds).toString()
-            val volunteerNamesJson = JSONArray(volunteerNames).toString()
-
-            db.signalDao().updateAssignment(
-                id                   = signalId,
-                primaryVolunteerId   = volunteerIds.first(),
-                primaryVolunteerName = volunteerNames.first(),
-                volunteerIdsJson     = volunteerIdsJson,
-                volunteerNamesJson   = volunteerNamesJson,
-                inventoryJson        = inventoryJson,
-                instructions         = instructions,
-                status               = status,
-                now                  = now
+            performAssignment(
+                signalId = signalId,
+                volunteerIds = volunteerIds,
+                volunteerNames = volunteerNames,
+                inventoryJson = inventoryJson,
+                instructions = instructions,
+                refundExisting = false
             )
+        }
+    }
 
-            if (::gossipRouter.isInitialized) {
-                gossipRouter.sendTicketAssignment(
-                    signalId             = signalId,
-                    volunteerIdsJson     = volunteerIdsJson,
-                    volunteerNamesJson   = volunteerNamesJson,
-                    primaryVolunteerId   = volunteerIds.first(),
-                    primaryVolunteerName = volunteerNames.first(),
-                    inventoryJson        = inventoryJson,
-                    instructions         = instructions,
-                    status               = status
+    fun assignZoneSignalsToVolunteers(assignments: List<ZoneTicketAssignment>) {
+        val validAssignments = assignments.filter { it.volunteerIds.isNotEmpty() }
+        if (validAssignments.isEmpty()) return
+
+        serviceScope.launch(Dispatchers.IO) {
+            validAssignments.forEach { assignment ->
+                performAssignment(
+                    signalId = assignment.signalId,
+                    volunteerIds = assignment.volunteerIds,
+                    volunteerNames = assignment.volunteerNames,
+                    inventoryJson = assignment.inventoryJson,
+                    instructions = assignment.instructions,
+                    refundExisting = true
                 )
             }
+        }
+    }
 
-            // Notify assigned volunteers if they're on this device
-            val signal = db.signalDao().getById(signalId)?.toDomain()
-            if (signal != null) {
-                val localNodeId = nodeId
-                if (volunteerIds.contains(localNodeId)) {
-                    TicketNotificationManager.notifyAssigned(applicationContext, signal)
-                }
+    private suspend fun performAssignment(
+        signalId: String,
+        volunteerIds: List<String>,
+        volunteerNames: List<String>,
+        inventoryJson: String,
+        instructions: String,
+        refundExisting: Boolean
+    ) {
+        if (volunteerIds.isEmpty()) return
+        if (refundExisting) refundInventory(signalId)
+
+        val nodeId = NodeIdentity.get(applicationContext)
+        UserSession.get(applicationContext) ?: return
+        val now = System.currentTimeMillis()
+
+        var inventoryShort = false
+        val items = JSONObject(inventoryJson)
+        items.keys().forEach { key ->
+            val requested = items.getInt(key)
+            val available = db.inventoryDao().getByKey(key)?.count ?: 0
+            if (requested > available) inventoryShort = true
+            val delta = -minOf(requested, available)
+            db.inventoryDao().adjustCount(key, delta)
+            val updated = db.inventoryDao().getByKey(key) ?: return@forEach
+            if (::gossipRouter.isInitialized) {
+                gossipRouter.sendInventoryUpdate(
+                    key, updated.label, updated.unit, updated.count, "ADJUST", delta
+                )
             }
+        }
+
+        val status = if (inventoryShort) "WAITING_FOR_INVENTORY" else "ASSIGNED"
+        val volunteerIdsJson = JSONArray(volunteerIds).toString()
+        val volunteerNamesJson = JSONArray(volunteerNames).toString()
+
+        db.signalDao().updateAssignment(
+            id = signalId,
+            primaryVolunteerId = volunteerIds.first(),
+            primaryVolunteerName = volunteerNames.first(),
+            volunteerIdsJson = volunteerIdsJson,
+            volunteerNamesJson = volunteerNamesJson,
+            inventoryJson = inventoryJson,
+            instructions = instructions,
+            status = status,
+            now = now
+        )
+
+        if (::gossipRouter.isInitialized) {
+            gossipRouter.sendTicketAssignment(
+                signalId = signalId,
+                volunteerIdsJson = volunteerIdsJson,
+                volunteerNamesJson = volunteerNamesJson,
+                primaryVolunteerId = volunteerIds.first(),
+                primaryVolunteerName = volunteerNames.first(),
+                inventoryJson = inventoryJson,
+                instructions = instructions,
+                status = status
+            )
+        }
+
+        val signal = db.signalDao().getById(signalId)?.toDomain()
+        if (signal != null && volunteerIds.contains(nodeId)) {
+            TicketNotificationManager.notifyAssigned(applicationContext, signal)
         }
     }
 

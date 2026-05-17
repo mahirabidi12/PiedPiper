@@ -13,6 +13,9 @@ interface PeerDao {
     @Query("SELECT * FROM peers WHERE connection_state = 'CONNECTED'")
     fun observeConnected(): Flow<List<PeerEntity>>
 
+    @Query("SELECT * FROM peers WHERE role = :role AND last_seen >= :since ORDER BY last_seen DESC")
+    fun observeRecentlySeenByRole(role: String, since: Long): Flow<List<PeerEntity>>
+
     @Query("SELECT * FROM peers WHERE node_id = :nodeId LIMIT 1")
     suspend fun getByNodeId(nodeId: String): PeerEntity?
 

@@ -22,6 +22,7 @@ import com.disastermesh.app.model.SignalStatus
 import com.disastermesh.app.ui.AppViewModel
 import com.disastermesh.app.ui.MainActivity
 import com.disastermesh.app.ui.sheet.AssignTicketBottomSheet
+import com.disastermesh.app.ui.sheet.AssignZoneBottomSheet
 import com.disastermesh.app.ui.sheet.SignalDetailBottomSheet
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
@@ -109,7 +110,21 @@ class ZoneDetailFragment : Fragment() {
         }
 
         binding.btnResolveZone.setOnClickListener {
-            // TODO: resolve all open signals in this zone
+            val svc = (requireActivity() as MainActivity).meshService
+            if (svc == null) {
+                Toast.makeText(requireContext(), "Mesh service not ready yet.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val openSignals = allZoneSignals.filter { !it.status.isTerminal }
+            if (openSignals.isEmpty()) {
+                Toast.makeText(requireContext(), "No open tickets in this zone.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            AssignZoneBottomSheet.newInstance(areaLabel, openSignals) { assignments ->
+                svc.assignZoneSignalsToVolunteers(assignments)
+            }.show(childFragmentManager, "assign_zone")
         }
 
         // Stat tile click → filter
