@@ -3,6 +3,7 @@ package com.disastermesh.app.ui.comms
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -116,8 +117,8 @@ class ChatRoomFragment : Fragment() {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         listening = true
-                        binding.btnMic.text = "..."
-                        binding.btnMic.setTextColor(requireContext().getColor(R.color.ai_loading))
+                        binding.btnMic.imageTintList =
+                            ColorStateList.valueOf(requireContext().getColor(R.color.ai_loading))
                     }
 
                     override fun onBeginningOfSpeech() = Unit
@@ -197,8 +198,8 @@ class ChatRoomFragment : Fragment() {
 
     private fun resetMicButton() {
         if (_binding == null) return
-        binding.btnMic.text = "MIC"
-        binding.btnMic.setTextColor(requireContext().getColor(R.color.ai_ready))
+        binding.btnMic.imageTintList =
+            ColorStateList.valueOf(requireContext().getColor(R.color.ai_ready))
     }
 
     private fun speakMessage(text: String) {

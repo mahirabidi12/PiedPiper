@@ -1,7 +1,6 @@
 package com.disastermesh.app.ui.node
 
 import android.content.Context
-import android.content.Intent
 import android.os.BatteryManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -17,6 +16,7 @@ import com.disastermesh.app.adapter.PeerAdapter
 import com.disastermesh.app.core.NodeIdentity
 import com.disastermesh.app.core.UserSession
 import com.disastermesh.app.databinding.FragmentNodeBinding
+import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.db.entities.SyncLogEntity
 import com.disastermesh.app.mesh.MeshService
 import com.disastermesh.app.model.PeerState
@@ -42,6 +42,7 @@ class NodeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.background = com.disastermesh.app.ui.GridBackgroundDrawable(requireContext())
         setupIdentityCard()
         setupPeersList()
         setupActions()
@@ -94,20 +95,12 @@ class NodeFragment : Fragment() {
     // ── Actions ───────────────────────────────────────────────────────────────
 
     private fun setupActions() {
-        binding.btnSwitchRole.setOnClickListener {
-            UserSession.clear(requireContext())
-            (requireActivity() as MainActivity).showLogin()
-        }
-
         binding.btnLeaveMesh.setOnClickListener {
             AlertDialog.Builder(requireContext())
                 .setTitle("Leave Mesh")
                 .setMessage("This clears your session and stops the mesh network. Continue?")
                 .setPositiveButton("Leave") { _, _ ->
-                    val ctx = requireContext()
-                    UserSession.clear(ctx)
-                    ctx.stopService(Intent(ctx, MeshService::class.java))
-                    (requireActivity() as MainActivity).showLogin()
+                    (requireActivity() as MainActivity).stopMeshSession()
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -117,57 +110,48 @@ class NodeFragment : Fragment() {
     // ── Observations ──────────────────────────────────────────────────────────
 
     private fun startObserving() {
+        val db  = AppDatabase.getInstance(requireContext())
         val svc = (requireActivity() as MainActivity).meshService
 
-        if (svc == null) {
-            applyMeshStatus(MeshService.MeshStatus.OFFLINE, 0)
-            showSyncLogEntries(emptyList())
-            return
-        }
-
-        // Peer count
+        // DB-backed: always observed regardless of service bound state.
+        // Peers show connected first, then historical (dimmed in adapter).
         viewLifecycleOwner.lifecycleScope.launch {
-            svc.peerCount.collectLatest { count ->
+            db.peerDao().observeAll().collectLatest { entities ->
+                val connected = entities.map { it.toDomain() }
+                    .filter { it.connectionState == PeerState.CONNECTED }
+                    .sortedByDescending { it.lastSeen }
+                peerAdapter.submitList(connected)
+                val count = connected.size
+                binding.tvPeersHeader.text = "CONNECTED PEERS [${count.toString().padStart(2, '0')}]"
                 binding.tvNodePeerCount.text = count.toString()
-                binding.tvGossipValue.text   = "$count peers · ttl 8"
+                binding.tvNoPeers.visibility = if (connected.isEmpty()) View.VISIBLE else View.GONE
+                binding.rvPeers.visibility   = if (connected.isEmpty()) View.GONE   else View.VISIBLE
             }
         }
 
-        // Mesh status → dots + labels
+        viewLifecycleOwner.lifecycleScope.launch {
+            db.syncLogDao().observeRecent().collectLatest { logs ->
+                showSyncLogEntries(logs.take(8))
+            }
+        }
+
+        // Service-backed: mesh status + gossip router label.
+        // If service isn't bound yet, show OFFLINE and wait — the user can
+        // navigate away and back once the service connects.
+        if (svc == null) {
+            applyMeshStatus(MeshService.MeshStatus.OFFLINE, 0)
+            return
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             svc.meshStatus.collectLatest { status ->
                 applyMeshStatus(status, svc.peerCount.value)
             }
         }
 
-        // All peers (connected + historical)
         viewLifecycleOwner.lifecycleScope.launch {
-            svc.observeAllPeers().collectLatest { entities ->
-                val peers = entities.map { it.toDomain() }
-                    .sortedWith(compareBy(
-                        { if (it.connectionState == PeerState.CONNECTED) 0 else 1 },
-                        { -it.lastSeen }
-                    ))
-
-                peerAdapter.submitList(peers)
-
-                val connectedCount = peers.count { it.connectionState == PeerState.CONNECTED }
-                binding.tvPeersHeader.text = "CONNECTED PEERS [${connectedCount.toString().padStart(2, '0')}]"
-
-                if (peers.isEmpty()) {
-                    binding.tvNoPeers.visibility = View.VISIBLE
-                    binding.rvPeers.visibility   = View.GONE
-                } else {
-                    binding.tvNoPeers.visibility = View.GONE
-                    binding.rvPeers.visibility   = View.VISIBLE
-                }
-            }
-        }
-
-        // Sync log (last 8 entries)
-        viewLifecycleOwner.lifecycleScope.launch {
-            svc.observeSyncLog().collectLatest { logs ->
-                showSyncLogEntries(logs.take(8))
+            svc.peerCount.collectLatest { count ->
+                binding.tvGossipValue.text = "$count peers · ttl 8"
             }
         }
     }

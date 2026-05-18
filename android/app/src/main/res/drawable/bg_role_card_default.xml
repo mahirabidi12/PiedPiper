@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/ink_900" />
-    <stroke android:width="1dp" android:color="@color/border_default" />
-</shape>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Pressed: ink_800 fill + border_strong stroke -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_800" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+    <!-- Focused -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_800" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+    <!-- Normal: ink_900 base + border_default stroke -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_900" />
+            <stroke android:width="1dp" android:color="@color/border_default" />
+        </shape>
+    </item>
+
+</selector>

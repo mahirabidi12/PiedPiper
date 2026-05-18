@@ -41,6 +41,7 @@ class InventoryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.background = com.disastermesh.app.ui.GridBackgroundDrawable(requireContext())
 
         val session = UserSession.get(requireContext()) ?: return
         val canEdit = session.role == Role.AUTHORITY || session.role == Role.VOLUNTEER

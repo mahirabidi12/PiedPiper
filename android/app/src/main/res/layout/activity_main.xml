@@ -54,6 +54,22 @@
             android:paddingBottom="3dp"
             android:layout_marginEnd="8dp" />
 
+        <!-- Last sync pill -->
+        <TextView
+            android:id="@+id/tvLastSync"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_sync_none"
+            android:fontFamily="monospace"
+            android:textSize="8sp"
+            android:textColor="@color/text_secondary"
+            android:background="@drawable/bg_btn_neutral"
+            android:paddingStart="7dp"
+            android:paddingEnd="7dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:layout_marginEnd="8dp" />
+
         <!-- Role badge -->
         <TextView
             android:id="@+id/tvRoleBadge"
@@ -108,8 +124,8 @@
             app:itemIconTint="@color/text_dim"
             app:itemTextColor="@color/text_dim"
             app:itemIconSize="20dp"
-            app:itemPaddingTop="1dp"
-            app:itemPaddingBottom="1dp"
+            app:itemPaddingTop="8dp"
+            app:itemPaddingBottom="8dp"
             app:itemRippleColor="@color/border_default"
             app:itemActiveIndicatorStyle="@style/Widget.DisasterMesh.BottomNav.ActiveIndicator"
             app:itemTextAppearanceActive="@style/TextAppearance.DisasterMesh.NavLabel.Compact"

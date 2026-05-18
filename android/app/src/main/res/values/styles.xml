@@ -6,11 +6,15 @@
         <item name="colorPrimary">@color/civilian</item>
         <item name="colorPrimaryDark">@color/ink_950</item>
         <item name="colorAccent">@color/civilian</item>
+        <!-- AMOLED: true black window, system bars, and navigation bar -->
         <item name="android:windowBackground">@color/ink_950</item>
-        <item name="android:statusBarColor">@color/ink_900</item>
-        <item name="android:navigationBarColor">@color/ink_900</item>
+        <item name="android:statusBarColor">@color/ink_950</item>
+        <item name="android:navigationBarColor">@color/ink_950</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <!-- Zero-radius everywhere: tech-sharp corners throughout -->
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.DisasterMesh.Sharp</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.DisasterMesh.Sharp</item>
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.DisasterMesh.Sharp</item>
@@ -24,7 +28,7 @@
 
     <!-- ── Bottom Navigation ─────────────────────────────────────────────── -->
     <style name="Widget.DisasterMesh.BottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
-        <item name="android:background">@color/ink_900</item>
+        <item name="android:background">@color/ink_950</item>
         <item name="itemIconTint">@color/text_dim</item>
         <item name="itemTextColor">@color/text_dim</item>
         <item name="itemRippleColor">@color/border_default</item>
@@ -32,7 +36,7 @@
     </style>
 
     <style name="Widget.DisasterMesh.BottomNav.ActiveIndicator" parent="">
-        <item name="android:color">#22161B22</item>
+        <item name="android:color">#14161B22</item>
         <item name="android:width">40dp</item>
         <item name="android:height">22dp</item>
         <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.NavPill</item>
@@ -53,7 +57,9 @@
     <style name="Widget.DisasterMesh.Button.Primary" parent="Widget.MaterialComponents.Button">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">9sp</item>
-        <item name="android:letterSpacing">0.08</item>
+        <!-- tracking-widest equivalent: 0.14em -->
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:textAllCaps">true</item>
         <item name="android:textColor">@color/ink_950</item>
         <item name="backgroundTint">@color/civilian</item>
         <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.Sharp</item>
@@ -64,7 +70,8 @@
     <style name="Widget.DisasterMesh.Button.Secondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">9sp</item>
-        <item name="android:letterSpacing">0.08</item>
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:textAllCaps">true</item>
         <item name="android:textColor">@color/text_secondary</item>
         <item name="strokeColor">@color/border_strong</item>
         <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.Sharp</item>
@@ -75,6 +82,7 @@
     <style name="Widget.DisasterMesh.Button.Ghost" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">9sp</item>
+        <item name="android:letterSpacing">0.12</item>
         <item name="android:textColor">@color/text_muted</item>
         <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.Sharp</item>
         <item name="android:insetTop">0dp</item>
@@ -83,7 +91,7 @@
 
     <!-- ── Text Input ────────────────────────────────────────────────────── -->
     <style name="Widget.DisasterMesh.TextInput" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxBackgroundColor">@color/ink_800</item>
+        <item name="boxBackgroundColor">@color/ink_900</item>
         <item name="boxStrokeColor">@color/border_strong</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="shapeAppearance">@style/ShapeAppearance.DisasterMesh.Sharp</item>
@@ -99,47 +107,68 @@
     </style>
 
     <!-- ── Text appearances ──────────────────────────────────────────────── -->
+
+    <!-- Navigation bar labels -->
     <style name="TextAppearance.DisasterMesh.NavLabel" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">8sp</item>
-        <item name="android:letterSpacing">0.10</item>
+        <item name="android:letterSpacing">0.12</item>
     </style>
 
     <style name="TextAppearance.DisasterMesh.NavLabel.Compact" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">9sp</item>
-        <item name="android:letterSpacing">0.10</item>
+        <item name="android:letterSpacing">0.12</item>
     </style>
 
+    <!-- Micro labels: hop count, status chips, section sub-labels -->
     <style name="TextAppearance.DisasterMesh.Mono.Tiny" parent="">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">7sp</item>
+        <item name="android:letterSpacing">0.14</item>
         <item name="android:textColor">@color/text_dim</item>
     </style>
 
+    <!-- Caption: small monospace label for section headers, timestamps -->
     <style name="TextAppearance.DisasterMesh.Mono.Caption" parent="">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">8sp</item>
+        <item name="android:letterSpacing">0.14</item>
         <item name="android:textColor">@color/text_muted</item>
     </style>
 
+    <!-- Label: standard data label, status pill text -->
     <style name="TextAppearance.DisasterMesh.Mono.Label" parent="">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">9sp</item>
+        <item name="android:letterSpacing">0.12</item>
         <item name="android:textColor">@color/text_secondary</item>
     </style>
 
+    <!-- Body: readable signal message text -->
     <style name="TextAppearance.DisasterMesh.Mono.Body" parent="">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.04</item>
         <item name="android:textColor">@color/text_primary</item>
     </style>
 
+    <!-- Title: card/panel heading -->
     <style name="TextAppearance.DisasterMesh.Mono.Title" parent="">
         <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
         <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- Section header: uppercase tracking-widest label — matches prototype SectionHeader -->
+    <style name="TextAppearance.DisasterMesh.Mono.SectionHeader" parent="">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:letterSpacing">0.20</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/text_muted</item>
     </style>
 
     <!-- ── Suggestion list (AI first-run picker) ───────────────────────── -->

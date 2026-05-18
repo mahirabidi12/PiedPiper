@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tactical card: ink_900 base with a 2-layer border treatment.
+    Layer 1: a very subtle inner fill.
+    Layer 2: a 1dp outer border in border_strong.
+    Layer 3: an inset "corner mark" border at 8dp inset — simulates
+    the prototype's TacticalCorners accent in XML (visible only at corners
+    due to the layering; use on larger cards like the identity card).
+    For smaller cards use bg_card_default.xml instead.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base fill -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_900" />
+        </shape>
+    </item>
+
+    <!-- Outer perimeter border -->
+    <item>
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+    <!-- Corner accent inset — creates the L-mark illusion at 8dp from each edge -->
+    <item
+        android:left="8dp"
+        android:top="8dp"
+        android:right="8dp"
+        android:bottom="8dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="#0CFFFFFF" />
+        </shape>
+    </item>
+
+</layer-list>

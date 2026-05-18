@@ -36,14 +36,17 @@ class GossipRouter(
     private val onChatReceived: (ChatMessage) -> Unit,
     private val onPeerUpdated: (Peer) -> Unit,
     private val onCriticalPoiUpdated: (CriticalPoiEntity) -> Unit,
-    private val onTicketAssigned: ((Signal) -> Unit)? = null
+    private val onTicketAssigned: ((Signal) -> Unit)? = null,
+    private val onPacketCommitted: (() -> Unit)? = null
 ) : MeshManager.MeshCallbacks {
 
     companion object {
-        private const val TAG = "GossipRouter"
-        private const val DEFAULT_TTL = 8
-        private const val SEEN_PRUNE_MS = 24 * 60 * 60 * 1000L
-        private const val SYNC_WINDOW_MS = 6 * 60 * 60 * 1000L
+        private const val TAG              = "GossipRouter"
+        private const val DEFAULT_TTL      = 8
+        private const val SEEN_PRUNE_MS    = 24 * 60 * 60 * 1000L
+        private const val SYNC_WINDOW_MS   = 6 * 60 * 60 * 1000L
+        private const val MAX_SYNC_SIGNALS = 60
+        private const val SYNC_DELAY_MS    = 20L
     }
 
     // ── MeshManager.MeshCallbacks ─────────────────────────────────────────────
@@ -99,6 +102,7 @@ class GossipRouter(
 
         refreshPeerPresence(packet, fromEndpointId)
         persistAndNotify(packet, fromEndpointId)
+        withContext(Dispatchers.Main) { onPacketCommitted?.invoke() }
 
         val relay = packet.copy(hopCount = packet.hopCount + 1)
         val bytes = relay.toJson().toByteArray(Charsets.UTF_8)
@@ -680,9 +684,11 @@ class GossipRouter(
                 message   = "Ticket assigned to $volunteerNamesJson",
                 createdAt = now
             ))
+            // Broadcast after all DB writes complete — remote peers call getById()
+            // in handleTicketAssignment for notification; they need a consistent record.
+            meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
+            Log.d(TAG, "Sent TICKET_ASSIGNMENT: $signalId → volunteers=$volunteerIdsJson")
         }
-        meshManager.broadcast(packet.toJson().toByteArray(Charsets.UTF_8))
-        Log.d(TAG, "Sent TICKET_ASSIGNMENT: $signalId → volunteers=$volunteerIdsJson")
     }
 
     // ── Store-and-forward ─────────────────────────────────────────────────────
@@ -726,7 +732,7 @@ class GossipRouter(
 
         Log.d(TAG, "Store-and-forward: $total records → $toEndpointId")
 
-        signals.forEach { s ->
+        signals.take(MAX_SYNC_SIGNALS).forEach { s ->
             if (s.status == "QUEUED") return@forEach
             val packet = MeshPacket(
                 id           = s.id,
@@ -753,6 +759,7 @@ class GossipRouter(
                 )
             )
             meshManager.sendTo(toEndpointId, packet.toJson().toByteArray(Charsets.UTF_8))
+            delay(SYNC_DELAY_MS)
         }
 
         messages.forEach { m ->
@@ -858,23 +865,44 @@ class GossipRouter(
     // ── Inventory handlers ────────────────────────────────────────────────────
 
     private suspend fun handleInventoryUpdate(packet: MeshPacket) {
-        val p      = JSONObject(packet.payload)
-        val key    = p.getString("key")
-        val now    = System.currentTimeMillis()
+        val p            = JSONObject(packet.payload)
+        val key          = p.getString("key")
+        val incomingTs   = p.getLong("updatedAt")
+        val action       = p.optString("action", "UPDATE")
+        val delta        = p.optInt("delta", 0)
+        val now          = System.currentTimeMillis()
+
+        val existing = db.inventoryDao().getByKey(key)
+
+        // ADJUST packets carry a signed delta rather than an absolute count.
+        // Applying the delta on each node independently means partition/merge
+        // converges correctly — seen_packets dedup guarantees each packet runs once.
+        // ADD and DELETE use the absolute value from the packet (idempotent by nature).
+        val newCount: Int = when (action) {
+            "ADJUST" -> maxOf(0, (existing?.count ?: 0) + delta)
+            "DELETE" -> 0
+            else -> {
+                // Last-write-wins for non-delta ops only
+                if (existing != null && existing.updatedAt > incomingTs) {
+                    Log.d(TAG, "Inventory LWW skip: local newer for $key")
+                    return
+                }
+                p.getInt("count")
+            }
+        }
+
         val entity = com.disastermesh.app.db.entities.InventoryEntity(
             key           = key,
             label         = p.getString("label"),
             unit          = p.getString("unit"),
-            count         = p.getInt("count"),
-            updatedAt     = p.getLong("updatedAt"),
+            count         = newCount,
+            updatedAt     = incomingTs,
             updatedBy     = p.getString("updatedBy"),
             updatedByName = p.getString("updatedByName"),
             isDeleted     = p.optBoolean("isDeleted", false)
         )
-        db.inventoryDao().upsertIfNewer(entity)
+        db.inventoryDao().upsert(entity)
 
-        val action = p.optString("action", "UPDATE")
-        val delta  = p.optInt("delta", 0)
         val detail = when (action) {
             "ADD"    -> "Added ${entity.count} ${entity.unit}"
             "ADJUST" -> if (delta >= 0) "+$delta ${entity.unit}" else "$delta ${entity.unit}"

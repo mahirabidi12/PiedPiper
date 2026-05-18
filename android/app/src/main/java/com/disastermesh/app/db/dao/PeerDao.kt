@@ -30,4 +30,10 @@ interface PeerDao {
 
     @Query("UPDATE peers SET connection_state = 'LOST', endpoint_id = NULL WHERE connection_state = 'CONNECTED'")
     suspend fun markAllLost()
+
+    @Query("SELECT * FROM peers WHERE connection_state = 'CONNECTED'")
+    suspend fun getConnected(): List<PeerEntity>
+
+    @Query("SELECT * FROM peers WHERE connection_state = 'LOST' AND last_seen >= :since")
+    suspend fun getRecentlyLost(since: Long): List<PeerEntity>
 }

@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -60,6 +61,7 @@ class MeshService : Service() {
     // ── Internal state ────────────────────────────────────────────────────────
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var wakeLock: PowerManager.WakeLock? = null
 
     private lateinit var db: AppDatabase
     private lateinit var meshManager: MeshManager
@@ -81,6 +83,13 @@ class MeshService : Service() {
 
     private val _criticalPoiUpdates = MutableSharedFlow<CriticalPoiEntity>(replay = 0)
     val criticalPoiUpdates: SharedFlow<CriticalPoiEntity> = _criticalPoiUpdates.asSharedFlow()
+
+    private val _lastSyncAt = MutableStateFlow(0L)
+    val lastSyncAt: StateFlow<Long> = _lastSyncAt.asStateFlow()
+
+    fun notifyPacketCommitted() {
+        _lastSyncAt.value = System.currentTimeMillis()
+    }
 
     /** Room-aware: observe all messages for a room from DB (includes history). */
     fun observeRoom(roomId: String) = db.chatMessageDao().observeRoom(roomId)
@@ -131,6 +140,9 @@ class MeshService : Service() {
         db = AppDatabase.getInstance(applicationContext)
         createNotificationChannel()
         registerReceiver(bluetoothReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DisasterMesh:MeshWakeLock")
+            .also { it.setReferenceCounted(false); it.acquire() }
         serviceScope.launch(Dispatchers.IO) {
             val removed = db.chatMessageDao().purgeContentDuplicates()
             if (removed > 0) Log.i(TAG, "Purged $removed duplicate chat rows on startup")
@@ -204,7 +216,8 @@ class MeshService : Service() {
             },
             onTicketAssigned = { signal ->
                 TicketNotificationManager.notifyAssigned(applicationContext, signal)
-            }
+            },
+            onPacketCommitted = { notifyPacketCommitted() }
         )
 
         meshManager.start()
@@ -218,7 +231,11 @@ class MeshService : Service() {
         started = false
         unregisterReceiver(bluetoothReceiver)
         if (::meshManager.isInitialized) meshManager.stop()
+        serviceScope.launch(Dispatchers.IO) {
+            db.peerDao().markAllLost()
+        }
         serviceScope.cancel()
+        wakeLock?.let { if (it.isHeld) it.release() }
         Log.d(TAG, "MeshService destroyed")
     }
 

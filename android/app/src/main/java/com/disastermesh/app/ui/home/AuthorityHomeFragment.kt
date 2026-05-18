@@ -123,6 +123,7 @@ class AuthorityHomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.background = com.disastermesh.app.ui.GridBackgroundDrawable(requireContext())
 
         binding.rvSignals.layoutManager = LinearLayoutManager(requireContext())
         binding.rvClosedSignals.layoutManager = LinearLayoutManager(requireContext())

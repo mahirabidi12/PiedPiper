@@ -154,14 +154,12 @@
             android:layout_weight="1"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="@drawable/bg_input_dark"
-            android:layout_marginEnd="8dp">
+            android:background="@drawable/bg_input_dark">
 
             <EditText
                 android:id="@+id/etChatInput"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:hint="@string/hint_chat_input"
                 android:background="@android:color/transparent"
                 android:textColor="@color/text_primary"
@@ -169,25 +167,25 @@
                 android:fontFamily="monospace"
                 android:textSize="12sp"
                 android:paddingStart="10dp"
-                android:paddingEnd="6dp"
+                android:paddingEnd="10dp"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxLines="4" />
-
-            <TextView
-                android:id="@+id/btnMic"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:gravity="center"
-                android:text="MIC"
-                android:fontFamily="monospace"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:textColor="@color/ai_ready"
-                android:clickable="true"
-                android:focusable="true" />
         </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnMic"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_mic"
+            android:scaleType="center"
+            android:tint="@color/ai_absent"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Microphone" />
 
         <Button
             android:id="@+id/btnSend"

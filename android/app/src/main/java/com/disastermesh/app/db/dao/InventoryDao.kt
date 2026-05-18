@@ -30,6 +30,9 @@ interface InventoryDao {
     @Query("SELECT COUNT(*) FROM inventory WHERE is_deleted = 0")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM inventory WHERE is_deleted = 0 ORDER BY label ASC")
+    suspend fun getActiveItems(): List<InventoryEntity>
+
     @Query("SELECT * FROM inventory ORDER BY updated_at ASC")
     suspend fun getAllForSync(): List<InventoryEntity>
 

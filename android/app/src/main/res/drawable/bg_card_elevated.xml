@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+<!--
+    Elevated card — sits one level above default cards (modal sheets, detail panels).
+    ink_800 base (#101010) with a stronger border_strong (#222222) gives clear
+    visual separation from the grid-background and default cards beneath.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
     <solid android:color="@color/ink_800" />
-    <stroke android:width="1dp" android:color="@color/border_default" />
+    <stroke android:width="1dp" android:color="@color/border_strong" />
 </shape>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+<!--
+    Terminal / identity card block — used for the NODE identity card and
+    monospace data panels. Same surface as bg_card_elevated but with
+    border_strong to create a defined, structured perimeter.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
     <solid android:color="@color/ink_900" />
     <stroke android:width="1dp" android:color="@color/border_strong" />
 </shape>

@@ -61,29 +61,13 @@
             android:textStyle="bold"
             android:textColor="@color/volunteer"
             android:background="@drawable/bg_btn_volunteer"
-            android:layout_marginEnd="4dp"
             android:clickable="true"
             android:focusable="true"
             android:text="CHANNELS" />
 
-        <TextView
-            android:id="@+id/tabDirect"
-            android:layout_width="0dp"
-            android:layout_height="34dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:fontFamily="monospace"
-            android:textSize="9sp"
-            android:letterSpacing="0.10"
-            android:textColor="@color/text_muted"
-            android:background="@drawable/bg_btn_neutral"
-            android:layout_marginStart="4dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="DIRECT" />
     </LinearLayout>
 
-    <!-- Room list (shown on CHANNELS tab for VOL / AUTH) -->
+    <!-- Room list (shown for VOL / AUTH) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRooms"
         android:layout_width="match_parent"
@@ -92,17 +76,6 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:clipToPadding="false" />
-
-    <!-- DM peer list (shown on DIRECT tab for VOL / AUTH) -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPeers"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:clipToPadding="false"
-        android:visibility="gone" />
 
     <!-- ChatRoom / DM conversation container -->
     <FrameLayout

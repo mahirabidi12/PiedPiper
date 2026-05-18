@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Full-screen AMOLED grid background.
+    Layer 0: pure-black base fill (#000000).
+    Layer 1: bg_grid_tile tiled horizontally and vertically — produces the
+    24dp × 24dp cyber-grid at ~2.4% white opacity (matching prototype).
+    Apply to fragment root views instead of @color/ink_950.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <color android:color="@color/ink_950" />
+    </item>
+
+    <item>
+        <bitmap
+            android:src="@drawable/bg_grid_tile"
+            android:tileMode="repeat" />
+    </item>
+
+</layer-list>

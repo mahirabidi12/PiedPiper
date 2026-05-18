@@ -73,6 +73,28 @@ interface SignalDao {
     @Query("SELECT * FROM signals WHERE ai_classified = 0 ORDER BY created_at ASC")
     suspend fun getAllUnclassified(): List<SignalEntity>
 
+    @Query("SELECT * FROM signals WHERE status NOT IN ('RESOLVED','EXPIRED','CANCELLED','REJECTED','FAILED') ORDER BY updated_at DESC")
+    suspend fun getActive(): List<SignalEntity>
+
+    @Query("""
+        SELECT * FROM signals
+        WHERE volunteer_ids LIKE '%"' || :nodeId || '"%'
+          AND status NOT IN ('RESOLVED','EXPIRED','REJECTED','CANCELLED','FAILED')
+        ORDER BY updated_at DESC
+    """)
+    suspend fun getActiveAssignedTo(nodeId: String): List<SignalEntity>
+
+    @Query("SELECT * FROM signals WHERE sender_node_id = :nodeId ORDER BY updated_at DESC")
+    suspend fun getBySender(nodeId: String): List<SignalEntity>
+
+    @Query("""
+        SELECT * FROM signals
+        WHERE (assigned_volunteer_id IS NULL OR assigned_volunteer_id = '')
+          AND status NOT IN ('RESOLVED','EXPIRED','CANCELLED','REJECTED','FAILED')
+        ORDER BY updated_at DESC
+    """)
+    suspend fun getUnassignedActive(): List<SignalEntity>
+
     @Query("SELECT * FROM signals WHERE status = 'QUEUED' AND sender_node_id = :nodeId")
     suspend fun getQueuedByNode(nodeId: String): List<SignalEntity>
 

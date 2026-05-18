@@ -72,13 +72,13 @@ class MainActivity : AppCompatActivity() {
             add(Manifest.permission.BLUETOOTH_ADVERTISE)
             add(Manifest.permission.BLUETOOTH_CONNECT)
             add(Manifest.permission.BLUETOOTH_SCAN)
+        }
+        if (Build.VERSION.SDK_INT >= 33) {
             add(Manifest.permission.NEARBY_WIFI_DEVICES)
+            add(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             add(Manifest.permission.BLUETOOTH)
             add(Manifest.permission.BLUETOOTH_ADMIN)
-        }
-        if (Build.VERSION.SDK_INT >= 33) {
-            add(Manifest.permission.POST_NOTIFICATIONS)
         }
     }.toTypedArray()
 
@@ -235,6 +235,19 @@ class MainActivity : AppCompatActivity() {
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
+    /**
+     * Atomic mesh teardown: unbind → stop service → clear session → login screen.
+     * Called by NodeFragment "Leave Mesh". The service's onDestroy handles
+     * meshManager.stop() + serviceScope.cancel() automatically.
+     */
+    fun stopMeshSession() {
+        try { unbindService(serviceConnection) } catch (_: Exception) {}
+        meshService = null
+        stopService(Intent(this, MeshService::class.java))
+        UserSession.clear(this)
+        showLogin()
+    }
+
     private fun observeMeshState() {
         val svc = meshService ?: return
         lifecycleScope.launch {
@@ -255,6 +268,18 @@ class MainActivity : AppCompatActivity() {
             svc.peerCount.collectLatest { count ->
                 if (svc.meshStatus.value == MeshService.MeshStatus.ONLINE) {
                     binding.tvPeerCount.text = getString(R.string.label_peers_connected, count)
+                }
+            }
+        }
+        lifecycleScope.launch {
+            svc.lastSyncAt.collectLatest { epochMs ->
+                binding.tvLastSync.text = if (epochMs == 0L) getString(R.string.label_sync_none) else {
+                    val diff = System.currentTimeMillis() - epochMs
+                    when {
+                        diff < 60_000L         -> getString(R.string.label_sync_now)
+                        diff < 3_600_000L      -> getString(R.string.label_sync_mins, diff / 60_000)
+                        else                   -> getString(R.string.label_sync_hours, diff / 3_600_000)
+                    }
                 }
             }
         }
