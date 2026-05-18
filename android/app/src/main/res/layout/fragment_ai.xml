@@ -167,6 +167,60 @@
             android:text="RESUMABLE · BACKGROUND · ONE-TIME · WORKS OFFLINE AFTER" />
     </LinearLayout>
 
+    <!-- ── Mode toggle: SURVIVAL | SITREP ──────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/ink_900"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:id="@+id/tabSurvival"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="10sp"
+            android:letterSpacing="0.10"
+            android:textStyle="bold"
+            android:textColor="@color/civilian"
+            android:background="@color/ink_700"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="SURVIVAL" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="36dp"
+            android:background="@color/border_default" />
+
+        <TextView
+            android:id="@+id/tabSitrep"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="10sp"
+            android:letterSpacing="0.10"
+            android:textStyle="bold"
+            android:textColor="@color/text_muted"
+            android:background="@android:color/transparent"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="SITREP" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_default" />
+
     <!-- ── Chat thread bar (session + new-thread action) ────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -340,6 +394,111 @@
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>
+
+        <!-- SITREP first-run suggestion panel — visible when SITREP mode is active
+             and the chat is empty with no typed input. -->
+        <ScrollView
+            android:id="@+id/suggestionPanelSitrep"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="32dp"
+                android:paddingBottom="24dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:gravity="center"
+                    android:text="Ask about the situation" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_muted"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.4"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="22dp"
+                    android:text="Query the live mesh state.\nAnswers reflect your role's data only." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="10dp"
+                        android:background="@color/civilian"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="8sp"
+                        android:letterSpacing="0.14"
+                        android:textColor="@color/text_muted"
+                        android:text="QUICK START" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/sitrepSuggestion1"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="What is the most critical active incident?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/sitrepSuggestion2"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="Summarize all unassigned tasks" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/sitrepSuggestion3"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="How many peers are currently connected?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/sitrepSuggestion4"
+                    style="@style/Widget.DisasterMesh.SuggestionRow">
+                    <View style="@style/Widget.DisasterMesh.SuggestionAccent" />
+                    <TextView
+                        style="@style/Widget.DisasterMesh.SuggestionLabel"
+                        android:text="Which signals need immediate attention?" />
+                    <TextView style="@style/Widget.DisasterMesh.SuggestionArrow" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
     </FrameLayout>
 
     <!-- ── Input row ────────────────────────────────────────────────────── -->
@@ -369,12 +528,11 @@
 
             <EditText
                 android:id="@+id/etQuestion"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:paddingStart="10dp"
-                android:paddingEnd="6dp"
+                android:paddingEnd="10dp"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
                 android:textSize="13sp"
@@ -384,20 +542,20 @@
                 android:imeOptions="actionSend"
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxLines="3" />
-
-            <TextView
-                android:id="@+id/btnAiMic"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:gravity="center"
-                android:text="MIC"
-                android:fontFamily="monospace"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:textColor="@color/ai_ready"
-                android:clickable="true"
-                android:focusable="true" />
         </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnAiMic"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_btn_neutral"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_mic"
+            android:scaleType="center"
+            android:tint="@color/ai_absent"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Microphone" />
 
         <LinearLayout
             android:id="@+id/btnAsk"

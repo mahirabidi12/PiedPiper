@@ -1,5 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/ink_800" />
-    <stroke android:width="1dp" android:color="@color/border_strong" />
-</shape>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Disabled: near-invisible, unclickable appearance -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_950" />
+            <stroke android:width="1dp" android:color="#1AFFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Pressed: ink_700 fill, border_strong stroke — instant tactile feedback -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_700" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+    <!-- Focused (keyboard / d-pad navigation) -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_700" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+    <!-- Normal -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_800" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+</selector>

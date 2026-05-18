@@ -27,6 +27,9 @@
 
     <!-- Foreground Service — keeps mesh alive when app is backgrounded -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- WakeLock — prevents CPU suspension on aggressive OEM power saving (MIUI, ColorOS) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <!-- Notifications — foreground service + peer count banner (API 33+) -->

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 
 /**
  * Holds the *volatile* AI-streaming bubble.
@@ -23,6 +24,20 @@ import kotlinx.coroutines.flow.asStateFlow
  * rotates mid-generation.
  */
 class AiChatViewModel : ViewModel() {
+
+    enum class Mode { SURVIVAL, SITREP }
+
+    /** Current chat mode — drives session ID and ask() routing. */
+    private val _mode = MutableStateFlow(Mode.SURVIVAL)
+    val mode: StateFlow<Mode> = _mode.asStateFlow()
+
+    fun setMode(mode: Mode) {
+        _mode.value = mode
+        _activeSessionId.value = when (mode) {
+            Mode.SURVIVAL -> DEFAULT_ACTIVE_SESSION_ID
+            Mode.SITREP   -> "sitrep-session-${UUID.randomUUID()}"
+        }
+    }
 
     /** Active thread shown by the AI tab. Survives tab switches via activity scope. */
     private val _activeSessionId = MutableStateFlow(DEFAULT_ACTIVE_SESSION_ID)
@@ -66,6 +81,7 @@ class AiChatViewModel : ViewModel() {
 
     companion object {
         const val DEFAULT_ACTIVE_SESSION_ID = "ai-default"
+        const val SITREP_SESSION_ID         = "sitrep-default"
         const val THINKING_PLACEHOLDER_TEXT = "Gemma is thinking..."
     }
 }

@@ -3,6 +3,7 @@ package com.disastermesh.app.ui.ai
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -33,11 +34,15 @@ import com.disastermesh.app.ai.LanguagePromptWrapper
 import com.disastermesh.app.ai.ModelDownloader
 import com.disastermesh.app.ai.PromptTemplates
 import com.disastermesh.app.ai.SignalProcessor
+import com.disastermesh.app.ai.SituationalBriefingEngine
 import com.disastermesh.app.ai.SurvivalLanguage
+import com.disastermesh.app.core.NodeIdentity
+import com.disastermesh.app.core.UserSession
 import com.disastermesh.app.databinding.FragmentAiBinding
 import com.disastermesh.app.db.AppDatabase
 import com.disastermesh.app.db.entities.AiMessageEntity
 import com.disastermesh.app.db.entities.AiSessionEntity
+import com.disastermesh.app.model.Role
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
@@ -90,15 +95,18 @@ class AiChatFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.background = com.disastermesh.app.ui.GridBackgroundDrawable(requireContext())
         db = AppDatabase.getInstance(requireContext())
 
         setupChatList()
         setupSuggestions()
         setupAskButton()
         setupLanguageButton()
+        setupModeToggle()
         setupNewSessionButton()
         setupSpeech()
         observeActiveSession()
+        observeMode()
         warmUpModel()
     }
 
@@ -148,8 +156,8 @@ class AiChatFragment : Fragment() {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         listening = true
-                        binding.btnAiMic.text = "..."
-                        binding.btnAiMic.setTextColor(requireContext().getColor(R.color.ai_loading))
+                        binding.btnAiMic.imageTintList =
+                            ColorStateList.valueOf(requireContext().getColor(R.color.ai_loading))
                     }
 
                     override fun onBeginningOfSpeech() = Unit
@@ -218,11 +226,12 @@ class AiChatFragment : Fragment() {
             withContext(Dispatchers.IO) {
                 if (db.aiSessionDao().getById(sessionId) == null) {
                     val now = System.currentTimeMillis()
+                    val isSitrep = sessionId.startsWith("sitrep")
                     db.aiSessionDao().upsert(
                         AiSessionEntity(
                             id            = sessionId,
-                            topic         = "FREEFORM",
-                            title         = "Survival Chat",
+                            topic         = if (isSitrep) "SITREP" else "FREEFORM",
+                            title         = if (isSitrep) "Situational Briefing" else "Survival Chat",
                             createdAt     = now,
                             lastMessageAt = now
                         )
@@ -233,8 +242,9 @@ class AiChatFragment : Fragment() {
                 combine(
                     db.aiMessageDao().observeSession(sessionId),
                     viewModel.streaming,
-                    inputIsEmpty
-                ) { committed, draft, inputEmpty ->
+                    inputIsEmpty,
+                    viewModel.mode
+                ) { committed, draft, inputEmpty, mode ->
                     val merged = if (draft != null && draft.sessionId == sessionId) {
                         committed + AiMessageEntity(
                             id        = STREAMING_DRAFT_ID,
@@ -246,13 +256,13 @@ class AiChatFragment : Fragment() {
                     } else {
                         committed
                     }
-                    // Suggestion panel is only mounted on first-run state:
-                    // no committed messages, no streaming bubble, no typed input.
-                    val showSuggestions = merged.isEmpty() && inputEmpty
-                    merged to showSuggestions
-                }.collectLatest { (merged, showSuggestions) ->
+                    val emptyState = merged.isEmpty() && inputEmpty
+                    Triple(merged, emptyState && mode == AiChatViewModel.Mode.SURVIVAL,
+                                   emptyState && mode == AiChatViewModel.Mode.SITREP)
+                }.collectLatest { (merged, showSurvivalSuggestions, showSitrepSuggestions) ->
                     val b = _binding ?: return@collectLatest
-                    b.suggestionPanel.visibility = if (showSuggestions) View.VISIBLE else View.GONE
+                    b.suggestionPanel.visibility      = if (showSurvivalSuggestions) View.VISIBLE else View.GONE
+                    b.suggestionPanelSitrep.visibility = if (showSitrepSuggestions) View.VISIBLE else View.GONE
                     adapter.submitList(merged) {
                         val bind = _binding ?: return@submitList
                         if (merged.isNotEmpty()) bind.rvAiMessages.scrollToPosition(merged.size - 1)
@@ -262,10 +272,47 @@ class AiChatFragment : Fragment() {
         }
     }
 
+    private fun setupModeToggle() {
+        binding.tabSurvival.setOnClickListener { viewModel.setMode(AiChatViewModel.Mode.SURVIVAL) }
+        binding.tabSitrep.setOnClickListener   { viewModel.setMode(AiChatViewModel.Mode.SITREP) }
+    }
+
+    private fun observeMode() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.mode.collectLatest { mode ->
+                    val b = _binding ?: return@collectLatest
+                    val on  = requireContext().getColor(R.color.civilian)
+                    val off = requireContext().getColor(R.color.text_muted)
+                    val onBg  = requireContext().getColor(R.color.ink_700)
+                    val offBg = android.graphics.Color.TRANSPARENT
+                    when (mode) {
+                        AiChatViewModel.Mode.SURVIVAL -> {
+                            b.tabSurvival.setTextColor(on);  b.tabSurvival.setBackgroundColor(onBg)
+                            b.tabSitrep.setTextColor(off);   b.tabSitrep.setBackgroundColor(offBg)
+                            b.tvSessionTitle.text = "SURVIVAL CHAT"
+                            b.btnNewSession.visibility = View.VISIBLE
+                            b.etQuestion.hint = "Ask a survival question…"
+                        }
+                        AiChatViewModel.Mode.SITREP -> {
+                            b.tabSitrep.setTextColor(on);    b.tabSitrep.setBackgroundColor(onBg)
+                            b.tabSurvival.setTextColor(off); b.tabSurvival.setBackgroundColor(offBg)
+                            b.tvSessionTitle.text = "SITREP CHAT"
+                            b.btnNewSession.visibility = View.VISIBLE
+                            b.etQuestion.hint = "Ask about the current situation…"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun setupNewSessionButton() {
         binding.btnNewSession.setOnClickListener {
-            // Fresh thread — new id, observation switches to it.
-            val newId = "ai-session-${UUID.randomUUID()}"
+            val newId = when (viewModel.mode.value) {
+                AiChatViewModel.Mode.SITREP   -> "sitrep-session-${UUID.randomUUID()}"
+                AiChatViewModel.Mode.SURVIVAL -> "ai-session-${UUID.randomUUID()}"
+            }
             viewModel.setActiveSessionId(newId)
         }
     }
@@ -314,6 +361,11 @@ class AiChatFragment : Fragment() {
         binding.suggestion2.setOnClickListener { runSuggestion("What supplies do I need for a flood?") }
         binding.suggestion3.setOnClickListener { runSuggestion("How can I make water safer to drink?") }
         binding.suggestion4.setOnClickListener { runSuggestion("What is the safest shelter during an aftershock?") }
+
+        binding.sitrepSuggestion1.setOnClickListener { runSuggestion("What is the most critical active incident?") }
+        binding.sitrepSuggestion2.setOnClickListener { runSuggestion("Summarize all unassigned tasks") }
+        binding.sitrepSuggestion3.setOnClickListener { runSuggestion("How many peers are currently connected?") }
+        binding.sitrepSuggestion4.setOnClickListener { runSuggestion("Which signals need immediate attention?") }
 
         // Single character of input → hide the panel immediately. We trigger
         // a fresh evaluation via the StateFlow the combine() observer reads.
@@ -370,8 +422,8 @@ class AiChatFragment : Fragment() {
 
     private fun resetMicButton() {
         if (_binding == null) return
-        binding.btnAiMic.text = "MIC"
-        binding.btnAiMic.setTextColor(requireContext().getColor(R.color.ai_ready))
+        binding.btnAiMic.imageTintList =
+            ColorStateList.valueOf(requireContext().getColor(R.color.ai_ready))
     }
 
     private fun speakMessage(text: String) {
@@ -409,22 +461,21 @@ class AiChatFragment : Fragment() {
         else -> "Speech recognition failed"
     }
 
-    /**
-     * Streaming ask flow:
-     *   Main → IO: persist user turn → ViewModel.startStream() →
-     *   collect generateStream() pushing each chunk to ViewModel →
-     *   on completion: IO: persist FINAL text → ViewModel.finishStream()
-     *
-     * Room is written exactly TWICE per turn (user + final AI) — never per
-     * chunk. The bubble grows in real time off the ViewModel's StateFlow.
-     */
     private fun ask() {
+        when (viewModel.mode.value) {
+            AiChatViewModel.Mode.SURVIVAL -> askSurvival()
+            AiChatViewModel.Mode.SITREP   -> askSitrep()
+        }
+    }
+
+    /**
+     * Survival ask flow — uses the language-aware survival system prompt.
+     * Room written exactly twice (user + final AI), never per chunk.
+     */
+    private fun askSurvival() {
         val question = binding.etQuestion.text.toString().trim()
         if (question.isEmpty() || isLoading) return
-        if (GemmaClient.status != GemmaClient.Status.READY) {
-            warmUpModel()
-            return
-        }
+        if (GemmaClient.status != GemmaClient.Status.READY) { warmUpModel(); return }
 
         val lang = LanguagePreference.current
         val sessionId = viewModel.activeSessionId.value
@@ -433,19 +484,11 @@ class AiChatFragment : Fragment() {
             setLoading(true)
             binding.etQuestion.text.clear()
 
-            // 1. Persist user turn — Flow re-emits, user bubble appears.
             withContext(Dispatchers.IO) {
                 AiHistory.appendMessage(db, sessionId, isUser = true, text = question)
             }
 
-            // 2. Open the volatile bubble with a visible placeholder. The
-            //    first non-empty chunk replaces it in-place. The chat list
-            //    re-renders via combine() on every
-            //    pushChunk(); Room is untouched during this loop.
-            viewModel.startStream(
-                sessionId,
-                getString(R.string.ai_thinking_label)
-            )
+            viewModel.startStream(sessionId, getString(R.string.ai_thinking_label))
             var finalText = ""
 
             GemmaClient.generateStream(
@@ -457,10 +500,55 @@ class AiChatFragment : Fragment() {
                     viewModel.pushChunk(finalText)
                 }
                 .onCompletion {
-                    // 3. Finalise: write exactly ONE row to Room with the full
-                    //    text, then drop the volatile bubble. The DAO Flow
-                    //    re-emits and the committed bubble takes the draft's
-                    //    place in the same RecyclerView slot.
+                    if (finalText.isNotEmpty()) {
+                        withContext(Dispatchers.IO) {
+                            AiHistory.appendMessage(db, sessionId, isUser = false, text = finalText)
+                        }
+                    }
+                    viewModel.finishStream()
+                    setLoading(false)
+                }
+                .collect { cumulativeText ->
+                    if (cumulativeText.isNotBlank()) {
+                        finalText = cumulativeText
+                        viewModel.pushChunk(cumulativeText)
+                    }
+                }
+        }
+    }
+
+    /**
+     * SITREP ask flow — compiles live mesh state, routes through
+     * SituationalBriefingEngine with role-based data isolation.
+     * Session is fixed ("sitrep-default"); new-session button is hidden.
+     */
+    private fun askSitrep() {
+        val question = binding.etQuestion.text.toString().trim()
+        if (question.isEmpty() || isLoading) return
+        if (GemmaClient.status != GemmaClient.Status.READY) { warmUpModel(); return }
+
+        val session = UserSession.get(requireContext())
+        val role    = session?.role ?: Role.CIVILIAN
+        val nodeId  = NodeIdentity.get(requireContext())
+        val sessionId = viewModel.activeSessionId.value
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            setLoading(true)
+            binding.etQuestion.text.clear()
+
+            withContext(Dispatchers.IO) {
+                AiHistory.appendMessage(db, sessionId, isUser = true, text = question)
+            }
+
+            viewModel.startStream(sessionId, getString(R.string.ai_thinking_label))
+            var finalText = ""
+
+            SituationalBriefingEngine.query(question, db, role, nodeId)
+                .catch { t ->
+                    finalText = "⚠ Could not compile situation report:\n${t.message ?: "unknown error"}"
+                    viewModel.pushChunk(finalText)
+                }
+                .onCompletion {
                     if (finalText.isNotEmpty()) {
                         withContext(Dispatchers.IO) {
                             AiHistory.appendMessage(db, sessionId, isUser = false, text = finalText)

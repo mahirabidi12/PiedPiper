@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ── Ink scale (dark background palette) ─────────────────────────── -->
-    <color name="ink_950">#06070A</color>
-    <color name="ink_900">#0D0F14</color>
-    <color name="ink_800">#161B22</color>
-    <color name="ink_700">#1E2430</color>
-    <color name="ink_600">#2A3242</color>
+    <!-- ── Ink scale (AMOLED pure-black palette) ─────────────────────────── -->
+    <color name="ink_950">#000000</color>
+    <color name="ink_900">#080808</color>
+    <color name="ink_800">#101010</color>
+    <color name="ink_700">#181818</color>
+    <color name="ink_600">#222222</color>
 
     <!-- ── Role accents ────────────────────────────────────────────────── -->
     <color name="civilian">#58A6FF</color>
-    <color name="civilian_tint">#0D1F33</color>
+    <color name="civilian_tint">#001828</color>
     <color name="volunteer">#3FB950</color>
-    <color name="volunteer_tint">#0D2B13</color>
+    <color name="volunteer_tint">#002208</color>
     <color name="authority">#F78166</color>
-    <color name="authority_tint">#331B15</color>
+    <color name="authority_tint">#280C06</color>
 
     <!-- ── Priority ────────────────────────────────────────────────────── -->
     <color name="priority_critical">#FF4D4D</color>
     <color name="priority_high">#FFA033</color>
     <color name="priority_normal">#FFD43B</color>
     <color name="priority_low">#71717A</color>
-    <color name="critical_tint">#2B0A0A</color>
+    <color name="critical_tint">#200000</color>
 
     <!-- ── Signal status ───────────────────────────────────────────────── -->
     <color name="status_new">#58A6FF</color>
@@ -52,11 +52,11 @@
     <color name="text_primary">#E6EDF3</color>
     <color name="text_secondary">#B0BAC6</color>
     <color name="text_muted">#6A737D</color>
-    <color name="text_dim">#404858</color>
+    <color name="text_dim">#3A3F48</color>
 
     <!-- ── Borders ─────────────────────────────────────────────────────── -->
-    <color name="border_default">#1E2430</color>
-    <color name="border_strong">#2A3242</color>
+    <color name="border_default">#181818</color>
+    <color name="border_strong">#222222</color>
 
     <!-- ── Mesh / AI status pills ──────────────────────────────────────── -->
     <color name="mesh_online">#3FB950</color>

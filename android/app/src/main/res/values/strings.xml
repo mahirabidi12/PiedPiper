@@ -26,6 +26,10 @@
     <string name="label_peers_connected">%1$d PEERS</string>
     <string name="label_mesh_offline">MESH OFFLINE</string>
     <string name="label_bt_off">BLUETOOTH OFF</string>
+    <string name="label_sync_none">SYNC —</string>
+    <string name="label_sync_now">SYNC &lt;1m</string>
+    <string name="label_sync_mins">SYNC %1$dm</string>
+    <string name="label_sync_hours">SYNC %1$dh</string>
 
     <!-- Mesh service notification -->
     <string name="notif_channel_mesh">Mesh Network</string>
@@ -95,6 +99,11 @@
     <string name="btn_review_each">REVIEW EACH</string>
     <string name="btn_open_zone">OPEN ZONE →</string>
     <string name="btn_resolve_gemma">RESOLVE VIA GEMMA</string>
+
+    <!-- Macro Buttons -->
+    <string name="btn_macro_trapped">🆘 TRAPPED</string>
+    <string name="btn_macro_medical">✚ MEDICAL</string>
+    <string name="btn_macro_supplies">🍱 FOOD/H2O</string>
 
     <!-- AI chat -->
     <string name="ai_thinking_label">Gemma is thinking...</string>

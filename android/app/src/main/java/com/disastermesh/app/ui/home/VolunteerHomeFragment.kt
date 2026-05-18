@@ -66,6 +66,7 @@ class VolunteerHomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.background = com.disastermesh.app.ui.GridBackgroundDrawable(requireContext())
 
         binding.rvSignals.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSignals.adapter = signalAdapter

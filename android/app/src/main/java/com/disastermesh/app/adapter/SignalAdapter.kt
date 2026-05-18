@@ -15,8 +15,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 class SignalAdapter(
-    private val onClick: ((Signal) -> Unit)? = null,
-    private val onCancel: ((Signal) -> Unit)? = null
+    private val onCancel: ((Signal) -> Unit)? = null,
+    private val onClick: ((Signal) -> Unit)? = null
 ) : ListAdapter<Signal, SignalAdapter.VH>(DIFF) {
 
     inner class VH(val binding: ItemSignalCardBinding) : RecyclerView.ViewHolder(binding.root)

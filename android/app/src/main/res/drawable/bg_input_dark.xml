@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/ink_800" />
-    <stroke android:width="1dp" android:color="@color/border_strong" />
-</shape>
+<!--
+    Text input field background.
+    ink_900 base so the input reads as a recessed well against ink_800 surfaces.
+    1dp border_strong border provides structural definition without colour distraction.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Focused: slightly lighter fill + stronger border -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_800" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+    <!-- Normal -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ink_900" />
+            <stroke android:width="1dp" android:color="@color/border_strong" />
+        </shape>
+    </item>
+
+</selector>

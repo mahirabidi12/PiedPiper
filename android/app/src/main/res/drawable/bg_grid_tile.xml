@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    24dp × 24dp repeating tile. Lines are drawn along the top and left edges
+    at #06FFFFFF (≈ 2.4 % white) — matches the prototype's
+    rgba(255,255,255,0.025) grid. The tile repeats in bg_grid.xml via tileMode.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Horizontal grid line (top edge of tile) -->
+    <path
+        android:pathData="M0,0.5 L24,0.5"
+        android:strokeColor="#06FFFFFF"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent" />
+
+    <!-- Vertical grid line (left edge of tile) -->
+    <path
+        android:pathData="M0.5,0 L0.5,24"
+        android:strokeColor="#06FFFFFF"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent" />
+
+</vector>
