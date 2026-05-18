@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -151,8 +152,8 @@ class AiChatFragment : Fragment() {
             })
         }
 
-        if (SpeechRecognizer.isRecognitionAvailable(requireContext())) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext()).apply {
+        if (isOfflineSpeechAvailable()) {
+            speechRecognizer = createOfflineSpeechRecognizer()?.apply {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         listening = true
@@ -205,6 +206,17 @@ class AiChatFragment : Fragment() {
             }
         }
     }
+
+    private fun isOfflineSpeechAvailable(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        SpeechRecognizer.isOnDeviceRecognitionAvailable(requireContext())
+
+    private fun createOfflineSpeechRecognizer(): SpeechRecognizer? =
+        if (isOfflineSpeechAvailable()) {
+            SpeechRecognizer.createOnDeviceSpeechRecognizer(requireContext())
+        } else {
+            null
+        }
 
     /**
      * Seed the session if missing, then observe the merged stream:
@@ -399,7 +411,11 @@ class AiChatFragment : Fragment() {
             return
         }
         if (speechRecognizer == null) {
-            Toast.makeText(requireContext(), "Speech recognition unavailable on this phone", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "Offline speech unavailable. Install offline speech recognition for this language.",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) ==
@@ -414,6 +430,7 @@ class AiChatFragment : Fragment() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, currentSpeechLocale().toLanguageTag())
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak your question")
         }

@@ -38,18 +38,17 @@
             android:gravity="center_vertical"
             android:layout_gravity="end">
 
-            <TextView
+            <ImageView
                 android:id="@+id/btnOutSpeak"
                 android:layout_width="28dp"
                 android:layout_height="24dp"
                 android:gravity="center"
-                android:text="SPK"
-                android:fontFamily="monospace"
-                android:textSize="7sp"
-                android:textStyle="bold"
-                android:textColor="@color/ai_ready"
+                android:src="@drawable/ic_speaker"
+                android:padding="3dp"
+                android:tint="@color/ai_ready"
                 android:clickable="true"
                 android:focusable="true"
+                android:contentDescription="Speak message"
                 android:layout_marginEnd="6dp" />
 
             <TextView
