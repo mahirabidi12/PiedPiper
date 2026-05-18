@@ -1,7 +1,0 @@
-.gradle/
-local.properties
-app/build/
-build/
-*.iml
-.idea/caches/
-.idea/deploymentTargetSelector.xml
