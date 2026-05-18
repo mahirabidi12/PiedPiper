@@ -369,21 +369,84 @@ class AiChatFragment : Fragment() {
      *    non-empty → observer hides the panel).
      */
     private fun setupSuggestions() {
-        binding.suggestion1.setOnClickListener { runSuggestion("How do I treat a deep cut?") }
-        binding.suggestion2.setOnClickListener { runSuggestion("What supplies do I need for a flood?") }
-        binding.suggestion3.setOnClickListener { runSuggestion("How can I make water safer to drink?") }
-        binding.suggestion4.setOnClickListener { runSuggestion("What is the safest shelter during an aftershock?") }
+        val role = UserSession.get(requireContext())?.role ?: Role.CIVILIAN
+        val survivalQuestions = survivalSuggestionsFor(role)
+        val sitrepQuestions = sitrepSuggestionsFor(role)
 
-        binding.sitrepSuggestion1.setOnClickListener { runSuggestion("What is the most critical active incident?") }
-        binding.sitrepSuggestion2.setOnClickListener { runSuggestion("Summarize all unassigned tasks") }
-        binding.sitrepSuggestion3.setOnClickListener { runSuggestion("How many peers are currently connected?") }
-        binding.sitrepSuggestion4.setOnClickListener { runSuggestion("Which signals need immediate attention?") }
+        bindSuggestion(binding.suggestion1, survivalQuestions[0])
+        bindSuggestion(binding.suggestion2, survivalQuestions[1])
+        bindSuggestion(binding.suggestion3, survivalQuestions[2])
+        bindSuggestion(binding.suggestion4, survivalQuestions[3])
+
+        bindSuggestion(binding.sitrepSuggestion1, sitrepQuestions[0])
+        bindSuggestion(binding.sitrepSuggestion2, sitrepQuestions[1])
+        bindSuggestion(binding.sitrepSuggestion3, sitrepQuestions[2])
+        bindSuggestion(binding.sitrepSuggestion4, sitrepQuestions[3])
 
         // Single character of input → hide the panel immediately. We trigger
         // a fresh evaluation via the StateFlow the combine() observer reads.
         binding.etQuestion.addTextChangedListener { editable ->
             inputIsEmpty.value = editable.isNullOrEmpty()
         }
+    }
+
+    private fun bindSuggestion(row: View, question: String) {
+        val label = findSuggestionLabel(row) ?: return
+        label.text = question
+        row.setOnClickListener { runSuggestion(question) }
+    }
+
+    private fun findSuggestionLabel(row: View): android.widget.TextView? {
+        val group = row as? ViewGroup ?: return null
+        for (i in 0 until group.childCount) {
+            val child = group.getChildAt(i)
+            if (child is android.widget.TextView && child.text.toString() != "→") {
+                return child
+            }
+        }
+        return null
+    }
+
+    private fun survivalSuggestionsFor(role: Role): List<String> = when (role) {
+        Role.CIVILIAN -> listOf(
+            "My father is unconscious. How do I give CPR?",
+            "Someone is bleeding heavily. What should I do first?",
+            "A person is trapped under debris. How can I help safely?",
+            "My child is not breathing properly. What should I do?"
+        )
+        Role.VOLUNTEER -> listOf(
+            "How should I triage people when I reach a site?",
+            "What supplies should I carry for a rescue task?",
+            "How do I report progress clearly to command?",
+            "How can I keep myself safe while helping civilians?"
+        )
+        Role.AUTHORITY -> listOf(
+            "Several critical signals arrived at once. How should I triage them?",
+            "How many volunteers should I send for a medical rescue ticket?",
+            "Inventory is low. How do I allocate supplies without overusing stock?",
+            "A zone has many open tickets. How should I coordinate response?"
+        )
+    }
+
+    private fun sitrepSuggestionsFor(role: Role): List<String> = when (role) {
+        Role.CIVILIAN -> listOf(
+            "What is the status of my active requests?",
+            "Is a volunteer assigned or coming to help me?",
+            "Which safe zone should I move toward?",
+            "What recent alerts affect civilians like me?"
+        )
+        Role.VOLUNTEER -> listOf(
+            "What active tasks are assigned to me?",
+            "Which assigned task should I handle first?",
+            "What inventory should I carry for my tasks?",
+            "Which nearby signals need volunteer support?"
+        )
+        Role.AUTHORITY -> listOf(
+            "Which open ticket should command handle first right now?",
+            "Show unassigned tickets that need volunteers",
+            "Which zones have the highest active workload?",
+            "What inventory shortages could block assignments?"
+        )
     }
 
     /** Tap-to-send: stuffs the suggestion into the input field and runs ask(). */
